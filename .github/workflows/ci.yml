@@ -1,0 +1,58 @@
+name: WinAPI-Coop-Survivor CI
+
+on:
+  push:
+    branches: [ "main", "dev" ]
+  pull_request:
+    branches: [ "main", "dev" ]
+
+jobs:
+  build:
+    name: Build (${{ matrix.configuration }} | x64)
+    runs-on: windows-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration: [Debug, Release]
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Cache NuGet Packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.config') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+
+    - name: Cache vcpkg Installed Packages
+      uses: actions/cache@v4
+      with:
+        path: vcpkg_installed
+        key: ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json') }}
+        restore-keys: |
+          ${{ runner.os }}-vcpkg-
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Setup NuGet
+      uses: nuget/setup-nuget@v2
+
+    - name: Integrate vcpkg with MSBuild
+      run: vcpkg integrate install
+
+    - name: Install vcpkg Dependencies
+      run: vcpkg install --triplet x64-windows
+
+    - name: Restore NuGet Packages
+      run: nuget restore WinAPI-Coop-Survivor.sln
+
+    - name: Build Solution
+      run: |
+        msbuild WinAPI-Coop-Survivor.sln /p:Configuration=${{ matrix.configuration }} /p:Platform=x64 /p:VcpkgEnableManifest=true /m /verbosity:minimal

@@ -1,0 +1,15 @@
+{
+  "name": "d2dframework",
+  "version-string": "1.0.0",
+  "dependencies": [
+    "box2d",
+    {
+      "name": "imgui",
+      "features": [
+        "docking-experimental",
+        "dx11-binding",
+        "win32-binding"
+      ]
+    }
+  ]
+}

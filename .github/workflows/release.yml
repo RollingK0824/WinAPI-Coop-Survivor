@@ -1,0 +1,82 @@
+name: WinAPI-Coop-Survivor Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    name: Build & Package Release
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Cache vcpkg Installed Packages
+      uses: actions/cache@v4
+      with:
+        path: vcpkg_installed
+        key: ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json') }}
+        restore-keys: |
+          ${{ runner.os }}-vcpkg-
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Setup NuGet
+      uses: nuget/setup-nuget@v2
+
+    - name: Integrate vcpkg with MSBuild
+      run: vcpkg integrate install
+
+    - name: Install vcpkg Dependencies
+      run: vcpkg install --triplet x64-windows
+
+    - name: Restore NuGet Packages
+      run: nuget restore WinAPI-Coop-Survivor.sln
+
+    - name: Build Release Version
+      run: |
+        msbuild WinAPI-Coop-Survivor.sln /p:Configuration=Release /p:Platform=x64 /p:VcpkgEnableManifest=true /m /verbosity:minimal
+
+    - name: Prepare Release Package
+      shell: powershell
+      run: |
+        $Staging = "WinAPI-Coop-Survivor_Release"
+        New-Item -ItemType Directory -Force -Path $Staging
+        
+        # 1. Executable, DLLs, and config files
+        if (Test-Path "x64\Release\WinAPI-Coop-Survivor.exe") {
+            Copy-Item "x64\Release\WinAPI-Coop-Survivor.exe" -Destination $Staging
+        }
+        Copy-Item "x64\Release\*.dll" -Destination $Staging -ErrorAction SilentlyContinue
+
+        if (Test-Path "WinAPI-Coop-Survivor\imgui.ini") {
+            Copy-Item "WinAPI-Coop-Survivor\imgui.ini" -Destination $Staging
+        }
+        
+        # 2. Include Resources and Source if present
+        if (Test-Path "WinAPI-Coop-Survivor\Resources") {
+            Copy-Item -Recurse "WinAPI-Coop-Survivor\Resources" -Destination "$Staging\Resources"
+        }
+        if (Test-Path "WinAPI-Coop-Survivor\Source") {
+            Copy-Item -Recurse "WinAPI-Coop-Survivor\Source" -Destination "$Staging\Source"
+        }
+        
+        # 3. Create Zip file
+        Compress-Archive -Path "$Staging\*" -DestinationPath "WinAPI-Coop-Survivor_${{ github.ref_name }}_x64.zip"
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: WinAPI-Coop-Survivor_${{ github.ref_name }}_x64.zip
+        name: WinAPI-Coop-Survivor ${{ github.ref_name }}
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

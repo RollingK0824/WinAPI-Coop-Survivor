@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{902e741a-d098-433b-a034-ec2387b4e12d}</ProjectGuid>
+    <RootNamespace>D2DTest</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir)Resources;$(ProjectDir)Source;$(ProjectDir)Source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir)Resources;$(ProjectDir)Source;</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir)Resources;$(ProjectDir)Source;$(ProjectDir)Source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>Engine/Core/pch.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir)Resources;$(ProjectDir)Source;</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>Engine/Core/pch.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="Source\Engine\Core\DebugInfo.h" />
+    <ClInclude Include="Source\Engine\Core\EventBus.h" />
+    <ClInclude Include="Source\Engine\Core\ObjectPool.h" />
+    <ClInclude Include="Source\Engine\Core\ObserverPtr.h" />
+    <ClInclude Include="Source\Engine\Core\SubObjectPtr.h" />
+    <ClInclude Include="Source\Engine\Editor\Panels\ContentBrowserPanel.h" />
+    <ClInclude Include="Source\Engine\Editor\Panels\HierarchyPanel.h" />
+    <ClInclude Include="Source\Engine\Editor\Panels\ViewportPanel.h" />
+    <ClInclude Include="Source\Engine\Editor\Panels\InspectorPanel.h" />
+    <ClInclude Include="Source\Engine\Editor\Panels\MainMenuBarPanel.h" />
+    <ClInclude Include="Source\Engine\Framework\Components\Core\CameraComponent.h" />
+    <ClInclude Include="Source\Engine\Framework\Components\UI\DebugHUDComponent.h" />
+    <ClInclude Include="Source\Engine\Framework\Components\UI\HUDPresenter.h" />
+    <ClInclude Include="Source\Engine\Framework\Components\UI\UIButtonComponent.h" />
+    <ClInclude Include="Source\Engine\Framework\Components\UI\UIPanelComponent.h" />
+    <ClInclude Include="Source\Engine\Framework\Components\UI\UITextComponent.h" />
+    <ClInclude Include="Source\Engine\Framework\Components\Network\NetworkIdentity.h" />
+    <ClInclude Include="Source\Engine\Manager\CameraManager.h" />
+    <ClInclude Include="Source\Engine\Manager\DebugManager.h" />
+    <ClInclude Include="Source\Engine\Manager\GUISystem.h" />
+    <ClInclude Include="Source\Engine\Network\NetworkManager.h" />
+    <ClInclude Include="Source\Engine\Manager\PrefabManager.h" />
+    <ClInclude Include="Source\Engine\Editor\EditorSystem.h" />
+    <ClInclude Include="Source\Engine\Manager\ActionManager.h" />
+    <ClInclude Include="Source\Engine\Core\Types.h" />
+    <ClInclude Include="Source\Engine\Network\NetPacket.h" />
+    <ClInclude Include="Source\Engine\Core\ComponentRegister.h" />
+    <ClInclude Include="Source\Engine\Core\pch.h" />
+    <ClInclude Include="Source\Engine\Core\Util.h" />
+    <ClInclude Include="Source\Engine\Framework\Components\Render\AnimatorComponent.h" />
+    <ClInclude Include="Source\Engine\Manager\FileSystem.h" />
+    <ClInclude Include="Source\Engine\Manager\JsonSerializer.h" />
+    <ClInclude Include="Source\Engine\Framework\Components\Physics\BoxCollider.h" />
+    <ClInclude Include="Source\Engine\Framework\Components\Physics\CircleCollider.h" />
+    <ClInclude Include="Source\Engine\Framework\Components\Core\ScriptComponent.h" />
+    <ClInclude Include="Source\Engine\Framework\Components\Physics\ColliderComponent.h" />
+    <ClInclude Include="Source\Engine\Framework\Components\Render\RenderComponent.h" />
+    <ClInclude Include="Source\Engine\Framework\Components\Core\TransformComponent.h" />
+    <ClInclude Include="Source\Engine\Framework\Base\Component.h" />
+    <ClInclude Include="Source\Engine\Framework\GameObject.h" />
+    <ClInclude Include="Source\Engine\Manager\SceneManager.h" />
+    <ClInclude Include="Source\Engine\Physics\PhysicsManager.h" />
+    <ClInclude Include="Source\Engine\Manager\RandomManager.h" />
+    <ClInclude Include="Source\Engine\Framework\Scene.h" />
+    <ClInclude Include="Source\Engine\Framework\Base\IRenderable.h" />
+    <ClInclude Include="Source\Engine\Framework\Base\ISystem.h" />
+    <ClInclude Include="Source\Engine\Framework\Base\IUpdatable.h" />
+    <ClInclude Include="Source\Engine\Renderer\RenderGizmo.h" />
+    <ClInclude Include="Source\Engine\Renderer\RenderSystem.h" />
+    <ClInclude Include="Source\Engine\Core\EngineKernel.h" />
+    <ClInclude Include="Source\Engine\Manager\InputManager.h" />
+    <ClInclude Include="Source\Engine\Core\Define.h" />
+    <ClInclude Include="Source\Engine\Renderer\RenderCommand.h" />
+    <ClInclude Include="Source\Engine\Core\GameApp.h" />
+    <ClInclude Include="Source\Engine\Renderer\GraphicManager.h" />
+    <ClInclude Include="Source\Engine\Core\Singleton.h" />
+    <ClInclude Include="Source\Engine\Manager\TimeManager.h" />
+    <ClInclude Include="Source\Engine\Manager\ResourceManager.h" />
+    <ClInclude Include="Source\Engine\Renderer\Sprite.h" />
+    <ClInclude Include="Source\Engine\Framework\Components\UI\UIImageComponent.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Source\Engine\Editor\Panels\ContentBrowserPanel.cpp" />
+    <ClCompile Include="Source\Engine\Editor\Panels\HierarchyPanel.cpp" />
+    <ClCompile Include="Source\Engine\Editor\Panels\ViewportPanel.cpp" />
+    <ClCompile Include="Source\Engine\Editor\Panels\InspectorPanel.cpp" />
+    <ClCompile Include="Source\Engine\Editor\Panels\MainMenuBarPanel.cpp" />
+    <ClCompile Include="Source\Engine\Framework\Components\Core\CameraComponent.cpp" />
+    <ClCompile Include="Source\Engine\Framework\Components\UI\DebugHUDComponent.cpp" />
+    <ClCompile Include="Source\Engine\Framework\Components\UI\HUDPresenter.cpp" />
+    <ClCompile Include="Source\Engine\Framework\Components\Network\NetworkIdentity.cpp" />
+    <ClCompile Include="Source\Engine\Framework\Components\UI\UIButtonComponent.cpp" />
+    <ClCompile Include="Source\Engine\Framework\Components\UI\UIPanelComponent.cpp" />
+    <ClCompile Include="Source\Engine\Framework\Components\UI\UITextComponent.cpp" />
+    <ClCompile Include="Source\Engine\Manager\CameraManager.cpp" />
+    <ClCompile Include="Source\Engine\Manager\DebugManager.cpp" />
+    <ClCompile Include="Source\Engine\Manager\GUISystem.cpp" />
+    <ClCompile Include="Source\Engine\Manager\PrefabManager.cpp" />
+    <ClCompile Include="Source\Engine\Framework\Components\Physics\BoxCollider.cpp" />
+    <ClCompile Include="Source\Engine\Framework\Components\Physics\CircleCollider.cpp" />
+    <ClCompile Include="Source\Engine\Framework\Components\Physics\ColliderComponent.cpp" />
+    <ClCompile Include="Source\Engine\Framework\Components\Core\TransformComponent.cpp" />
+    <ClCompile Include="Source\Engine\Editor\EditorSystem.cpp" />
+    <ClCompile Include="Source\Engine\Manager\ActionManager.cpp" />
+    <ClCompile Include="Source\Engine\Network\NetworkManager.cpp" />
+    <ClCompile Include="Source\Engine\Core\pch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Source\Engine\Core\Util.cpp" />
+    <ClCompile Include="Source\Engine\Framework\Components\Render\AnimatorComponent.cpp" />
+    <ClCompile Include="Source\Engine\Manager\JsonSerializer.cpp" />
+    <ClCompile Include="Source\Engine\Framework\Components\Render\RenderComponent.cpp" />
+    <ClCompile Include="Source\Engine\Framework\Components\Core\ScriptComponent.cpp" />
+    <ClCompile Include="Source\Engine\Framework\GameObject.cpp" />
+    <ClCompile Include="Source\Engine\Manager\SceneManager.cpp" />
+    <ClCompile Include="Source\Engine\Physics\PhysicsManager.cpp" />
+    <ClCompile Include="Source\Engine\Manager\RandomManager.cpp" />
+    <ClCompile Include="Source\Engine\Framework\Scene.cpp" />
+    <ClCompile Include="Source\Engine\Renderer\RenderSystem.cpp" />
+    <ClCompile Include="Source\Engine\Core\EngineKernel.cpp" />
+    <ClCompile Include="Source\Engine\Manager\InputManager.cpp" />
+    <ClCompile Include="Source\Engine\Core\GameApp.cpp" />
+    <ClCompile Include="Source\Engine\Renderer\GraphicManager.cpp" />
+    <ClCompile Include="Source\Engine\Manager\TimeManager.cpp" />
+    <ClCompile Include="Source\Engine\Manager\ResourceManager.cpp" />
+    <ClCompile Include="Source\Engine\Framework\Components\UI\UIImageComponent.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="imgui.ini" />
+    <None Include="packages.config" />
+    <None Include="Resoucres\Json\DefaultScene.json" />
+    <None Include="Resoucres\Json\ResourceList.json" />
+    <None Include="Resources\Json\DefaultScene(backup2).json" />
+    <None Include="Resources\Json\DefaultScene.json.backup2" />
+    <None Include="Resources\Json\EditorScene(backup).json" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Resoucres\Texture\Character.png" />
+    <Image Include="Resoucres\Texture\Coin.png" />
+    <Image Include="Resoucres\Texture\Wall.png" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\packages\nlohmann.json.3.12.0\build\native\nlohmann.json.targets" Condition="Exists('..\packages\nlohmann.json.3.12.0\build\native\nlohmann.json.targets')" />
+  </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\nlohmann.json.3.12.0\build\native\nlohmann.json.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\nlohmann.json.3.12.0\build\native\nlohmann.json.targets'))" />
+  </Target>
+</Project>
