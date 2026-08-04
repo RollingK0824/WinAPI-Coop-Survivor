@@ -18,6 +18,10 @@ public:
 
 	D2D1_MATRIX_3X2_F GetActiveViewMatrix() const;
 
+	void ToggleEditorCameraInPlay() { m_bUseEditorCameraInPlay = !m_bUseEditorCameraInPlay; }
+	bool IsUsingEditorCamera() const;
+	bool IsActiveCameraValid() const;
+
 	void PanEditorCamera(Vector2 delta);
 	void ZoomEditorCamera(float zoomDelta);
 	void ResetEditorCamera();
@@ -33,4 +37,6 @@ private:
 
 	Vector2 m_editorCamPos = { 0.0f, 0.0f };
 	float m_editorCamZoom = 1.0f;
+
+	bool m_bUseEditorCameraInPlay = false;
 };

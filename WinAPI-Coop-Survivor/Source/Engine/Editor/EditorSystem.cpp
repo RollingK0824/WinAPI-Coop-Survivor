@@ -24,6 +24,7 @@ bool EditorSystem::Initialize()
 
 #if WITH_EDITOR
     ActionManager::GetInstance()->BindShortcut("SaveScene", 'S', { VK_CONTROL });
+    ActionManager::GetInstance()->BindAction("ToggleCameraView", { VK_F8 });
 #endif
 
     m_pMainMenuBarPanel = std::make_unique<MainMenuBarPanel>();
@@ -66,5 +67,9 @@ void EditorSystem::Update(float dt)
     if (ActionManager::GetInstance()->GetActionDown("SaveScene"))
     {
         SceneManager::GetInstance()->SaveActiveScene();
+    }
+    if (ActionManager::GetInstance()->GetActionDown("ToggleCameraView"))
+    {
+        CameraManager::GetInstance()->ToggleEditorCameraInPlay();
     }
 }

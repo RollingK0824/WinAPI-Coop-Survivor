@@ -41,19 +41,29 @@ void ViewportPanel::OnDrawGUI()
 	}
 
 	m_bIsHovered = ImGui::IsWindowHovered();
-	m_bIsFocused = ImGui::IsWindowFocused();
 
-	if (m_bIsHovered)
+	CameraManager* pCamMgr = CameraManager::GetInstance();
+	if (!pCamMgr->IsActiveCameraValid())
+	{
+		ImVec2 panelSize = ImGui::GetWindowSize();
+		const char* warningText = "No Main Camera Rendering (Add CameraComponent to Scene)";
+		ImVec2 textSize = ImGui::CalcTextSize(warningText);
+
+		ImGui::SetCursorPos(ImVec2((panelSize.x - textSize.x) * 0.5f, (panelSize.y - textSize.y) * 0.5f));
+		ImGui::TextColored(ImVec4(1.0f, 0.3f, 0.3f, 1.0f), warningText);
+	}
+
+	if (m_bIsHovered && pCamMgr->IsUsingEditorCamera())
 	{
 		if (ImGui::IsMouseDragging(ImGuiMouseButton_Right) || ImGui::IsMouseDragging(ImGuiMouseButton_Middle))
 		{
 			ImVec2 delta = ImGui::GetIO().MouseDelta;
-			CameraManager::GetInstance()->PanEditorCamera(Vector2(delta.x, delta.y));
+			pCamMgr->PanEditorCamera(Vector2(delta.x, delta.y));
 		}
 		float wheel = ImGui::GetIO().MouseWheel;
 		if (wheel != 0.0f)
 		{
-			CameraManager::GetInstance()->ZoomEditorCamera(wheel * 0.1f);
+			pCamMgr->ZoomEditorCamera(wheel * 0.1f);
 		}
 	}
 

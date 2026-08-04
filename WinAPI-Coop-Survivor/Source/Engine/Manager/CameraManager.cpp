@@ -6,19 +6,24 @@
 
 D2D1_MATRIX_3X2_F CameraManager::GetActiveViewMatrix() const
 {
-    EnginePlayState playState = EngineKernel::GetInstance()->GetPlayState();
-    if (playState == EnginePlayState::Play && m_pMainCamera)
+    if (IsUsingEditorCamera())
     {
-        return m_pMainCamera->GetViewMatrix();
-    }
+        float screenWidth = GraphicManager::GetInstance()->GetScreenWidth();
+        float screenHeight = GraphicManager::GetInstance()->GetScreenHeight();
+        D2D1_POINT_2F screenCenter = D2D1::Point2F(screenWidth * 0.5f, screenHeight * 0.5f);
 
-    float screenWidth = GraphicManager::GetInstance()->GetScreenWidth();
-    float screenHeight = GraphicManager::GetInstance()->GetScreenHeight();
-    D2D1_POINT_2F screenCenter = D2D1::Point2F(screenWidth * 0.5f, screenHeight * 0.5f);
-    D2D1_MATRIX_3X2_F matTrans = D2D1::Matrix3x2F::Translation(-m_editorCamPos.x, -m_editorCamPos.y);
-    D2D1_MATRIX_3X2_F matScale = D2D1::Matrix3x2F::Scale(m_editorCamZoom, m_editorCamZoom, D2D1::Point2F(0.0f, 0.0f));
-    D2D1_MATRIX_3X2_F matCenter = D2D1::Matrix3x2F::Translation(screenCenter.x, screenCenter.y);
-    return matTrans * matScale * matCenter;
+        D2D1_MATRIX_3X2_F matTrans = D2D1::Matrix3x2F::Translation(-m_editorCamPos.x, -m_editorCamPos.y);
+        D2D1_MATRIX_3X2_F matScale = D2D1::Matrix3x2F::Scale(m_editorCamZoom, m_editorCamZoom, D2D1::Point2F(0.0f, 0.0f));
+        D2D1_MATRIX_3X2_F matCenter = D2D1::Matrix3x2F::Translation(screenCenter.x, screenCenter.y);
+        return matTrans * matScale * matCenter;
+
+        if (m_pMainCamera)
+        {
+            return m_pMainCamera->GetViewMatrix();
+        }
+
+        return D2D1::Matrix3x2F::Identity();
+    }
 }
 
 D2D1_POINT_2F CameraManager::ScreenToWorld(D2D1_POINT_2F screenPoint) const
@@ -30,6 +35,22 @@ D2D1_POINT_2F CameraManager::ScreenToWorld(D2D1_POINT_2F screenPoint) const
         return D2D1::Matrix3x2F::ReinterpretBaseType(&invViewMat)->TransformPoint(screenPoint);
     }
     return screenPoint;
+}
+
+bool CameraManager::IsUsingEditorCamera() const
+{
+    EnginePlayState playState = EngineKernel::GetInstance()->GetPlayState();
+
+    return (playState == EnginePlayState::Edit) || m_bUseEditorCameraInPlay;
+}
+
+bool CameraManager::IsActiveCameraValid() const
+{
+    if (IsUsingEditorCamera())
+    {
+        return true;
+    }
+    return (m_pMainCamera != nullptr);
 }
 
 void CameraManager::PanEditorCamera(Vector2 delta)
