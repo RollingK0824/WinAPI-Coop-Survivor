@@ -1,7 +1,7 @@
 ﻿#pragma once
-#include "Engine/Framework/Base/Component.h"
+#include "Engine/Framework/Components/UI/UIComponent.h"
 
-class UITextComponent : public Component
+class UITextComponent : public UIComponent
 {
 public:
 	CLONEABLE_COMPONENT(UITextComponent)

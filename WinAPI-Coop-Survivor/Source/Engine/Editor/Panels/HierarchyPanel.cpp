@@ -54,6 +54,8 @@ void HierarchyPanel::DrawGameObjectList(Scene* pActiveScene)
 
 void HierarchyPanel::DrawGameObjectNode(Scene* pActiveScene, GameObject* pObj, int index)
 {
+    ImGui::PushID(pObj);
+
     bool isSelected = (EditorSystem::GetInstance()->GetSelectedObject() == pObj);
 
     if (ImGui::Selectable(pObj->GetName().c_str(), isSelected))
@@ -69,6 +71,8 @@ void HierarchyPanel::DrawGameObjectNode(Scene* pActiveScene, GameObject* pObj, i
         ImGui::EndDragDropSource();
     }
     HandleDragAndDropReorder(pObj, index);
+
+    ImGui::PopID();
 }
 
 void HierarchyPanel::HandleItemContextMenu(Scene* pActiveScene, GameObject* pObj)
@@ -118,7 +122,7 @@ void HierarchyPanel::HandlePrefabDrop(Scene* pActiveScene)
         if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_PREFAB_FILE"))
         {
             const char* prefabFilePath = (const char*)payload->Data;
-
+            
             std::ifstream file(prefabFilePath);
             if (file.is_open())
             {

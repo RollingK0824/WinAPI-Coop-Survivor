@@ -8,8 +8,12 @@
 
 static ComponentRegistrar<UITextComponent> registrar(EngineKey::Component::UITextComponent.data());
 
-UITextComponent::UITextComponent(GameObject* owner, TransformComponent* transform) : Component(owner,transform)
+UITextComponent::UITextComponent(GameObject* owner, TransformComponent* transform) : UIComponent(owner,transform)
 {
+	ExposeVariable("Text", &m_text);
+	ExposeVariable("Position", &m_position);
+	ExposeVariable("Font Size", &m_fontSize);
+	ExposeVariable("Color", &m_color);
 }
 
 void UITextComponent::RenderUI()

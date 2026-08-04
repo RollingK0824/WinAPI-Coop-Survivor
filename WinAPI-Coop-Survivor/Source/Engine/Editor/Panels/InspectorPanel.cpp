@@ -7,6 +7,7 @@
 #include "Engine/Framework/Base/Component.h"
 #include "Engine/Framework/Components/Core/TransformComponent.h"
 #include "Engine/Framework/Components/Render/RenderComponent.h"
+#include "Engine/Framework/Components/UI/UIImageComponent.h"
 void InspectorPanel::Initialize()
 {
 	GUISystem::GetInstance()->RegisterPanel(this);
@@ -357,6 +358,10 @@ void InspectorPanel::DrawComponents(GameObject* pObj)
 								if (RenderComponent* renderComp = dynamic_cast<RenderComponent*>(comp))
 								{
 									renderComp->SetTextureKey(*wKey);
+								}
+								else if (UIImageComponent* uiImg = dynamic_cast<UIImageComponent*>(comp))
+								{
+									uiImg->SetTextureKey(*wKey);
 								}
 							}
 						}

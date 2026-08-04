@@ -167,6 +167,7 @@
     <ClInclude Include="Source\Engine\Framework\Components\UI\DebugHUDComponent.h" />
     <ClInclude Include="Source\Engine\Framework\Components\UI\HUDPresenter.h" />
     <ClInclude Include="Source\Engine\Framework\Components\UI\UIButtonComponent.h" />
+    <ClInclude Include="Source\Engine\Framework\Components\UI\UIComponent.h" />
     <ClInclude Include="Source\Engine\Framework\Components\UI\UIPanelComponent.h" />
     <ClInclude Include="Source\Engine\Framework\Components\UI\UITextComponent.h" />
     <ClInclude Include="Source\Engine\Framework\Components\Network\NetworkIdentity.h" />

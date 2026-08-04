@@ -7,6 +7,7 @@ class GameObject;
 class Component;
 class ScriptComponent;
 class RenderComponent;
+class UIComponent;
 class ColliderComponent;
 
 class Scene : public ISystem, public IUpdatable, public IRenderable
@@ -36,6 +37,7 @@ public:
 
 	void UnregisterScriptComponent(ScriptComponent* pComp);
 	void UnregisterRenderComponent(RenderComponent* pComp);
+	void UnregisterUIComponent(UIComponent* pComp);
 
 	void DestroyObjects(GameObject* pObj);
 	void PostFrameCleanUp();
@@ -52,6 +54,7 @@ private:
 	std::vector<GameObject*> m_vGameObjects;
 	std::vector<ScriptComponent*> m_vUpdatableComponents;
 	std::vector<RenderComponent*> m_vRenderComponents;
+	std::vector<UIComponent*> m_vUIComponents;
 
 	std::vector<GameObject*> m_vCreationQueue;
 	std::vector<Component*> m_vComponentCreationQueue;

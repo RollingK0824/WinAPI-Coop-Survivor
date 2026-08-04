@@ -2,6 +2,7 @@
 #include "ContentBrowserPanel.h"
 #include "Engine/Manager/SceneManager.h"
 #include "Engine/Manager/JsonSerializer.h"
+#include "Engine/Manager/PrefabManager.h"
 #include "Engine/Framework/Scene.h"
 #include "Engine/Framework/GameObject.h"
 
@@ -68,6 +69,20 @@ void ContentBrowserPanel::DrawContentGrid()
                 if (isSceneFile && ImGui::MenuItem("Set as Active Scene"))
                 {
                     SceneManager::GetInstance()->LoadSceneFromFile(path.string());
+                }
+                if (isPrefabFile && ImGui::MenuItem("Instantiate Prefab"))
+                {
+                    Scene* pActiveScene = SceneManager::GetInstance()->GetActiveScene();
+                    if (pActiveScene)
+                    {
+                        std::string prefabKey = path.stem().string();
+                        GameObject* pClonedObj = PrefabManager::GetInstance()->Instantiate(prefabKey, pActiveScene);
+                        if (!pClonedObj)
+                        {
+                            PrefabManager::GetInstance()->LoadPrefab(prefabKey, path.string());
+                            pClonedObj = PrefabManager::GetInstance()->Instantiate(prefabKey, pActiveScene);
+                        }
+                    }
                 }
                 if (ImGui::MenuItem("Rename"))
                 {

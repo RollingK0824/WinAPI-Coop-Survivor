@@ -1,14 +1,17 @@
 ﻿#pragma once
-#include "Engine/Framework/Base/Component.h"
+#include "Engine/Framework/Components/UI/UIComponent.h"
 #include "Engine/Renderer/RenderCommand.h"
 
-class UIImageComponent : public Component
+class UIImageComponent : public UIComponent
 {
 public:
 	CLONEABLE_COMPONENT(UIImageComponent)
 
 		UIImageComponent(GameObject* owner, TransformComponent* transform);
 	virtual ~UIImageComponent() override = default;
+
+	virtual void Serialize(json& outJson) const override;
+	virtual void Deserialize(const json& inJson) override;
 
 	void SetTextureKey(const std::wstring& textureKey);
 	void SetPosition(Vector2 pos) { m_RenderCommand.position = pos; }

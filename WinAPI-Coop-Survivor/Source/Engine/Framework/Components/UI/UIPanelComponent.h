@@ -1,8 +1,8 @@
 #pragma once
-#include "Engine/Framework/Base/Component.h"
+#include "Engine/Framework/Components/UI/UIComponent.h"
 #include "Engine/Renderer/RenderCommand.h"
 
-class UIPanelComponent : public Component
+class UIPanelComponent : public UIComponent
 {
 public:
 	CLONEABLE_COMPONENT(UIPanelComponent)

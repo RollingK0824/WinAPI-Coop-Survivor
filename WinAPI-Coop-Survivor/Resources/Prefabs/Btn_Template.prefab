@@ -1,0 +1,39 @@
+{
+    "Name": "Btn_Template",
+    "IsActive": true,
+    "Components": [
+        {
+            "Type": "TransformComponent",
+            "Data": {
+                "IsEnabled": true,
+                "Position": {
+                    "x": 0.0,
+                    "y": 0.0
+                },
+                "Rotation": 0.0,
+                "Scale": {
+                    "x": 1.0,
+                    "y": 1.0
+                }
+            }
+        },
+        {
+            "Type": "UIImageComponent",
+            "Data": {
+                "IsEnabled": true
+            }
+        },
+        {
+            "Type": "UITextComponent",
+            "Data": {
+                "IsEnabled": true
+            }
+        },
+        {
+            "Type": "UIButtonComponent",
+            "Data": {
+                "IsEnabled": true
+            }
+        }
+    ]
+}

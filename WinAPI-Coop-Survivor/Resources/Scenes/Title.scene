@@ -27,6 +27,195 @@
                     }
                 }
             ]
+        },
+        {
+            "Name": "TempBackground",
+            "IsActive": false,
+            "Components": [
+                {
+                    "Type": "TransformComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Position": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "Rotation": 0.0,
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        }
+                    }
+                },
+                {
+                    "Type": "RenderComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "RenderType": 0,
+                        "ZOrder": 0,
+                        "TextureKey": "TempBackground.jpg",
+                        "SrcRect": {
+                            "left": 0.0,
+                            "top": 0.0,
+                            "right": 1920.0,
+                            "bottom": 1080.0
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "Name": "Host_Btn",
+            "IsActive": true,
+            "Components": [
+                {
+                    "Type": "TransformComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Position": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "Rotation": 0.0,
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        }
+                    }
+                },
+                {
+                    "Type": "UIImageComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "TextureKey": "TempBackground.jpg",
+                        "Size": {
+                            "x": 100.0,
+                            "y": 30.0
+                        },
+                        "Position": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "FillAmount": 1.0,
+                        "Opacity": 1.0,
+                        "ZOrder": 9999
+                    }
+                },
+                {
+                    "Type": "UITextComponent",
+                    "Data": {
+                        "IsEnabled": true
+                    }
+                },
+                {
+                    "Type": "UIButtonComponent",
+                    "Data": {
+                        "IsEnabled": true
+                    }
+                }
+            ]
+        },
+        {
+            "Name": "Join_Btn",
+            "IsActive": true,
+            "Components": [
+                {
+                    "Type": "TransformComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Position": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "Rotation": 0.0,
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        }
+                    }
+                },
+                {
+                    "Type": "UIImageComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "TextureKey": "",
+                        "Size": {
+                            "x": 100.0,
+                            "y": 30.0
+                        },
+                        "Position": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "FillAmount": 1.0,
+                        "Opacity": 1.0,
+                        "ZOrder": 24464
+                    }
+                },
+                {
+                    "Type": "UITextComponent",
+                    "Data": {
+                        "IsEnabled": true
+                    }
+                },
+                {
+                    "Type": "UIButtonComponent",
+                    "Data": {
+                        "IsEnabled": true
+                    }
+                }
+            ]
+        },
+        {
+            "Name": "Exit_Btn",
+            "IsActive": true,
+            "Components": [
+                {
+                    "Type": "TransformComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Position": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "Rotation": 0.0,
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        }
+                    }
+                },
+                {
+                    "Type": "UIImageComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "TextureKey": "",
+                        "Size": {
+                            "x": 100.0,
+                            "y": 30.0
+                        },
+                        "Position": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "FillAmount": 1.0,
+                        "Opacity": 1.0,
+                        "ZOrder": 24464
+                    }
+                },
+                {
+                    "Type": "UITextComponent",
+                    "Data": {
+                        "IsEnabled": true
+                    }
+                },
+                {
+                    "Type": "UIButtonComponent",
+                    "Data": {
+                        "IsEnabled": true
+                    }
+                }
+            ]
         }
     ]
 }

@@ -11,6 +11,7 @@ static ComponentRegistrar<UIButtonComponent> registrar(EngineKey::Component::UIB
 UIButtonComponent::UIButtonComponent(GameObject* owner, TransformComponent* transform)
 	: ScriptComponent(owner, transform)
 {
+	ExposeVariable("Is Hovered", &m_bIsHovered);
 }
 
 void UIButtonComponent::Awake()
