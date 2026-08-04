@@ -21,6 +21,9 @@ public:
 	virtual void Update(float dt)override;
 	virtual void LateUpdate(float dt)override;
 
+	void SetEnableFollow(bool enable) { m_bEnableFollow = enable; }
+	bool IsFollowEnabled() const { return m_bEnableFollow; }
+
 	void SetUpdateMode(CameraUpdateMode mode) { m_updateMode = mode; }
 	CameraUpdateMode GetUpdateM() const { return m_updateMode; }
 
@@ -57,6 +60,8 @@ private:
 
 private:
 	TransformComponent* m_pTargetTransform = nullptr;
+
+	bool m_bEnableFollow = false;
 
 	CameraUpdateMode m_updateMode = CameraUpdateMode::FixedUpdate;
 

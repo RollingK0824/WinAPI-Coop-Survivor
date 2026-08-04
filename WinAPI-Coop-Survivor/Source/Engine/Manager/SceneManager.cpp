@@ -76,6 +76,20 @@ void SceneManager::PostFrame()
     m_pActiveScene->PostFrame();
 }
 
+void SceneManager::StartPlaySession()
+{
+    SavePlaySnapshot();
+    EngineKernel::GetInstance()->SetPlayState(EnginePlayState::Play);
+    RestorePlaySnapshot();
+}
+
+void SceneManager::StopPlaySession()
+{
+    EngineKernel::GetInstance()->SetPlayState(EnginePlayState::Edit);
+
+    RestorePlaySnapshot();
+}
+
 bool SceneManager::CreateScene(const std::string& sceneName)
 {
     if (m_mapScenes.find(sceneName) != m_mapScenes.end())

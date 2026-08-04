@@ -43,14 +43,23 @@ void ViewportPanel::OnDrawGUI()
 	m_bIsHovered = ImGui::IsWindowHovered();
 
 	CameraManager* pCamMgr = CameraManager::GetInstance();
+	static int s_missingCameraFrameCount = 0;
 	if (!pCamMgr->IsActiveCameraValid())
 	{
-		ImVec2 panelSize = ImGui::GetWindowSize();
-		const char* warningText = "No Main Camera Rendering (Add CameraComponent to Scene)";
-		ImVec2 textSize = ImGui::CalcTextSize(warningText);
+		s_missingCameraFrameCount++;
+		if (s_missingCameraFrameCount > 3)
+		{
+			ImVec2 panelSize = ImGui::GetWindowSize();
+			const char* warningText = "No Main Camera Rendering (Add CameraComponent to Scene)";
+			ImVec2 textSize = ImGui::CalcTextSize(warningText);
 
-		ImGui::SetCursorPos(ImVec2((panelSize.x - textSize.x) * 0.5f, (panelSize.y - textSize.y) * 0.5f));
-		ImGui::TextColored(ImVec4(1.0f, 0.3f, 0.3f, 1.0f), warningText);
+			ImGui::SetCursorPos(ImVec2((panelSize.x - textSize.x) * 0.5f, (panelSize.y - textSize.y) * 0.5f));
+			ImGui::TextColored(ImVec4(1.0f, 0.3f, 0.3f, 1.0f), warningText);
+		}
+	}
+	else
+	{
+		s_missingCameraFrameCount = 0;
 	}
 
 	if (m_bIsHovered && pCamMgr->IsUsingEditorCamera())
