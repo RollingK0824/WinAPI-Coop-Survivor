@@ -1,4 +1,4 @@
-#include "Engine/Core/pch.h"
+ï»¿#include "Engine/Core/pch.h"
 #include "CameraManager.h"
 #include "Engine/Core/EngineKernel.h"
 #include "Engine/Framework/Components/Core/CameraComponent.h"
@@ -6,26 +6,28 @@
 
 D2D1_MATRIX_3X2_F CameraManager::GetActiveViewMatrix() const
 {
+    if (IsUsingEditorCamera())
+    {
+        float screenWidth = GraphicManager::GetInstance()->GetScreenWidth();
+        float screenHeight = GraphicManager::GetInstance()->GetScreenHeight();
+        D2D1_POINT_2F screenCenter = D2D1::Point2F(screenWidth * 0.5f, screenHeight * 0.5f);
+        D2D1_MATRIX_3X2_F matTrans = D2D1::Matrix3x2F::Translation(-m_editorCamPos.x, -m_editorCamPos.y);
+        D2D1_MATRIX_3X2_F matScale = D2D1::Matrix3x2F::Scale(m_editorCamZoom, m_editorCamZoom, D2D1::Point2F(0.0f, 0.0f));
+        D2D1_MATRIX_3X2_F matCenter = D2D1::Matrix3x2F::Translation(screenCenter.x, screenCenter.y);
+
+        return matTrans * matScale * matCenter;
+    }
+
     if (m_pMainCamera)
     {
         return m_pMainCamera->GetViewMatrix();
     }
-    // 2. ¸ŞÀÎ Ä«¸Ş¶óÀÌ ¾øÀ» °æ¿ì ¿¡µğÅÍ Àü¿ë Ä«¸Ş¶ó View Matrix °è»ê
-    float screenWidth = GraphicManager::GetInstance()->GetScreenWidth();
-    float screenHeight = GraphicManager::GetInstance()->GetScreenHeight();
-    D2D1_POINT_2F screenCenter = D2D1::Point2F(screenWidth * 0.5f, screenHeight * 0.5f);
-    D2D1_MATRIX_3X2_F matTrans = D2D1::Matrix3x2F::Translation(-m_editorCamPos.x, -m_editorCamPos.y);
-    D2D1_MATRIX_3X2_F matScale = D2D1::Matrix3x2F::Scale(m_editorCamZoom, m_editorCamZoom, D2D1::Point2F(0.0f, 0.0f));
-    D2D1_MATRIX_3X2_F matCenter = D2D1::Matrix3x2F::Translation(screenCenter.x, screenCenter.y);
-    return matTrans * matScale * matCenter;
+    return D2D1::Matrix3x2F::Identity();
+    
 }
 
 D2D1_POINT_2F CameraManager::ScreenToWorld(D2D1_POINT_2F screenPoint) const
 {
-    if (m_pMainCamera)
-    {
-        return m_pMainCamera->ScreenToWorldPoint(screenPoint);
-    }
     D2D1_MATRIX_3X2_F viewMat = GetActiveViewMatrix();
     D2D1_MATRIX_3X2_F invViewMat = viewMat;
     if (D2D1InvertMatrix(&invViewMat))
@@ -35,9 +37,25 @@ D2D1_POINT_2F CameraManager::ScreenToWorld(D2D1_POINT_2F screenPoint) const
     return screenPoint;
 }
 
+bool CameraManager::IsUsingEditorCamera() const
+{
+    EnginePlayState playState = EngineKernel::GetInstance()->GetPlayState();
+
+    return (playState == EnginePlayState::Edit) || m_bUseEditorCameraInPlay;
+}
+
+bool CameraManager::IsActiveCameraValid() const
+{
+    if (IsUsingEditorCamera())
+    {
+        return true;
+    }
+    return (m_pMainCamera != nullptr);
+}
+
 void CameraManager::PanEditorCamera(Vector2 delta)
 {
-    // ÁÜ ¹èÀ²À» °í·ÁÇÑ ÀÌµ¿ µ¨Å¸ Ã³¸®
+    // ì¤Œ ë°°ìœ¨ì„ ê³ ë ¤í•œ ì´ë™ ë¸íƒ€ ì²˜ë¦¬
     m_editorCamPos.x -= (delta.x / m_editorCamZoom);
     m_editorCamPos.y -= (delta.y / m_editorCamZoom);
 }

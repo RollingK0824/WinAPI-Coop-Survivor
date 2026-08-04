@@ -11,6 +11,7 @@ static ComponentRegistrar<CameraComponent> registrar(EngineKey::Component::Camer
 CameraComponent::CameraComponent(GameObject* owner, TransformComponent* transform) : ScriptComponent(owner, transform)
 {
 	ExposeVariable("Zoom", &m_zoom);
+	ExposeVariable("Enable Follow", &m_bEnableFollow);
 	ExposeVariable("Smooth Follow", &m_bSmoothFollow);
 	ExposeVariable("Follow Speed", &m_followSpeed);
 	ExposeVariable("Use Map Bounds", &m_bUseMapBounds);
@@ -69,21 +70,24 @@ void CameraComponent::LateUpdate(float dt)
 
 void CameraComponent::InternalUpdateCamera(float dt)
 {
-	D2D1_POINT_2F targetPos = m_pTargetTransform ? m_pTargetTransform->GetPosition() : transform.GetPosition();
-
-	targetPos = (Vector2)targetPos + (Vector2)m_offset;
-
-	if (m_bSmoothFollow)
+	if(!m_bEnableFollow || m_pTargetTransform == nullptr)
 	{
-		float lerpFactor = 1.0f - std::exp(-m_followSpeed * dt);
-		m_currentPos.x += (targetPos.x - m_currentPos.x) * lerpFactor;
-		m_currentPos.y += (targetPos.y - m_currentPos.y) * lerpFactor;
+		m_currentPos = (Vector2)transform.GetPosition() + (Vector2)m_offset;
 	}
 	else
 	{
-		m_currentPos = targetPos;
+		D2D1_POINT_2F targetPos = (Vector2)m_pTargetTransform->GetPosition() + (Vector2)m_offset;
+		if (m_bSmoothFollow)
+		{
+			float lerpFactor = 1.0f - std::exp(-m_followSpeed * dt);
+			m_currentPos.x += (targetPos.x - m_currentPos.x) * lerpFactor;
+			m_currentPos.y += (targetPos.y - m_currentPos.y) * lerpFactor;
+		}
+		else
+		{
+			m_currentPos = targetPos;
+		}
 	}
-
 	if (m_bUseMapBounds)
 	{
 		m_currentPos.x = std::clamp(m_currentPos.x, m_mapBounds.left, m_mapBounds.right);
@@ -93,10 +97,12 @@ void CameraComponent::InternalUpdateCamera(float dt)
 
 D2D1_MATRIX_3X2_F CameraComponent::GetViewMatrix() const
 {
-	D2D1_POINT_2F finalPos = (Vector2)m_currentPos + (Vector2)m_shakeOffset;
-
-	finalPos.x = std::floorf(finalPos.x);
-	finalPos.y = std::floorf(finalPos.y);
+	D2D1_POINT_2F viewPos = m_currentPos;
+	if (!m_bEnableFollow || m_pTargetTransform == nullptr)
+	{
+		viewPos = (Vector2)transform.GetPosition() + (Vector2)m_offset;
+	}
+	D2D1_POINT_2F finalPos = (Vector2)viewPos + (Vector2)m_shakeOffset;
 
 	float screenWidth = GraphicManager::GetInstance()->GetScreenWidth();
 	float screenHeight = GraphicManager::GetInstance()->GetScreenHeight();

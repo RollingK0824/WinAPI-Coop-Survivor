@@ -24,6 +24,7 @@ bool EditorSystem::Initialize()
 
 #if WITH_EDITOR
     ActionManager::GetInstance()->BindShortcut("SaveScene", 'S', { VK_CONTROL });
+    ActionManager::GetInstance()->BindAction("ToggleCameraView", { VK_F8 });
 #endif
 
     m_pMainMenuBarPanel = std::make_unique<MainMenuBarPanel>();
@@ -67,24 +68,8 @@ void EditorSystem::Update(float dt)
     {
         SceneManager::GetInstance()->SaveActiveScene();
     }
-
-    if (EngineKernel::GetInstance()->GetPlayState() != EnginePlayState::Edit) return;
-    CameraComponent* pMainCamera = CameraManager::GetInstance()->GetMainCamera();
-    if (!pMainCamera) return;
-    static Vector2 lastMousePos = { 0.0f, 0.0f };
-    POINT curPoint;
-    GetCursorPos(&curPoint);
-    ScreenToClient(GameApp::GetInstance()->GetWindowHandle(), &curPoint);
-    Vector2 currentMousePos((float)curPoint.x, (float)curPoint.y);
-    if (InputManager::GetInstance()->GetKeyPress(VK_RBUTTON) || InputManager::GetInstance()->GetKeyPress(VK_MBUTTON))
+    if (ActionManager::GetInstance()->GetActionDown("ToggleCameraView"))
     {
-        Vector2 mouseDelta = currentMousePos - lastMousePos;
-        float zoom = pMainCamera->GetZoom();
-        Vector2 camPos = pMainCamera->transform.GetPosition();
-
-        camPos.x -= (mouseDelta.x / zoom);
-        camPos.y -= (mouseDelta.y / zoom);
-        pMainCamera->transform.SetPosition(camPos);
+        CameraManager::GetInstance()->ToggleEditorCameraInPlay();
     }
-    lastMousePos = currentMousePos;
 }

@@ -21,6 +21,9 @@ public:
 
 	virtual void PostFrame()override;
 
+	void StartPlaySession();
+	void StopPlaySession();
+
 	bool CreateScene(const std::string& sceneName);
 	bool LoadScene(const std::string& sceneName);
 	Scene* GetActiveScene() const { return m_pActiveScene; }
@@ -30,6 +33,10 @@ public:
 
 	void SavePlaySnapshot();
 	void RestorePlaySnapshot();
+
+private:
+	SceneManager() = default;
+	virtual ~SceneManager() = default;
 
 private:
 	std::unordered_map<std::string, Scene*> m_mapScenes;

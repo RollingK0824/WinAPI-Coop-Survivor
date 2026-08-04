@@ -34,16 +34,14 @@ void MainMenuBarPanel::OnDrawGUI()
         {
             if (ImGui::Button(" Play "))
             {
-                SceneManager::GetInstance()->SavePlaySnapshot();
-                EngineKernel::GetInstance()->SetPlayState(EnginePlayState::Play);
+                SceneManager::GetInstance()->StartPlaySession();
             }
         }
         else
         {
             if (ImGui::Button(" Stop "))
             {
-                EngineKernel::GetInstance()->SetPlayState(EnginePlayState::Edit);
-                SceneManager::GetInstance()->RestorePlaySnapshot();
+                SceneManager::GetInstance()->StopPlaySession();
             }
         }
 

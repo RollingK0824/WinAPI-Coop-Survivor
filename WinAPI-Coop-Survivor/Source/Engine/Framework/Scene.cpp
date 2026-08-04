@@ -232,11 +232,12 @@ void Scene::PostFrameCleanUp()
 		{
 			if (pComp == nullptr)continue;
 
-			pComp->Awake();
 
 			if (EngineKernel::GetInstance()->GetPlayState() == EnginePlayState::Play)
 			{
+				pComp->Awake();
 				pComp->Start();
+				pComp->OnEnable();
 			}
 
 			if (auto* updatable = dynamic_cast<ScriptComponent*>(pComp))
