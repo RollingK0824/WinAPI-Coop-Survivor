@@ -280,3 +280,24 @@ void Scene::PostFrameCleanUp()
 	}
 }
 
+void Scene::ReorderGameObject(GameObject* targetObj, int newIndex)
+{
+	if (!targetObj || newIndex < 0 || newIndex >= (int)m_vGameObjects.size()) return;
+	auto it = std::find(m_vGameObjects.begin(), m_vGameObjects.end(), targetObj);
+	if (it == m_vGameObjects.end()) return;
+	m_vGameObjects.erase(it);
+	m_vGameObjects.insert(m_vGameObjects.begin() + newIndex, targetObj);
+	UpdateGameObjectIndices();
+}
+
+void Scene::UpdateGameObjectIndices()
+{
+	for (size_t i = 0; i < m_vGameObjects.size(); ++i)
+	{
+		if (m_vGameObjects[i])
+		{
+			m_vGameObjects[i]->SetSceneIndex(i);
+		}
+	}
+}
+

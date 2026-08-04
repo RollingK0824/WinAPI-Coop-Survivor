@@ -50,6 +50,11 @@ public:
 	const std::vector<Component*>& GetComponents()const { return m_vComponents; }
 	void Serialize(json& outJson)const;
 
+	void SetSiblingIndex(int index);
+	int GetSiblingIndex() const;
+	void SetAsFirstSibling();
+	void SetAsLastSibling();
+
 	bool IsActive() const { return m_bIsActive; }
 	void SetActive(bool active);
 	Scene* GetOwnerScene() const { return m_pOwnerScene; }

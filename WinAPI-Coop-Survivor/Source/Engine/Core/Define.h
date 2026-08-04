@@ -7,7 +7,7 @@ namespace EngineKey
 	{
 		constexpr std::string_view ResourceList = "Resources/Json/ResourceList.json";
 		constexpr std::string_view CharacterTexture = "Resources/Texture/Character.json";
-		constexpr std::string_view DefaultScene = "Resources/Json/DefaultScene.json";
+		constexpr std::string_view DefaultScene = "Resources/Scenes/DefaultScene.scene";
 	}
 
 	namespace Document

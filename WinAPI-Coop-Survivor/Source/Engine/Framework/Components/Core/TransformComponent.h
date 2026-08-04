@@ -6,7 +6,7 @@ class TransformComponent : public Component
 public:
 	CLONEABLE_COMPONENT(TransformComponent)
 
-	TransformComponent(GameObject* owner);
+		TransformComponent(GameObject* owner);
 	virtual ~TransformComponent() = default;
 
 	virtual std::string_view GetComponentType() const override
@@ -25,7 +25,7 @@ public:
 
 	virtual void Deserialize(const json& inJson)override
 	{
-		Component::Deserialize(inJson); 
+		Component::Deserialize(inJson);
 
 		if (inJson.contains(EngineKey::Property::Position.data()))
 		{
@@ -44,6 +44,11 @@ public:
 			m_Scale.y = scaleJson["y"].get<float>();
 		}
 	}
+
+	void SetSiblingIndex(int index);
+	int GetSiblingIndex() const;
+	void SetAsFirstSibling();
+	void SetAsLastSibling();
 
 	const Vector2& GetPosition() const { return m_Position; }
 	void SetPosition(float x, float y) { m_Position.x = x; m_Position.y = y; }

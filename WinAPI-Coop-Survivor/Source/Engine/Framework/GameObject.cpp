@@ -133,6 +133,32 @@ void GameObject::Serialize(json& outJson)const
 	}
 }
 
+void GameObject::SetSiblingIndex(int index)
+{
+	if (m_pOwnerScene)
+	{
+		m_pOwnerScene->ReorderGameObject(this, index);
+	}
+}
+
+int GameObject::GetSiblingIndex() const
+{
+	return static_cast<int>(m_sceneIndex);
+}
+
+void GameObject::SetAsFirstSibling()
+{
+	SetSiblingIndex(0);
+}
+
+void GameObject::SetAsLastSibling()
+{
+	if (m_pOwnerScene)
+	{
+		SetSiblingIndex(static_cast<int>(m_pOwnerScene->GetGameObjects().size()) - 1);
+	}
+}
+
 void GameObject::SetActive(bool active)
 {
 	if (m_bIsActive == active) return;

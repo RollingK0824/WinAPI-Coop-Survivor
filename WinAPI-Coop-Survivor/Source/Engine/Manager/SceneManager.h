@@ -1,9 +1,9 @@
 ﻿#pragma once
+#include "Engine/Core/Define.h"
 #include "Engine/Core/Singleton.h"
 #include "Engine/Framework/Base/ISystem.h"
 #include "Engine/Framework/Base/IUpdatable.h"
 #include "Engine/Framework/Base/IRenderable.h"
-
 class Scene;
 
 class SceneManager : public Singleton<SceneManager>, public ISystem, public IUpdatable, public IRenderable
@@ -25,10 +25,11 @@ public:
 	void StopPlaySession();
 
 	bool CreateScene(const std::string& sceneName);
+	Scene* CreateDefaultTemplateScene(const std::string& sceneName);
 	bool LoadScene(const std::string& sceneName);
 	Scene* GetActiveScene() const { return m_pActiveScene; }
 
-	bool SaveActiveScene(const std::string& jsonFilePath = "Resources/Json/DefaultScene.json");
+	bool SaveActiveScene(const std::string& jsonFilePath = EngineKey::FilePath::DefaultScene.data() );
 	bool LoadSceneFromFile(const std::string& jsonFilePath);
 
 	void SavePlaySnapshot();

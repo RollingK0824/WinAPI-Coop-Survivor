@@ -40,6 +40,9 @@ public:
 	void DestroyObjects(GameObject* pObj);
 	void PostFrameCleanUp();
 
+	void ReorderGameObject(GameObject* targetObj, int newIndex);
+	void UpdateGameObjectIndices();
+
 	const std::vector<GameObject*>& GetGameObjects() const { return m_vGameObjects; }
 
 	void SetSceneName(const std::string& name) { m_SceneName = name; }

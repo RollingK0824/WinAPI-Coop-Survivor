@@ -19,7 +19,13 @@ void MainMenuBarPanel::OnDrawGUI()
     {
         if (ImGui::BeginMenu("File"))
         {
-            if (ImGui::MenuItem("Save Scene to JSON", "Ctrl+S"))
+            if (ImGui::MenuItem("New Scene", "Ctrl+N"))
+            {
+                SceneManager::GetInstance()->CreateDefaultTemplateScene("NewScene");
+            }
+            ImGui::Separator();
+
+            if (ImGui::MenuItem("Save Scene", "Ctrl+S"))
             {
                 SceneManager::GetInstance()->SaveActiveScene();
             }
