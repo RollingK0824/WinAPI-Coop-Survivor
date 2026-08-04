@@ -6,11 +6,12 @@
 
 D2D1_MATRIX_3X2_F CameraManager::GetActiveViewMatrix() const
 {
-    if (m_pMainCamera)
+    EnginePlayState playState = EngineKernel::GetInstance()->GetPlayState();
+    if (playState == EnginePlayState::Play && m_pMainCamera)
     {
         return m_pMainCamera->GetViewMatrix();
     }
-    // 2. 메인 카메라이 없을 경우 에디터 전용 카메라 View Matrix 계산
+
     float screenWidth = GraphicManager::GetInstance()->GetScreenWidth();
     float screenHeight = GraphicManager::GetInstance()->GetScreenHeight();
     D2D1_POINT_2F screenCenter = D2D1::Point2F(screenWidth * 0.5f, screenHeight * 0.5f);
@@ -22,10 +23,6 @@ D2D1_MATRIX_3X2_F CameraManager::GetActiveViewMatrix() const
 
 D2D1_POINT_2F CameraManager::ScreenToWorld(D2D1_POINT_2F screenPoint) const
 {
-    if (m_pMainCamera)
-    {
-        return m_pMainCamera->ScreenToWorldPoint(screenPoint);
-    }
     D2D1_MATRIX_3X2_F viewMat = GetActiveViewMatrix();
     D2D1_MATRIX_3X2_F invViewMat = viewMat;
     if (D2D1InvertMatrix(&invViewMat))
