@@ -16,10 +16,14 @@ jobs:
       with:
         submodules: recursive
 
-    - name: Cache vcpkg Installed Packages
+    - name: Cache vcpkg Installed Packages & Archives
       uses: actions/cache@v4
       with:
-        path: vcpkg_installed
+        path: |
+          vcpkg_installed
+          ~/.cache/vcpkg/archives
+          C:/Users/runneradmin/AppData/Local/vcpkg/archives
+          C:/Users/runneradmin/AppData/Local/vcpkg/downloads
         key: ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json') }}
         restore-keys: |
           ${{ runner.os }}-vcpkg-
