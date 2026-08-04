@@ -1,0 +1,68 @@
+{
+  "SceneName": "DefaultScene",
+  "GameObjects": [
+    {
+      "Name": "MainCamera",
+      "IsActive": true,
+      "Components": [
+        {
+          "Type": "TransformComponent",
+          "Data": {
+            "IsEnabled": true,
+            "Position": {
+              "x": 0.0,
+              "y": 0.0
+            },
+            "Rotation": 0.0,
+            "Scale": {
+              "x": 1.0,
+              "y": 1.0
+            }
+          }
+        },
+        {
+          "Type": "CameraComponent",
+          "Data": {
+            "IsEnabled": true
+          }
+        }
+      ]
+    },
+    {
+      "Name": "TempBackground",
+      "IsActive": true,
+      "Components": [
+        {
+          "Type": "TransformComponent",
+          "Data": {
+            "IsEnabled": true,
+            "Position": {
+              "x": 0.0,
+              "y": 0.0
+            },
+            "Rotation": 0.0,
+            "Scale": {
+              "x": 1.0,
+              "y": 1.0
+            }
+          }
+        },
+        {
+          "Type": "RenderComponent",
+          "Data": {
+            "IsEnabled": true,
+            "RenderType": 0,
+            "ZOrder": 0,
+            "TextureKey": "TempBackground.jpg",
+            "SrcRect": {
+              "left": 0.0,
+              "top": 0.0,
+              "right": 1920.0,
+              "bottom": 1080.0
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
