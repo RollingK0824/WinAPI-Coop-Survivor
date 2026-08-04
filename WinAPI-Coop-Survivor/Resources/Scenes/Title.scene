@@ -1,5 +1,5 @@
 {
-    "SceneName": "Test",
+    "SceneName": "Title",
     "GameObjects": [
         {
             "Name": "Main Camera",
@@ -24,27 +24,6 @@
                     "Type": "CameraComponent",
                     "Data": {
                         "IsEnabled": true
-                    }
-                }
-            ]
-        },
-        {
-            "Name": "New GameObject",
-            "IsActive": true,
-            "Components": [
-                {
-                    "Type": "TransformComponent",
-                    "Data": {
-                        "IsEnabled": true,
-                        "Position": {
-                            "x": 0.0,
-                            "y": 0.0
-                        },
-                        "Rotation": 0.0,
-                        "Scale": {
-                            "x": 1.0,
-                            "y": 1.0
-                        }
                     }
                 }
             ]

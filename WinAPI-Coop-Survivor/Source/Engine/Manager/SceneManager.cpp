@@ -98,10 +98,18 @@ void SceneManager::StopPlaySession()
 
 bool SceneManager::CreateScene(const std::string& sceneName)
 {
-	if (m_mapScenes.find(sceneName) != m_mapScenes.end())
+	auto it = m_mapScenes.find(sceneName);
+	if (it != m_mapScenes.end())
 	{
-		return false;
+		if (m_pActiveScene == it->second)
+		{
+			m_pActiveScene = nullptr;
+		}
+		it->second->Release();
+		delete it->second;
+		m_mapScenes.erase(it);
 	}
+
 	Scene* newScene = new Scene();
 	if (!newScene->Initialize())
 	{
@@ -110,11 +118,8 @@ bool SceneManager::CreateScene(const std::string& sceneName)
 	}
 	newScene->SetSceneName(sceneName);
 	m_mapScenes[sceneName] = newScene;
-
-	if (m_pActiveScene == nullptr)
-	{
-		m_pActiveScene = newScene;
-	}
+	m_pActiveScene = newScene;
+	EditorSystem::GetInstance()->SetSelectedObject(nullptr);
 
 	return true;
 }
@@ -168,6 +173,11 @@ bool SceneManager::SaveActiveScene(const std::string& jsonFilePath)
 
 bool SceneManager::LoadSceneFromFile(const std::string& jsonFilePath)
 {
+	if (m_pActiveScene)
+	{
+		SaveActiveScene();
+	}
+
 	std::ifstream file(jsonFilePath);
 	if (!file.is_open()) return false;
 	json sceneJson;
