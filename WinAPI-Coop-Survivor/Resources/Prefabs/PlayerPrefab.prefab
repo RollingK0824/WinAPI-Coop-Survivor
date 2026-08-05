@@ -1,6 +1,6 @@
 {
     "Name": "TempPlayer",
-    "InstanceID": 18,
+    "InstanceID": 25,
     "IsActive": true,
     "Components": [
         {
@@ -46,6 +46,17 @@
             "Type": "Player",
             "Data": {
                 "IsEnabled": true
+            }
+        },
+        {
+            "Type": "BoxColliderComponent",
+            "Data": {
+                "IsEnabled": true,
+                "Density": 1.0,
+                "IsSensor": false,
+                "BodyType": 2,
+                "HalfWidth": 0.0,
+                "HalfHeight": 0.0
             }
         }
     ]
