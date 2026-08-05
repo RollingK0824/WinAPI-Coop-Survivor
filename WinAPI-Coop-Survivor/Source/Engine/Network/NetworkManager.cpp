@@ -79,7 +79,7 @@ bool NetworkManager::StartHost(int port) {
 	uint32 newSeed = RandomManager::GetInstance()->GenerateNewSeed();
 	m_ConnectedClients.clear();
 	m_InterpolationMap.clear();
-	m_NextNetID = 1000;
+	m_NextNetID = 2;
 
 	Scene* scene = SceneManager::GetInstance()->GetActiveScene();
 	if (scene) {

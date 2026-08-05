@@ -214,6 +214,11 @@
     <ClInclude Include="Source\Engine\Manager\ResourceManager.h" />
     <ClInclude Include="Source\Engine\Renderer\Sprite.h" />
     <ClInclude Include="Source\Engine\Framework\Components\UI\UIImageComponent.h" />
+    <ClInclude Include="Source\Game\Manager\InGameManager.h" />
+    <ClInclude Include="Source\Game\Player\Controller.h" />
+    <ClInclude Include="Source\Game\Player\LocalController.h" />
+    <ClInclude Include="Source\Game\Player\NetworkController.h" />
+    <ClInclude Include="Source\Game\Player\Player.h" />
     <ClInclude Include="Source\Game\Scripts\UI\TitleSceneController.h" />
   </ItemGroup>
   <ItemGroup>
@@ -264,6 +269,10 @@
     <ClCompile Include="Source\Engine\Manager\ResourceManager.cpp" />
     <ClCompile Include="Source\Engine\Framework\Components\UI\UIImageComponent.cpp" />
     <ClCompile Include="Source\Engine\Framework\Base\Component.cpp" />
+    <ClCompile Include="Source\Game\Manager\InGameManager.cpp" />
+    <ClCompile Include="Source\Game\Player\LocalController.cpp" />
+    <ClCompile Include="Source\Game\Player\NetworkController.cpp" />
+    <ClCompile Include="Source\Game\Player\Player.cpp" />
     <ClCompile Include="Source\Game\Scripts\UI\TitleSceneController.cpp" />
   </ItemGroup>
   <ItemGroup>

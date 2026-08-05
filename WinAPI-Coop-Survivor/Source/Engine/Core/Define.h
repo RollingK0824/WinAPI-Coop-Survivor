@@ -7,7 +7,7 @@ namespace EngineKey
 	{
 		constexpr std::string_view ResourceList = "Resources/Json/ResourceList.json";
 		constexpr std::string_view CharacterTexture = "Resources/Texture/Character.json";
-		constexpr std::string_view DefaultScene = "Resources/Scenes/DefaultScene.scene";
+		constexpr std::string_view DefaultScene = "Resources/Scenes/Title.scene";
 	}
 
 	namespace Document
@@ -76,6 +76,10 @@ namespace EngineKey
 		constexpr std::string_view Bullet = "Bullet";
 		constexpr std::string_view Effect = "Effect";
 		constexpr std::string_view TitleSceneController = "TitleSceneController";
+		constexpr std::string_view NetworkController = "NetworkController";
+		constexpr std::string_view LocalController = "LocalController";
+		constexpr std::string_view Controller = "Controller";
+		constexpr std::string_view InGameManager = "InGameManager";
 	}
 }
 
