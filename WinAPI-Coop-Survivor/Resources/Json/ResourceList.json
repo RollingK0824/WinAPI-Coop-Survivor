@@ -3,6 +3,19 @@
     {
       "Key": "TempBackground.jpg",
       "Path": "Resources/Texture/TempBackground.jpg"
+    },
+    {
+      "Key": "introBG.png",
+      "Path": "Resources/Texture/introBG.png"
+    },
+    {
+      "Key": "Imeldat.png",
+      "Path": "Resources/Texture/Imeldat.png"
+    },
+    {
+      "Key": "tilemap_packed.png",
+      "Path": "Resources/Texture/tilemap_packed.png",
+      "AtlasPath": "Resources/Texture/tilemap_packed.json"
     }
   ]
 }

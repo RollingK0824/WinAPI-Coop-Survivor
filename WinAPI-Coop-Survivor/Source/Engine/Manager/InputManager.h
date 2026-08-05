@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Engine/Core/Singleton.h"
 #include "Engine/Framework/Base/ISystem.h"
 #include "Engine/Framework/Base/IUpdatable.h"
@@ -18,10 +18,18 @@ public:
 	bool GetKeyPress(int vkCode) const { return m_vKeyStates[vkCode] == KeyState::PRESS; }
 	bool GetKeyUp(int vkCode) const { return m_vKeyStates[vkCode] == KeyState::UP; }
 
+	Vector2 GetMousePosition() const { return m_mousePos; }
+	Vector2 GetWorldMousePosition() const { return m_worldMousePos; }
+
 private:
 	InputManager() = default;
 	virtual ~InputManager() = default;
 
+	void UpdateMousePosition();
+
 	std::vector<KeyState> m_vKeyStates;
 	std::vector<bool> m_vPrevStates;
+
+	Vector2 m_mousePos = { 0.0f, 0.0f };
+	Vector2 m_worldMousePos = { 0.0f, 0.0f };
 };

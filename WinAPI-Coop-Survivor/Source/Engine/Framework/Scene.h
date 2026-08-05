@@ -46,6 +46,8 @@ public:
 	GameObject* FindGameObjectByName(const std::string& name) const;
 	GameObject* FindGameObjectByInstanceID(uint64 instanceID) const;
 
+	void PostDeserialize();
+
 	const std::vector<GameObject*>& GetGameObjects() const { return m_vGameObjects; }
 
 	void SetSceneName(const std::string& name) { m_SceneName = name; }

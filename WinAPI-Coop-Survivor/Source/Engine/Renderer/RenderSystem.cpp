@@ -53,6 +53,8 @@ void RenderSystem::Render()
 
 		switch (cmd.type)
 		{
+		case RenderType::TEXT: DrawTextString(pRT, cmd, pBrush); break;
+		case RenderType::RECT: DrawRect(pRT, cmd, pBrush); break;
 		case RenderType::DEBUG_RECT: DrawDebugRect(pRT, cmd, pBrush); break;
 		case RenderType::DEBUG_CIRCLE:DrawDebugCircle(pRT, cmd, pBrush); break;
 		case RenderType::Debug_LINE:DrawDebugLine(pRT, cmd, pBrush); break;
@@ -94,6 +96,67 @@ void RenderSystem::DrawBitmap(ID2D1RenderTarget* pRT, const RenderCommand& cmd)
 		D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, // 픽셀 보간 모드 설정
 		&cmd.srcRect
 	);
+}
+
+void RenderSystem::DrawTextString(ID2D1RenderTarget* pRT, const RenderCommand& cmd, ID2D1SolidColorBrush* pBrush)
+{
+	if (cmd.text.pText.empty()) return;
+	IDWriteFactory* pWriteFactory = GraphicManager::GetInstance()->GetWriteFactory();
+	if (!pWriteFactory) return;
+	IDWriteTextFormat* pTextFormat = nullptr;
+	HRESULT hr = pWriteFactory->CreateTextFormat(
+		L"맑은 고딕",
+		nullptr,
+		DWRITE_FONT_WEIGHT_NORMAL,
+		DWRITE_FONT_STYLE_NORMAL,
+		DWRITE_FONT_STRETCH_NORMAL,
+		cmd.text.fontSize,
+		L"ko-KR",
+		&pTextFormat
+	);
+	if (SUCCEEDED(hr) && pTextFormat)
+	{
+		pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+		pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+		float width = (cmd.srcRect.right > cmd.srcRect.left) ? (cmd.srcRect.right - cmd.srcRect.left) : 300.0f;
+		float height = (cmd.srcRect.bottom > cmd.srcRect.top) ? (cmd.srcRect.bottom - cmd.srcRect.top) : 100.0f;
+		D2D1_MATRIX_3X2_F transformMatrix =
+			D2D1::Matrix3x2F::Scale(cmd.scaleX, cmd.scaleY) *
+			D2D1::Matrix3x2F::Rotation(cmd.rotation) *
+			D2D1::Matrix3x2F::Translation(cmd.position.x, cmd.position.y);
+		if (!cmd.isUI)
+		{
+			transformMatrix = transformMatrix * CameraManager::GetInstance()->GetActiveViewMatrix();
+		}
+		pRT->SetTransform(transformMatrix);
+		D2D1_RECT_F layoutRect = D2D1::RectF(-width * 0.5f, -height * 0.5f, width * 0.5f, height * 0.5f);
+		pRT->DrawTextW(
+			cmd.text.pText.data(),
+			static_cast<UINT32>(cmd.text.pText.length()),
+			pTextFormat,
+			layoutRect,
+			pBrush
+		);
+		pTextFormat->Release();
+	}
+}
+
+void RenderSystem::DrawRect(ID2D1RenderTarget* pRT, const RenderCommand& cmd, ID2D1SolidColorBrush* pBrush)
+{
+	float width = cmd.srcRect.right - cmd.srcRect.left;
+	float height = cmd.srcRect.bottom - cmd.srcRect.top;
+	if (width <= 0.0f) width = 100.0f;
+	if (height <= 0.0f) height = 100.0f;
+	pRT->SetTransform(CalculateSRTMatrix(cmd, width, height));
+	D2D1_RECT_F drawRect = D2D1::RectF(0.0f, 0.0f, width, height);
+	if (cmd.shape.isFilled)
+	{
+		pRT->FillRectangle(drawRect, pBrush);
+	}
+	else
+	{
+		pRT->DrawRectangle(drawRect, pBrush, 1.0f);
+	}
 }
 
 void RenderSystem::DrawDebugRect(ID2D1RenderTarget* pRT, const RenderCommand& cmd, ID2D1SolidColorBrush* pBrush)

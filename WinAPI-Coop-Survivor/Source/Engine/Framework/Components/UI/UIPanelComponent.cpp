@@ -14,9 +14,9 @@ UIPanelComponent::UIPanelComponent(GameObject* owner, TransformComponent* transf
 	m_RenderCommand.zOrder = 9999;
 	m_RenderCommand.color = D2D1::ColorF(0.0f, 0.0f, 0.0f, 0.6f);
 
-	ExposeTexture("Texture Key", &m_textureKey);
+	ExposeTexture("TextureKey", &m_textureKey);
 	ExposeVariable("Size", &m_size);
-	ExposeVariable("Render Background", &m_bRenderBackground);
+	ExposeVariable("RenderBackground", &m_bRenderBackground);
 }
 
 void UIPanelComponent::SetTextureKey(const std::wstring& textureKey)
@@ -27,34 +27,23 @@ void UIPanelComponent::SetTextureKey(const std::wstring& textureKey)
 	{
 		m_RenderCommand.type = RenderType::BITMAP;
 	}
+	else
+	{
+		m_RenderCommand.type = RenderType::RECT;
+	}
 }
 
-void UIPanelComponent::Serialize(json& outJson) const
+void UIPanelComponent::PostDeserialize(Scene* pScene)
 {
-	RenderComponent::Serialize(outJson);
+	RenderComponent::PostDeserialize(pScene);
 
-	std::string strKey(m_textureKey.begin(), m_textureKey.end());
-	outJson["TextureKey"] = strKey;
-	outJson["Size"] = { {"x", m_size.x}, {"y", m_size.y} };
-	outJson["RenderBackground"] = m_bRenderBackground;
-}
-
-void UIPanelComponent::Deserialize(const json& inJson)
-{
-	RenderComponent::Deserialize(inJson);
-
-	if (inJson.contains("TextureKey"))
+	m_RenderCommand.isUI = true;
+	if (!m_textureKey.empty())
 	{
-		std::string strKey = inJson["TextureKey"].get<std::string>();
-		SetTextureKey(std::wstring(strKey.begin(), strKey.end()));
+		SetTextureKey(m_textureKey);
 	}
-	if (inJson.contains("Size"))
+	else
 	{
-		m_size.x = inJson["Size"]["x"].get<float>();
-		m_size.y = inJson["Size"]["y"].get<float>();
-	}
-	if (inJson.contains("RenderBackground"))
-	{
-		m_bRenderBackground = inJson["RenderBackground"].get<bool>();
+		m_RenderCommand.type = RenderType::RECT;
 	}
 }

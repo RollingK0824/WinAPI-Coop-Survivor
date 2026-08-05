@@ -130,6 +130,18 @@ void GameObject::Serialize(json& outJson) const
 	outJson[EngineKey::Property::IsActive.data()] = m_bIsActive;
 	outJson[EngineKey::Property::Components.data()] = std::vector<json>();
 
+	json transformJson;
+	std::string trName = EngineKey::Component::Trnasform.data();
+	if (trName.empty()) trName = EngineKey::Component::Trnasform.data();
+
+	transformJson[EngineKey::Property::Type.data()] = trName;
+
+	json transformData;
+	transform.Serialize(transformData);
+	transformJson[EngineKey::Property::Data.data()] = transformData;
+
+	outJson[EngineKey::Property::Components.data()].push_back(transformJson);
+
 	for (auto* comp : m_vComponents)
 	{
 		if (!comp) continue;
@@ -160,6 +172,18 @@ void GameObject::Deserialize(const json& inJson)
 	if (inJson.contains(EngineKey::Property::IsActive.data()))
 	{
 		m_bIsActive = inJson[EngineKey::Property::IsActive.data()].get<bool>();
+	}
+}
+
+void GameObject::PostDeserialize(Scene* pScene)
+{
+	transform.PostDeserialize(pScene);
+	for (auto* comp : m_vComponents)
+	{
+		if (comp != nullptr && comp != m_pTransform)
+		{
+			comp->PostDeserialize(pScene);
+		}
 	}
 }
 

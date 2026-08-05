@@ -15,6 +15,8 @@ CameraComponent::CameraComponent(GameObject* owner, TransformComponent* transfor
 	ExposeVariable("Smooth Follow", &m_bSmoothFollow);
 	ExposeVariable("Follow Speed", &m_followSpeed);
 	ExposeVariable("Use Map Bounds", &m_bUseMapBounds);
+	ExposeVariable("Map Bounds", &m_mapBounds);
+	ExposeComponent("Follow Target", &m_pTargetTransform);
 }
 
 CameraComponent::~CameraComponent()

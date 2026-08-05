@@ -23,8 +23,7 @@ public:
 	void SetFlip(bool flipX, bool flipY) { m_RenderCommand.bitmap.flipX = flipX; m_RenderCommand.bitmap.flipY = flipY; }
 	void SetScale(float scaleX, float scaleY) { m_RenderCommand.scaleX = scaleX; m_RenderCommand.scaleY = scaleY; }
 
-	virtual void Serialize(json& outJson) const override;
-	virtual void Deserialize(const json& inJson) override;
+	virtual void PostDeserialize(Scene* pScene) override;
 
 	virtual std::string_view GetComponentType() const override { return EngineKey::Component::SpriteRenderer; }
 

@@ -4,6 +4,7 @@
 #include <functional>
 
 class UIImageComponent;
+class UIPanelComponent;
 
 class UIButtonComponent : public ScriptComponent
 {
@@ -13,14 +14,11 @@ public:
 	UIButtonComponent(GameObject* owner, TransformComponent* transform);
 	virtual ~UIButtonComponent() override = default;
 
-	void SetOnClick(std::function<void()> onClick) { m_onClick = onClick; }
-	bool IsHovered() const { return m_bIsHovered; }
-
 	virtual void Awake() override;
 	virtual void Update(float dt) override;
 
-	virtual void Serialize(json& outJson) const override;
-	virtual void Deserialize(const json& inJson) override;
+	void SetOnClick(std::function<void()> onClick) { m_onClick = onClick; }
+	bool IsHovered() const { return m_bIsHovered; }
 
 	virtual std::string_view GetComponentType() const override
 	{
@@ -30,8 +28,8 @@ public:
 private:
 	bool CheckMouseOver();
 
-private:
 	UIImageComponent* m_pImgView = nullptr;
+	UIPanelComponent* m_pPanelView = nullptr;
 	std::function<void()> m_onClick = nullptr;
 	bool m_bIsHovered = false;
 };

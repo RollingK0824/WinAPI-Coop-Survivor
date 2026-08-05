@@ -52,6 +52,9 @@ bool JsonSerializer::LoadScene(Scene* pScene, json& sceneJson)
 			ApplyJsonToGameObject(newObj, objJson);
 		}
 	}
+
+	pScene->PostDeserialize();
+
 	return true;
 }
 
@@ -80,6 +83,8 @@ GameObject* JsonSerializer::InstantiateFromPrefabData(Scene* pScene, const json&
 	GameObject* cloneObj = pScene->CreateGameObject();
 
 	ApplyJsonToGameObject(cloneObj, prefabJson);
+
+	cloneObj->PostDeserialize(pScene);
 
 	return cloneObj;
 }

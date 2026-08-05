@@ -50,6 +50,7 @@ public:
 	const std::vector<Component*>& GetComponents()const { return m_vComponents; }
 	void Serialize(json& outJson)const;
 	void Deserialize(const json& inJson);
+	void PostDeserialize(Scene* pScene);
 
 	void SetSiblingIndex(int index);
 	int GetSiblingIndex() const;
@@ -92,3 +93,49 @@ private:
 
 	size_t m_sceneIndex = 0;
 };
+
+template<typename T>
+inline void Component::ExposeComponent(const std::string& name, T** componentPtr)
+{
+	ExposedProperty prop;
+	prop.name = name;
+	prop.type = PropType::ObjectRef;
+	prop.data = reinterpret_cast<void*>(componentPtr);
+	prop.getInstanceID = [](void* ptr) -> uint64 {
+		T* pTarget = *reinterpret_cast<T**>(ptr);
+		if (!pTarget) return 0;
+		return pTarget->GetGameObjectInternal().GetInstanceID();
+	};
+	prop.resolver = [](GameObject* obj, void* ptr) {
+		if constexpr (std::is_same_v<T, TransformComponent>) {
+			*reinterpret_cast<TransformComponent**>(ptr) = (obj != nullptr ? &obj->transform : nullptr);
+		} else {
+			*reinterpret_cast<T**>(ptr) = (obj != nullptr ? obj->GetComponent<T>() : nullptr);
+		}
+	};
+	prop.getTargetGameObject = [](void* ptr) -> GameObject* {
+		T* pTarget = *reinterpret_cast<T**>(ptr);
+		if (!pTarget) return nullptr;
+		return &pTarget->GetGameObjectInternal();
+	};
+	m_vProperties.push_back(prop);
+}
+
+inline void Component::ExposeGameObject(const std::string& name, GameObject** gameObjectPtr)
+{
+	ExposedProperty prop;
+	prop.name = name;
+	prop.type = PropType::ObjectRef;
+	prop.data = reinterpret_cast<void*>(gameObjectPtr);
+	prop.getInstanceID = [](void* ptr) -> uint64 {
+		GameObject* pTarget = *reinterpret_cast<GameObject**>(ptr);
+		return pTarget != nullptr ? pTarget->GetInstanceID() : 0;
+	};
+	prop.resolver = [](GameObject* obj, void* ptr) {
+		*reinterpret_cast<GameObject**>(ptr) = obj;
+	};
+	prop.getTargetGameObject = [](void* ptr) -> GameObject* {
+		return *reinterpret_cast<GameObject**>(ptr);
+	};
+	m_vProperties.push_back(prop);
+}

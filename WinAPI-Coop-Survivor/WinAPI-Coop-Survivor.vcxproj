@@ -263,6 +263,7 @@
     <ClCompile Include="Source\Engine\Manager\TimeManager.cpp" />
     <ClCompile Include="Source\Engine\Manager\ResourceManager.cpp" />
     <ClCompile Include="Source\Engine\Framework\Components\UI\UIImageComponent.cpp" />
+    <ClCompile Include="Source\Engine\Framework\Base\Component.cpp" />
     <ClCompile Include="Source\Game\Scripts\UI\TitleSceneController.cpp" />
   </ItemGroup>
   <ItemGroup>

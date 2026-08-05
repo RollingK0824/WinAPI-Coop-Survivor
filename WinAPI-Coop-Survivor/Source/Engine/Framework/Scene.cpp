@@ -321,6 +321,31 @@ GameObject* Scene::FindGameObjectByInstanceID(uint64 instanceID) const
 			return pObj;
 		}
 	}
+	for (GameObject* pObj : m_vCreationQueue)
+	{
+		if (pObj != nullptr && pObj->GetInstanceID() == instanceID)
+		{
+			return pObj;
+		}
+	}
 	return nullptr;
+}
+
+void Scene::PostDeserialize()
+{
+	for (GameObject* pObj : m_vGameObjects)
+	{
+		if (pObj != nullptr)
+		{
+			pObj->PostDeserialize(this);
+		}
+	}
+	for (GameObject* pObj : m_vCreationQueue)
+	{
+		if (pObj != nullptr)
+		{
+			pObj->PostDeserialize(this);
+		}
+	}
 }
 
