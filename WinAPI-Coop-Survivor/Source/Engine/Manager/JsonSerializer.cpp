@@ -9,6 +9,12 @@ bool JsonSerializer::SaveScene(Scene* pScene, const std::string& filePath)
 {
 	if (pScene == nullptr)return false;
 
+	std::filesystem::path path(filePath);
+	if (path.has_parent_path())
+	{
+		std::filesystem::create_directories(path.parent_path());
+	}
+
 	json sceneJson;
 	sceneJson[EngineKey::Document::SceneName.data()] = pScene->GetSceneName();
 	sceneJson[EngineKey::Document::GameObjects.data()] = std::vector<json>();
@@ -50,23 +56,18 @@ bool JsonSerializer::LoadScene(Scene* pScene, json& sceneJson)
 }
 
 
-bool JsonSerializer::SavePrefab(GameObject* pObj, const std::string& saveDirectory)
+bool JsonSerializer::SavePrefab(GameObject* pObj, const std::string& filePath)
 {
 	if (pObj == nullptr) return false;
-
-	json prefabJson = SerializeGameObject(pObj);
-
-	std::filesystem::path dirPath = saveDirectory;
-	std::filesystem::path finalPath = dirPath / (pObj->GetName() + ".prefab");
-
-	if (!std::filesystem::exists(dirPath))
+	// SaveScene과 100% 동일한 경로 및 디렉터리 생성 로직
+	std::filesystem::path finalPath(filePath);
+	if (finalPath.has_parent_path())
 	{
-		std::filesystem::create_directories(dirPath);
+		std::filesystem::create_directories(finalPath.parent_path());
 	}
-
+	json prefabJson = SerializeGameObject(pObj);
 	std::ofstream file(finalPath);
 	if (!file.is_open()) return false;
-
 	file << prefabJson.dump(4);
 	file.close();
 	return true;

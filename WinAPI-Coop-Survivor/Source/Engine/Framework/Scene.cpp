@@ -6,7 +6,7 @@
 #include "Engine/Framework/GameObject.h"
 #include "Engine/Framework/Base/Component.h"
 #include "Engine/Framework/Components/Core/ScriptComponent.h"
-#include "Engine/Framework/Components/Render/RenderComponent.h"
+#include "Engine/Framework/Components/Core/RenderComponent.h"
 #include "Engine/Framework/Components/Core/TransformComponent.h"
 
 Scene::~Scene()
@@ -75,7 +75,7 @@ void Scene::Render()
 {
 	for (auto* renderComp : m_vRenderComponents)
 	{
-		if(renderComp == nullptr || !renderComp->IsEnabled() ||!renderComp->gameObject.IsActive()) continue;
+		if (renderComp == nullptr || !renderComp->IsEnabled() || !renderComp->gameObject.IsActive()) continue;
 
 		RenderCommand cmd = renderComp->GetRenderCommand();
 
@@ -149,7 +149,7 @@ void Scene::OnComponentAdded(Component* pComponent)
 
 	m_vComponentCreationQueue.push_back(pComponent);
 }
- 
+
 void Scene::UnregisterScriptComponent(ScriptComponent* pComp)
 {
 	if (m_vUpdatableComponents.empty() || pComp == nullptr) return;
@@ -251,7 +251,6 @@ void Scene::PostFrameCleanUp()
 				pComp->SetSceneVectorIndex(m_vRenderComponents.size());
 				m_vRenderComponents.push_back(renderComp);
 			}
-
 		}
 		m_vComponentCreationQueue.clear();
 	}
@@ -277,6 +276,27 @@ void Scene::PostFrameCleanUp()
 		}
 
 		m_vDestroyQueue.clear();
+	}
+}
+
+void Scene::ReorderGameObject(GameObject* targetObj, int newIndex)
+{
+	if (!targetObj || newIndex < 0 || newIndex >= (int)m_vGameObjects.size()) return;
+	auto it = std::find(m_vGameObjects.begin(), m_vGameObjects.end(), targetObj);
+	if (it == m_vGameObjects.end()) return;
+	m_vGameObjects.erase(it);
+	m_vGameObjects.insert(m_vGameObjects.begin() + newIndex, targetObj);
+	UpdateGameObjectIndices();
+}
+
+void Scene::UpdateGameObjectIndices()
+{
+	for (size_t i = 0; i < m_vGameObjects.size(); ++i)
+	{
+		if (m_vGameObjects[i])
+		{
+			m_vGameObjects[i]->SetSceneIndex(i);
+		}
 	}
 }
 

@@ -5,199 +5,236 @@
 #include "Engine/Editor/EditorSystem.h"
 #include "Engine/Framework/Scene.h"
 #include "Engine/Framework/GameObject.h"
+#include "Engine/Framework/Components/Core/CameraComponent.h"
 
 bool SceneManager::Initialize()
 {
-    // TODO : Initialize()
-
-    if (!CreateScene(INTRO_SCENE))return false;
-
-    return true;
+	// TODO : Initialize()
+	return true;
 }
 
 void SceneManager::Release()
 {
-    for (auto& pair : m_mapScenes)
-    {
-        if (pair.second != nullptr)
-        {
-            pair.second->Release();
-            delete pair.second;
-        }
-    }
-    m_mapScenes.clear();
+	for (auto& pair : m_mapScenes)
+	{
+		if (pair.second != nullptr)
+		{
+			pair.second->Release();
+			delete pair.second;
+		}
+	}
+	m_mapScenes.clear();
 
-    m_pActiveScene = nullptr;
-    m_pNextScene = nullptr;
+	m_pActiveScene = nullptr;
+	m_pNextScene = nullptr;
 
-    std::unordered_map<std::string, Scene*>().swap(m_mapScenes);
+	std::unordered_map<std::string, Scene*>().swap(m_mapScenes);
 }
 
 void SceneManager::FixedUpdate(float fixedDt)
 {
-    if (m_pNextScene != nullptr)
-    {
-        ChangeSceneInternal();
-    }
+	if (m_pNextScene != nullptr)
+	{
+		ChangeSceneInternal();
+	}
 
-    if (m_pActiveScene != nullptr)
-    {
-        m_pActiveScene->FixedUpdate(fixedDt);
-    }
+	if (m_pActiveScene != nullptr)
+	{
+		m_pActiveScene->FixedUpdate(fixedDt);
+	}
 }
 void SceneManager::Update(float dt)
 {
-    if (EngineKernel::GetInstance()->GetPlayState() != EnginePlayState::Play)return;
+	if (EngineKernel::GetInstance()->GetPlayState() != EnginePlayState::Play)return;
 
-    if (m_pActiveScene != nullptr)
-    {
-        m_pActiveScene->Update(dt);
-    }
+	if (m_pActiveScene != nullptr)
+	{
+		m_pActiveScene->Update(dt);
+	}
 }
 
 void SceneManager::LateUpdate(float dt)
 {
-    if (m_pActiveScene != nullptr)
-    {
-        m_pActiveScene->LateUpdate(dt);
-    }
+	if (m_pActiveScene != nullptr)
+	{
+		m_pActiveScene->LateUpdate(dt);
+	}
 }
 
 void SceneManager::Render()
 {
-    if (m_pActiveScene != nullptr)
-    {
-        m_pActiveScene->Render();
-    }
+	if (m_pActiveScene != nullptr)
+	{
+		m_pActiveScene->Render();
+	}
 }
 
 void SceneManager::PostFrame()
 {
-    m_pActiveScene->PostFrame();
+	if (m_pActiveScene != nullptr)
+	{
+		m_pActiveScene->PostFrame();
+	}
+
+	if (m_pNextScene != nullptr)
+	{
+		ChangeSceneInternal();
+	}
 }
 
 void SceneManager::StartPlaySession()
 {
-    SavePlaySnapshot();
-    EngineKernel::GetInstance()->SetPlayState(EnginePlayState::Play);
-    RestorePlaySnapshot();
+	SavePlaySnapshot();
+	EngineKernel::GetInstance()->SetPlayState(EnginePlayState::Play);
+	RestorePlaySnapshot();
 }
 
 void SceneManager::StopPlaySession()
 {
-    EngineKernel::GetInstance()->SetPlayState(EnginePlayState::Edit);
+	EngineKernel::GetInstance()->SetPlayState(EnginePlayState::Edit);
 
-    RestorePlaySnapshot();
+	RestorePlaySnapshot();
 }
 
 bool SceneManager::CreateScene(const std::string& sceneName)
 {
-    if (m_mapScenes.find(sceneName) != m_mapScenes.end())
-    {
-        return false;
-    }
+	auto it = m_mapScenes.find(sceneName);
+	if (it != m_mapScenes.end())
+	{
+		if (m_pActiveScene == it->second)
+		{
+			m_pActiveScene = nullptr;
+		}
+		it->second->Release();
+		delete it->second;
+		m_mapScenes.erase(it);
+	}
 
-    Scene* newScene = new Scene();
-    if (!newScene->Initialize())
-    {
-        delete newScene;
-        return false;
-    }
+	Scene* newScene = new Scene();
+	if (!newScene->Initialize())
+	{
+		delete newScene;
+		return false;
+	}
+	newScene->SetSceneName(sceneName);
+	m_mapScenes[sceneName] = newScene;
+	m_pActiveScene = newScene;
+	EditorSystem::GetInstance()->SetSelectedObject(nullptr);
 
-    m_mapScenes[sceneName] = newScene;
+	return true;
+}
 
-    m_pActiveScene = newScene;
-
-    return true;
+Scene* SceneManager::CreateDefaultTemplateScene(const std::string& sceneName)
+{
+	if (!CreateScene(sceneName)) return nullptr;
+	GameObject* pCameraObj = m_pActiveScene->CreateGameObject("Main Camera");
+	pCameraObj->AddComponent<CameraComponent>();
+	return m_pActiveScene;
 }
 
 bool SceneManager::LoadScene(const std::string& sceneName)
 {
-    auto it = m_mapScenes.find(sceneName);
-    if (it == m_mapScenes.end())
-    {
-        return false;
-    }
+	auto it = m_mapScenes.find(sceneName);
+	if (it == m_mapScenes.end())
+	{
+		return false;
+	}
 
-    m_pNextScene = it->second;
-    return true;
+	if (m_pActiveScene == nullptr)
+	{
+		m_pActiveScene = it->second;
+	}
+	else
+	{
+		m_pNextScene = it->second;
+	}
+
+	return true;
 }
 
 bool SceneManager::SaveActiveScene(const std::string& jsonFilePath)
 {
-    if (m_pActiveScene == nullptr) return false;
-    // 활성화된 씬의 이름을 DefaultScene으로 세팅 후 JsonSerializer를 이용해 저장
-    m_pActiveScene->SetSceneName("DefaultScene");
-    return JsonSerializer::SaveScene(m_pActiveScene, jsonFilePath);
+	if (!m_pActiveScene) return false;
+	std::string targetPath = jsonFilePath;
+	if (targetPath.empty() ||
+		targetPath == "Resources/Json/DefaultScene.json" ||
+		targetPath == "Resources/Scenes/DefaultScene.scene")
+	{
+		std::string sceneName = m_pActiveScene->GetSceneName();
+		if (sceneName.empty()) sceneName = "DefaultScene";
+
+		targetPath = "Resources/Scenes/" + sceneName + ".scene";
+	}
+	std::filesystem::path p(targetPath);
+	m_pActiveScene->SetSceneName(p.stem().string());
+
+	return JsonSerializer::SaveScene(m_pActiveScene, targetPath);
 }
 
 bool SceneManager::LoadSceneFromFile(const std::string& jsonFilePath)
 {
-    std::ifstream file(jsonFilePath);
-    if (!file.is_open()) return false;
+	if (m_pActiveScene)
+	{
+		SaveActiveScene();
+	}
 
-    json sceneJson;
-    file >> sceneJson;
-    file.close();
+	std::ifstream file(jsonFilePath);
+	if (!file.is_open()) return false;
+	json sceneJson;
+	file >> sceneJson;
+	file.close();
 
-    if (!sceneJson.contains(EngineKey::Document::SceneName.data())) return false;
-    std::string sceneName = sceneJson[EngineKey::Document::SceneName.data()].get<std::string>();
+	std::filesystem::path p(jsonFilePath);
+	std::string sceneName = p.stem().string();
+	Scene* targetScene = nullptr;
+	auto iter = m_mapScenes.find(sceneName);
+	if (iter == m_mapScenes.end())
+	{
+		CreateScene(sceneName);
+		targetScene = m_mapScenes[sceneName];
+	}
+	else
+	{
+		targetScene = iter->second;
+		EditorSystem::GetInstance()->SetSelectedObject(nullptr);
+		targetScene->Release();
+		targetScene->Initialize();
+	}
 
-    Scene* targetScene = nullptr;
-    auto iter = m_mapScenes.find(sceneName);
-    if (iter == m_mapScenes.end())
-    {
-        CreateScene(sceneName);
-        targetScene = m_mapScenes[sceneName];
-    }
-    else
-    {
-        targetScene = iter->second;
-        EditorSystem::GetInstance()->SetSelectedObject(nullptr);
-        targetScene->Release();
-        targetScene->Initialize();
-    }
-
-    targetScene->SetSceneName(sceneName);
-
-    if (!JsonSerializer::LoadScene(targetScene, sceneJson))
-    {
-        return false;
-    }
-
-    return LoadScene(sceneName);
+	targetScene->SetSceneName(sceneName);
+	if (!JsonSerializer::LoadScene(targetScene, sceneJson))
+	{
+		return false;
+	}
+	return LoadScene(sceneName);
 }
 
 void SceneManager::SavePlaySnapshot()
 {
-    if (!m_pActiveScene) return;
-    m_playSceneSnapshot.clear();
-    // 1. 현재 활성화된 m_pActiveScene을 RAM 메모리 json으로 백업
-    m_playSceneSnapshot = JsonSerializer::SerializeScene(m_pActiveScene);
-    m_bHasSnapshot = true;
+	if (!m_pActiveScene) return;
+	m_playSceneSnapshot.clear();
+	m_playSceneSnapshot = JsonSerializer::SerializeScene(m_pActiveScene);
+	m_bHasSnapshot = true;
 }
 
 void SceneManager::RestorePlaySnapshot()
 {
-    if (!m_pActiveScene || !m_bHasSnapshot) return;
-    // 1. 활성 씬의 기존 오브젝트 해제 후 재초기화
-    m_pActiveScene->Release();
-    m_pActiveScene->Initialize();
-    // 2. JsonSerializer를 사용하여 RAM 스냅샷 json에서 활성 씬 복원
-    JsonSerializer::LoadScene(m_pActiveScene, m_playSceneSnapshot);
-    // 3. 임시 스냅샷 메모리 비우기
-    m_playSceneSnapshot.clear();
-    m_bHasSnapshot = false;
+	if (!m_pActiveScene || !m_bHasSnapshot) return;
+	m_pActiveScene->Release();
+	m_pActiveScene->Initialize();
+	JsonSerializer::LoadScene(m_pActiveScene, m_playSceneSnapshot);
+	m_playSceneSnapshot.clear();
+	m_bHasSnapshot = false;
 }
 
 void SceneManager::ChangeSceneInternal()
 {
-    if (m_pNextScene == nullptr)return;
+	if (m_pNextScene == nullptr)return;
 
-    EditorSystem::GetInstance()->SetSelectedObject(nullptr);
+	EditorSystem::GetInstance()->SetSelectedObject(nullptr);
 
-    if(m_pActiveScene != nullptr && m_pActiveScene != m_pNextScene)m_pActiveScene->Release();
+	if (m_pActiveScene != nullptr && m_pActiveScene != m_pNextScene)m_pActiveScene->Release();
 
-    m_pActiveScene = m_pNextScene;
-    m_pNextScene = nullptr;
+	m_pActiveScene = m_pNextScene;
+	m_pNextScene = nullptr;
 }

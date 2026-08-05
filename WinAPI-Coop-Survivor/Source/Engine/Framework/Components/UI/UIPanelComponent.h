@@ -1,45 +1,33 @@
+// Source/Engine/Framework/Components/UI/UIPanelComponent.h
 #pragma once
-#include "Engine/Framework/Base/Component.h"
-#include "Engine/Renderer/RenderCommand.h"
+#include "Engine/Framework/Components/Core/RenderComponent.h"
 
-class UIPanelComponent : public Component
+class UIPanelComponent : public RenderComponent
 {
 public:
 	CLONEABLE_COMPONENT(UIPanelComponent)
 
-		UIPanelComponent(GameObject* owner, TransformComponent* transform);
+	UIPanelComponent(GameObject* owner, TransformComponent* transform);
 	virtual ~UIPanelComponent() override = default;
 
-	void AddChildUI(GameObject* pChildUI);
+	virtual void Serialize(json& outJson) const override;
+	virtual void Deserialize(const json& inJson) override;
 
-	void SetTextureKey(const std::wstring& textureKey) { m_textureKey = textureKey; }
+	void SetTextureKey(const std::wstring& textureKey);
 	void SetSize(Vector2 size) { m_size = size; }
-	void SetColor(const D2D1::ColorF& color) { m_color = color; }
-	void SetOpacity(float opacity) { m_RenderCommand.bitmap.opacity = opacity; }
-	void SetZOrder(int zOrder) { m_RenderCommand.zOrder = zOrder; }
 	void SetRenderBackground(bool bRender) { m_bRenderBackground = bRender; }
 
 	Vector2 GetSize() const { return m_size; }
-	D2D1_COLOR_F GetColor() const { return m_color; }
+	const std::wstring& GetTextureKey() const { return m_textureKey; }
 	bool IsRenderBackground() const { return m_bRenderBackground; }
-
-	void RenderUI();
-
-	virtual void OnEnable() override;
-	virtual void OnDisable() override;
 
 	virtual std::string_view GetComponentType() const override
 	{
 		return EngineKey::Component::UIPanelComponent;
 	}
 
-private:
-	std::vector<GameObject*> m_vChildUIObjects;
-
-	RenderCommand m_RenderCommand;
+protected:
 	std::wstring m_textureKey = L"";
-
 	Vector2 m_size = { 200.0f, 150.0f };
-	D2D1_COLOR_F m_color = D2D1::ColorF(0.0f, 0.0f, 0.0f, 0.6f);
 	bool m_bRenderBackground = true;
 };

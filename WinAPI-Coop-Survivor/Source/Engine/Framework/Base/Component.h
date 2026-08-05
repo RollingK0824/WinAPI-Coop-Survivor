@@ -15,7 +15,8 @@ enum class PropType
 	Vector2,
 	Color,
 	StringVector,
-	Texture
+	Texture,
+	ObjectRef
 };
 
 struct ExposedProperty
@@ -88,7 +89,11 @@ public:
 	void ExposeVariable(const std::string& name, std::vector<std::string>* var) { m_vProperties.push_back({ name, PropType::StringVector, var }); }
 	void ExposeTexture(const std::string& name, std::string* textureKey) { m_vProperties.push_back({ name, PropType::Texture, textureKey }); }
 	void ExposeTexture(const std::string& name, std::wstring* textureKey) { m_vProperties.push_back({ name, PropType::Texture, textureKey }); }
-
+	template<typename T>
+	void ExposeComponent(const std::string& name, T** componentPtr)
+	{
+		m_vProperties.push_back({ name,PropType::ObjectRef,reinterpret_cast<void**>(componentPtr) });
+	}
 	const std::vector<ExposedProperty>& GetProperties() const { return m_vProperties; }
 
 	virtual void Awake() {};

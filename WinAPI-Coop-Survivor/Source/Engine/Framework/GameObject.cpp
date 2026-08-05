@@ -11,6 +11,7 @@ GameObject::GameObject(Scene* pOwnerScene)
 	, m_bIsDead(false)
 	, transform(*(new TransformComponent(this)))
 {
+	m_instanceID = s_nextInstanceID++;
 	m_pTransform = &transform;
 }
 
@@ -93,6 +94,15 @@ void GameObject::Destroy()
 	}
 }
 
+void GameObject::SetInstanceID(uint64 id)
+{
+	m_instanceID = id;
+	if (id >= s_nextInstanceID)
+	{
+		s_nextInstanceID = id + 1;
+	}
+}
+
 void GameObject::RegisterComponentToScene(Component* comp)
 {
 	if (m_pOwnerScene != nullptr)
@@ -130,6 +140,32 @@ void GameObject::Serialize(json& outJson)const
 		compJson[EngineKey::Property::Data.data()] = compData;
 
 		outJson[EngineKey::Property::Components.data()].push_back(compJson);
+	}
+}
+
+void GameObject::SetSiblingIndex(int index)
+{
+	if (m_pOwnerScene)
+	{
+		m_pOwnerScene->ReorderGameObject(this, index);
+	}
+}
+
+int GameObject::GetSiblingIndex() const
+{
+	return static_cast<int>(m_sceneIndex);
+}
+
+void GameObject::SetAsFirstSibling()
+{
+	SetSiblingIndex(0);
+}
+
+void GameObject::SetAsLastSibling()
+{
+	if (m_pOwnerScene)
+	{
+		SetSiblingIndex(static_cast<int>(m_pOwnerScene->GetGameObjects().size()) - 1);
 	}
 }
 

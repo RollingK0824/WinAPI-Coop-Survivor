@@ -102,7 +102,15 @@ bool GameApp::Initialize(HINSTANCE hInstance, int nCmdShow, DisplayMode mode)
 
 	ResourceManager::GetInstance()->LoadResourcesFromJson(EngineKey::FilePath::ResourceList.data());
 
-	SceneManager::GetInstance()->LoadSceneFromFile(EngineKey::FilePath::DefaultScene.data());
+	std::string defaultScenePath(EngineKey::FilePath::DefaultScene);
+	if (std::filesystem::exists(defaultScenePath))
+	{
+		SceneManager::GetInstance()->LoadSceneFromFile(defaultScenePath);
+	}
+	else
+	{
+		SceneManager::GetInstance()->CreateDefaultTemplateScene("DefaultScene");
+	}
 
 	ShowWindow(m_hWnd, SW_MAXIMIZE);
 	UpdateWindow(m_hWnd);

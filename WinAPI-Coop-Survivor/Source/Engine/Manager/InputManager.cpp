@@ -23,17 +23,14 @@ void InputManager::Update(float dt)
 {
 	HWND hWnd = GameApp::GetInstance()->GetWindowHandle();
 	bool isForeground = (GetForegroundWindow() == hWnd);
-
 	ImGuiIO* io = (ImGui::GetCurrentContext() != nullptr) ? &ImGui::GetIO() : nullptr;
-	bool isImGuiUsingKeyboard = (io != nullptr) && io->WantCaptureKeyboard;
 
+	bool isTypingText = (io != nullptr) && io->WantTextInput;
 	for (int vkCode = 0; vkCode < 256; ++vkCode)
 	{
 		bool isCurrentPressed = false;
-
 		bool isFunctionKey = (vkCode >= VK_F1 && vkCode <= VK_F12);
-
-		if (isForeground && (!isImGuiUsingKeyboard || isFunctionKey))
+		if (isForeground && (!isTypingText || isFunctionKey))
 		{
 			isCurrentPressed = (GetAsyncKeyState(vkCode) & 0x8000) != 0;
 		}

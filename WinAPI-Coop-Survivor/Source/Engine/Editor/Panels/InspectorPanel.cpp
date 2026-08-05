@@ -6,7 +6,11 @@
 #include "Engine/Framework/GameObject.h"
 #include "Engine/Framework/Base/Component.h"
 #include "Engine/Framework/Components/Core/TransformComponent.h"
-#include "Engine/Framework/Components/Render/RenderComponent.h"
+#include "Engine/Framework/Components/Render/SpriteRendererComponent.h"
+#include "Engine/Framework/Components/UI/UIImageComponent.h"
+#include "Engine/Framework/Components/UI/UIPanelComponent.h"
+#include "Engine/Framework/Components/UI/UIButtonComponent.h"
+
 void InspectorPanel::Initialize()
 {
 	GUISystem::GetInstance()->RegisterPanel(this);
@@ -269,57 +273,57 @@ void InspectorPanel::DrawComponents(GameObject* pObj)
 					break;
 
 				case PropType::String:
+				{
+					std::string* str = static_cast<std::string*>(prop.data);
+					char buffer[256];
+					strcpy_s(buffer, str->c_str());
+					if (ImGui::InputText(("##" + prop.name).c_str(), buffer, sizeof(buffer)))
 					{
-						std::string* str = static_cast<std::string*>(prop.data);
-						char buffer[256];
-						strcpy_s(buffer, str->c_str());
-						if (ImGui::InputText(("##" + prop.name).c_str(), buffer, sizeof(buffer)))
-						{
-							*str = buffer;
-						}
+						*str = buffer;
 					}
-					break;
+				}
+				break;
 
 				case PropType::WString:
+				{
+					std::wstring* wstr = static_cast<std::wstring*>(prop.data);
+					std::string str(wstr->begin(), wstr->end());
+					char buffer[256];
+					strcpy_s(buffer, str.c_str());
+					if (ImGui::InputText(("##" + prop.name).c_str(), buffer, sizeof(buffer)))
 					{
-						std::wstring* wstr = static_cast<std::wstring*>(prop.data);
-						std::string str(wstr->begin(), wstr->end());
-						char buffer[256];
-						strcpy_s(buffer, str.c_str());
-						if (ImGui::InputText(("##" + prop.name).c_str(), buffer, sizeof(buffer)))
-						{
-							*wstr = std::wstring(buffer, buffer + strlen(buffer));
-						}
+						*wstr = std::wstring(buffer, buffer + strlen(buffer));
 					}
-					break;
+				}
+				break;
 
 				case PropType::Vector2:
-					{
-						Vector2* vec = static_cast<Vector2*>(prop.data);
-						float itemW = (ImGui::GetContentRegionAvail().x - 30.0f) * 0.5f;
-						if (itemW < 35.0f) itemW = 35.0f;
+				{
+					Vector2* vec = static_cast<Vector2*>(prop.data);
+					float itemW = (ImGui::GetContentRegionAvail().x - 30.0f) * 0.5f;
+					if (itemW < 35.0f) itemW = 35.0f;
 
-						ImGui::Text("X"); ImGui::SameLine();
-						ImGui::SetNextItemWidth(itemW);
-						LeftDragFloat(("##" + prop.name + "X").c_str(), &vec->x, 0.1f, "%.3f");
-						ImGui::SameLine();
-						ImGui::Text("Y"); ImGui::SameLine();
-						ImGui::SetNextItemWidth(itemW);
-						LeftDragFloat(("##" + prop.name + "Y").c_str(), &vec->y, 0.1f, "%.3f");
-					}
-					break;
+					ImGui::Text("X"); ImGui::SameLine();
+					ImGui::SetNextItemWidth(itemW);
+					LeftDragFloat(("##" + prop.name + "X").c_str(), &vec->x, 0.1f, "%.3f");
+					ImGui::SameLine();
+					ImGui::Text("Y"); ImGui::SameLine();
+					ImGui::SetNextItemWidth(itemW);
+					LeftDragFloat(("##" + prop.name + "Y").c_str(), &vec->y, 0.1f, "%.3f");
+				}
+				break;
 
 				case PropType::Color:
+				{
+					D2D1_COLOR_F* color = static_cast<D2D1_COLOR_F*>(prop.data);
+					float colVals[4] = { color->r, color->g, color->b, color->a };
+					if (ImGui::ColorEdit4(("##" + prop.name).c_str(), colVals))
 					{
-						D2D1_COLOR_F* color = static_cast<D2D1_COLOR_F*>(prop.data);
-						float colVals[4] = { color->r, color->g, color->b, color->a };
-						if (ImGui::ColorEdit4(("##" + prop.name).c_str(), colVals))
-						{
-							color->r = colVals[0]; color->g = colVals[1];
-							color->b = colVals[2]; color->a = colVals[3];
-						}
+						color->r = colVals[0]; color->g = colVals[1];
+						color->b = colVals[2]; color->a = colVals[3];
 					}
-					break;
+				}
+				break;
 
 
 				case PropType::Texture:
@@ -337,13 +341,16 @@ void InspectorPanel::DrawComponents(GameObject* pObj)
 					{
 						ImGui::OpenPopup("TexturePickerPopup");
 					}
-
 					ImGui::SameLine();
 					if (ImGui::Button("Set Native Size"))
 					{
-						if (RenderComponent* renderComp = dynamic_cast<RenderComponent*>(comp))
+						if (SpriteRendererComponent* spriteComp = dynamic_cast<SpriteRendererComponent*>(comp))
 						{
-							renderComp->SetNativeSize();
+							spriteComp->SetNativeSize();
+						}
+						else if (UIImageComponent* uiImg = dynamic_cast<UIImageComponent*>(comp))
+						{
+							uiImg->SetNativeSize();
 						}
 					}
 					if (ImGui::BeginPopup("TexturePickerPopup"))
@@ -354,9 +361,17 @@ void InspectorPanel::DrawComponents(GameObject* pObj)
 							if (ImGui::Selectable(keyName.c_str()))
 							{
 								*wKey = std::wstring(keyName.begin(), keyName.end());
-								if (RenderComponent* renderComp = dynamic_cast<RenderComponent*>(comp))
+								if (SpriteRendererComponent* spriteComp = dynamic_cast<SpriteRendererComponent*>(comp))
 								{
-									renderComp->SetTextureKey(*wKey);
+									spriteComp->SetTextureKey(*wKey);
+								}
+								else if (UIImageComponent* uiImg = dynamic_cast<UIImageComponent*>(comp))
+								{
+									uiImg->SetTextureKey(*wKey);
+								}
+								else if (UIPanelComponent* uiPanel = dynamic_cast<UIPanelComponent*>(comp))
+								{
+									uiPanel->SetTextureKey(*wKey);
 								}
 							}
 						}
@@ -364,33 +379,58 @@ void InspectorPanel::DrawComponents(GameObject* pObj)
 					}
 				}
 				break;
+
 				case PropType::StringVector:
+				{
+					auto* vec = static_cast<std::vector<std::string>*>(prop.data);
+					std::string headerText = prop.name + " (" + std::to_string(vec->size()) + ")";
+					if (ImGui::TreeNode(headerText.c_str()))
 					{
-						auto* vec = static_cast<std::vector<std::string>*>(prop.data);
-						std::string headerText = prop.name + " (" + std::to_string(vec->size()) + ")";
-						if (ImGui::TreeNode(headerText.c_str()))
+						int removeIdx = -1;
+						for (size_t i = 0; i < vec->size(); ++i)
 						{
-							int removeIdx = -1;
-							for (size_t i = 0; i < vec->size(); ++i)
+							ImGui::PushID(static_cast<int>(i));
+							char buf[256];
+							strcpy_s(buf, (*vec)[i].c_str());
+							ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - 30.0f);
+							if (ImGui::InputText(("Element " + std::to_string(i)).c_str(), buf, sizeof(buf)))
 							{
-								ImGui::PushID(static_cast<int>(i));
-								char buf[256];
-								strcpy_s(buf, (*vec)[i].c_str());
-								ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - 30.0f);
-								if (ImGui::InputText(("Element " + std::to_string(i)).c_str(), buf, sizeof(buf)))
-								{
-									(*vec)[i] = buf;
-								}
-								ImGui::SameLine();
-								if (ImGui::Button("-", ImVec2(20, 20))) removeIdx = static_cast<int>(i);
-								ImGui::PopID();
+								(*vec)[i] = buf;
 							}
-							if (removeIdx != -1) vec->erase(vec->begin() + removeIdx);
-							if (ImGui::Button("+ Add Element")) vec->push_back("");
-							ImGui::TreePop();
+							ImGui::SameLine();
+							if (ImGui::Button("-", ImVec2(20, 20))) removeIdx = static_cast<int>(i);
+							ImGui::PopID();
 						}
+						if (removeIdx != -1) vec->erase(vec->begin() + removeIdx);
+						if (ImGui::Button("+ Add Element")) vec->push_back("");
+						ImGui::TreePop();
 					}
-					break;
+				}
+				break;
+
+				case PropType::ObjectRef:
+				{
+					Component** ppComp = static_cast<Component**>(prop.data);
+					Component* pTarget = *ppComp;
+
+					std::string labelStr = (pTarget != nullptr) ? pTarget->gameObject.GetName() + "(" + std::string(pTarget->GetComponentType()) + ")" : "None (Drag & Drop Component Here)";
+
+					ImGui::Button(labelStr.c_str(), ImVec2(ImGui::GetContentRegionAvail().x, 25.0f));
+
+					if (ImGui::BeginDragDropTarget())
+					{
+						if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("HIERARCHY_REORDER_OBJ"))
+						{
+							GameObject* pDroppedObj = *(GameObject**)payload->Data;
+							if (pDroppedObj)
+							{
+								*ppComp = pDroppedObj->GetComponent<UIButtonComponent>();
+							}
+						}
+						ImGui::EndDragDropTarget();
+					}
+				}
+				break;
 				}
 
 				ImGui::NextColumn();

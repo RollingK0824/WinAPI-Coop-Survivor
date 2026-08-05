@@ -164,6 +164,7 @@
     <ClInclude Include="Source\Engine\Editor\Panels\InspectorPanel.h" />
     <ClInclude Include="Source\Engine\Editor\Panels\MainMenuBarPanel.h" />
     <ClInclude Include="Source\Engine\Framework\Components\Core\CameraComponent.h" />
+    <ClInclude Include="Source\Engine\Framework\Components\Render\SpriteRendererComponent.h" />
     <ClInclude Include="Source\Engine\Framework\Components\UI\DebugHUDComponent.h" />
     <ClInclude Include="Source\Engine\Framework\Components\UI\HUDPresenter.h" />
     <ClInclude Include="Source\Engine\Framework\Components\UI\UIButtonComponent.h" />
@@ -189,7 +190,7 @@
     <ClInclude Include="Source\Engine\Framework\Components\Physics\CircleCollider.h" />
     <ClInclude Include="Source\Engine\Framework\Components\Core\ScriptComponent.h" />
     <ClInclude Include="Source\Engine\Framework\Components\Physics\ColliderComponent.h" />
-    <ClInclude Include="Source\Engine\Framework\Components\Render\RenderComponent.h" />
+    <ClInclude Include="Source\Engine\Framework\Components\Core\RenderComponent.h" />
     <ClInclude Include="Source\Engine\Framework\Components\Core\TransformComponent.h" />
     <ClInclude Include="Source\Engine\Framework\Base\Component.h" />
     <ClInclude Include="Source\Engine\Framework\GameObject.h" />
@@ -213,6 +214,7 @@
     <ClInclude Include="Source\Engine\Manager\ResourceManager.h" />
     <ClInclude Include="Source\Engine\Renderer\Sprite.h" />
     <ClInclude Include="Source\Engine\Framework\Components\UI\UIImageComponent.h" />
+    <ClInclude Include="Source\Game\Scripts\UI\TitleSceneController.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Engine\Editor\Panels\ContentBrowserPanel.cpp" />
@@ -221,6 +223,7 @@
     <ClCompile Include="Source\Engine\Editor\Panels\InspectorPanel.cpp" />
     <ClCompile Include="Source\Engine\Editor\Panels\MainMenuBarPanel.cpp" />
     <ClCompile Include="Source\Engine\Framework\Components\Core\CameraComponent.cpp" />
+    <ClCompile Include="Source\Engine\Framework\Components\Render\SpriteRendererComponent.cpp" />
     <ClCompile Include="Source\Engine\Framework\Components\UI\DebugHUDComponent.cpp" />
     <ClCompile Include="Source\Engine\Framework\Components\UI\HUDPresenter.cpp" />
     <ClCompile Include="Source\Engine\Framework\Components\Network\NetworkIdentity.cpp" />
@@ -245,7 +248,7 @@
     <ClCompile Include="Source\Engine\Core\Util.cpp" />
     <ClCompile Include="Source\Engine\Framework\Components\Render\AnimatorComponent.cpp" />
     <ClCompile Include="Source\Engine\Manager\JsonSerializer.cpp" />
-    <ClCompile Include="Source\Engine\Framework\Components\Render\RenderComponent.cpp" />
+    <ClCompile Include="Source\Engine\Framework\Components\Core\RenderComponent.cpp" />
     <ClCompile Include="Source\Engine\Framework\Components\Core\ScriptComponent.cpp" />
     <ClCompile Include="Source\Engine\Framework\GameObject.cpp" />
     <ClCompile Include="Source\Engine\Manager\SceneManager.cpp" />
@@ -260,6 +263,7 @@
     <ClCompile Include="Source\Engine\Manager\TimeManager.cpp" />
     <ClCompile Include="Source\Engine\Manager\ResourceManager.cpp" />
     <ClCompile Include="Source\Engine\Framework\Components\UI\UIImageComponent.cpp" />
+    <ClCompile Include="Source\Game\Scripts\UI\TitleSceneController.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="imgui.ini" />
