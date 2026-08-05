@@ -18,12 +18,21 @@
             }
         },
         {
-            "Type": "RenderComponent",
+            "Type": "SpriteRendererComponent",
             "Data": {
                 "IsEnabled": true,
                 "RenderType": 0,
                 "ZOrder": 0,
+                "Opacity": 1.0,
+                "Color": {
+                    "r": 1.0,
+                    "g": 1.0,
+                    "b": 1.0,
+                    "a": 1.0
+                },
                 "TextureKey": "TempBackground.jpg",
+                "FlipX": false,
+                "FlipY": false,
                 "SrcRect": {
                     "left": 0.0,
                     "top": 0.0,
