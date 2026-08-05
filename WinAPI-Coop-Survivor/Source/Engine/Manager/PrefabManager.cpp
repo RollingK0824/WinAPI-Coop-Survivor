@@ -52,8 +52,6 @@ bool PrefabManager::LoadPrefab(const std::string& key, const std::string& filePa
 
 	JsonSerializer::ApplyJsonToGameObject(templateObj, prefabData);
 
-	templateObj->SetActive(false);
-
 	m_PrefabTemplates[key] = templateObj;
 
 	return true;
