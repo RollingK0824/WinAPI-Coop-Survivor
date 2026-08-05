@@ -6,43 +6,12 @@ class TransformComponent : public Component
 public:
 	CLONEABLE_COMPONENT(TransformComponent)
 
-		TransformComponent(GameObject* owner);
-	virtual ~TransformComponent() = default;
+	TransformComponent(GameObject* owner);
+	virtual ~TransformComponent() override = default;
 
 	virtual std::string_view GetComponentType() const override
 	{
 		return EngineKey::Component::Trnasform;
-	}
-
-	virtual void Serialize(json& outJson)const override
-	{
-		Component::Serialize(outJson);
-
-		outJson[EngineKey::Property::Position.data()] = { {"x",m_Position.x},{"y",m_Position.y} };
-		outJson[EngineKey::Property::Rotation.data()] = m_Rotation.angle;
-		outJson[EngineKey::Property::Scale.data()] = { {"x",m_Scale.x},{"y",m_Scale.y} };
-	}
-
-	virtual void Deserialize(const json& inJson)override
-	{
-		Component::Deserialize(inJson);
-
-		if (inJson.contains(EngineKey::Property::Position.data()))
-		{
-			const auto& posJson = inJson[EngineKey::Property::Position.data()];
-			m_Position.x = posJson["x"].get<float>();
-			m_Position.y = posJson["y"].get<float>();
-		}
-		if (inJson.contains(EngineKey::Property::Rotation.data()))
-		{
-			m_Rotation.angle = inJson[EngineKey::Property::Rotation.data()].get<float>();
-		}
-		if (inJson.contains(EngineKey::Property::Scale.data()))
-		{
-			const auto& scaleJson = inJson[EngineKey::Property::Scale.data()];
-			m_Scale.x = scaleJson["x"].get<float>();
-			m_Scale.y = scaleJson["y"].get<float>();
-		}
 	}
 
 	void SetSiblingIndex(int index);
@@ -63,7 +32,7 @@ public:
 	void SetScale(Vector2 scale) { m_Scale = scale; }
 
 private:
-	Vector2 m_Position = { 0.0f,0.0f };
+	Vector2 m_Position = { 0.0f, 0.0f };
 	Rotation m_Rotation = { 0.0f };
-	Vector2 m_Scale = { 1.0f,1.0f };
+	Vector2 m_Scale = { 1.0f, 1.0f };
 };

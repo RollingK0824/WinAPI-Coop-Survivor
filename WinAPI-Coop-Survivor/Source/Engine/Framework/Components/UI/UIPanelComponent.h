@@ -10,9 +10,6 @@ public:
 	UIPanelComponent(GameObject* owner, TransformComponent* transform);
 	virtual ~UIPanelComponent() override = default;
 
-	virtual void Serialize(json& outJson) const override;
-	virtual void Deserialize(const json& inJson) override;
-
 	void SetTextureKey(const std::wstring& textureKey);
 	void SetSize(Vector2 size) { m_size = size; }
 	void SetRenderBackground(bool bRender) { m_bRenderBackground = bRender; }
@@ -20,6 +17,8 @@ public:
 	Vector2 GetSize() const { return m_size; }
 	const std::wstring& GetTextureKey() const { return m_textureKey; }
 	bool IsRenderBackground() const { return m_bRenderBackground; }
+
+	virtual void PostDeserialize(Scene* pScene) override;
 
 	virtual std::string_view GetComponentType() const override
 	{

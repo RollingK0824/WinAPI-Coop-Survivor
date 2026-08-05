@@ -1,80 +1,93 @@
 // Source/Engine/Framework/Components/UI/UIButtonComponent.cpp
 #include "Engine/Core/pch.h"
 #include "UIButtonComponent.h"
-#include "UIImageComponent.h"
 #include "Engine/Core/ComponentRegister.h"
+#include "Engine/Framework/Components/Core/TransformComponent.h"
+#include "Engine/Framework/Components/UI/UIImageComponent.h"
+#include "Engine/Framework/Components/UI/UIPanelComponent.h"
 #include "Engine/Manager/InputManager.h"
 #include "Engine/Framework/GameObject.h"
-#include "Engine/Framework/Components/Core/TransformComponent.h"
 
 static ComponentRegistrar<UIButtonComponent> registrar(EngineKey::Component::UIButtonComponent.data());
 
 UIButtonComponent::UIButtonComponent(GameObject* owner, TransformComponent* transform)
 	: ScriptComponent(owner, transform)
 {
-	ExposeVariable("Is Hovered", &m_bIsHovered);
+	ExposeVariable("IsHovered", &m_bIsHovered);
 }
 
 void UIButtonComponent::Awake()
 {
 	ScriptComponent::Awake();
-
-	// 동일한 GameObject에 붙어있는 UIImageComponent 자동 참조
-	if (m_pImgView == nullptr)
-	{
-		m_pImgView = gameObject.GetComponent<UIImageComponent>();
-	}
+	m_pImgView = gameObject.GetComponent<UIImageComponent>();
+	m_pPanelView = gameObject.GetComponent<UIPanelComponent>();
 }
 
 void UIButtonComponent::Update(float dt)
 {
-	m_bIsHovered = CheckMouseOver();
+	ScriptComponent::Update(dt);
 
-	if (m_pImgView != nullptr)
+	if (CheckMouseOver())
 	{
-		if (m_bIsHovered)
+		m_bIsHovered = true;
+		if (InputManager::GetInstance()->GetKeyDown(VK_LBUTTON))
 		{
-			m_pImgView->SetOpacity(0.8f);
-		}
-		else
-		{
-			m_pImgView->SetOpacity(1.0f);
+			if (m_onClick)
+			{
+				m_onClick();
+			}
 		}
 	}
-
-	if (m_bIsHovered && InputManager::GetInstance()->GetKeyDown(VK_LBUTTON))
+	else
 	{
-		if (m_onClick != nullptr)
-		{
-			m_onClick();
-		}
+		m_bIsHovered = false;
 	}
 }
 
 bool UIButtonComponent::CheckMouseOver()
 {
-	if (m_pImgView == nullptr) return false;
+	Vector2 mousePos = InputManager::GetInstance()->GetMousePosition();
+
+	if (m_pImgView == nullptr && m_pPanelView == nullptr)
+	{
+		m_pImgView = gameObject.GetComponent<UIImageComponent>();
+		m_pPanelView = gameObject.GetComponent<UIPanelComponent>();
+	}
 
 	Vector2 pos = transform.GetPosition();
-	Vector2 size = m_pImgView->GetSize();
+	Vector2 scale = transform.GetScale();
+	Vector2 size = { 100.0f, 30.0f };
+	D2D1_POINT_2F pivot = { 0.5f, 0.5f };
 
-	POINT mousePos;
-	GetCursorPos(&mousePos);
-	ScreenToClient(GetActiveWindow(), &mousePos);
+	if (m_pImgView != nullptr)
+	{
+		const RenderCommand& cmd = m_pImgView->GetRenderCommand();
+		pivot = cmd.pivot;
+		float srcW = cmd.srcRect.right - cmd.srcRect.left;
+		float srcH = cmd.srcRect.bottom - cmd.srcRect.top;
+		if (srcW > 0.0f && srcH > 0.0f)
+		{
+			size = { srcW, srcH };
+		}
+		else
+		{
+			size = m_pImgView->GetSize();
+		}
+	}
+	else if (m_pPanelView != nullptr)
+	{
+		pivot = m_pPanelView->GetRenderCommand().pivot;
+		size = m_pPanelView->GetSize();
+	}
 
-	float mouseX = static_cast<float>(mousePos.x);
-	float mouseY = static_cast<float>(mousePos.y);
+	float finalW = size.x * scale.x;
+	float finalH = size.y * scale.y;
 
-	return (mouseX >= pos.x && mouseX <= pos.x + size.x &&
-		mouseY >= pos.y && mouseY <= pos.y + size.y);
-}
+	float left = pos.x - finalW * pivot.x;
+	float right = pos.x + finalW * (1.0f - pivot.x);
+	float top = pos.y - finalH * pivot.y;
+	float bottom = pos.y + finalH * (1.0f - pivot.y);
 
-void UIButtonComponent::Serialize(json& outJson) const
-{
-	ScriptComponent::Serialize(outJson);
-}
-
-void UIButtonComponent::Deserialize(const json& inJson)
-{
-	ScriptComponent::Deserialize(inJson);
+	return (mousePos.x >= left && mousePos.x <= right &&
+			mousePos.y >= top && mousePos.y <= bottom);
 }

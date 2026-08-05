@@ -14,7 +14,8 @@ public:
 	virtual ~AnimatorComponent() override = default;
 
 	virtual void Awake() override;
-	virtual void Update(float dt)override;
+	virtual void Update(float dt) override;
+	virtual void PostDeserialize(Scene* pScene) override;
 
 	void AddClip(const AnimationClip& clip);
 	void Play(const std::wstring& clipName);
@@ -28,14 +29,12 @@ public:
 
 	virtual std::string_view GetComponentType() const override { return EngineKey::Component::Animator; }
 
-	virtual void Serialize(json& outJson)const override;
-	virtual void Deserialize(const json& inJson)override;
-
 private:
 	SpriteRendererComponent* m_pSpriteRenderer = nullptr;
 
-	std::unordered_map<std::wstring, AnimationClip>m_MapClips;
+	std::unordered_map<std::wstring, AnimationClip> m_MapClips;
 	std::vector<std::string> m_vClipKeys;
+	std::string m_defaultPlayClip = "";
 	AnimationClip* m_pCurrentClip = nullptr;
 
 	int m_CurrentFrameIdx = 0;

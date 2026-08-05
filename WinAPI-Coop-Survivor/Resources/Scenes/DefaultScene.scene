@@ -7,9 +7,36 @@
             "IsActive": true,
             "Components": [
                 {
+                    "Type": "TransformComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Position": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "Rotation": 0.0,
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        }
+                    }
+                },
+                {
                     "Type": "CameraComponent",
                     "Data": {
-                        "IsEnabled": true
+                        "IsEnabled": true,
+                        "Zoom": 1.0,
+                        "Enable Follow": false,
+                        "Smooth Follow": true,
+                        "Follow Speed": 5.0,
+                        "Use Map Bounds": false,
+                        "Map Bounds": {
+                            "left": 0.0,
+                            "top": 0.0,
+                            "right": 0.0,
+                            "bottom": 0.0
+                        },
+                        "Follow Target": 0
                     }
                 }
             ]
@@ -19,6 +46,21 @@
             "InstanceID": 4,
             "IsActive": true,
             "Components": [
+                {
+                    "Type": "TransformComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Position": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "Rotation": 0.0,
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        }
+                    }
+                },
                 {
                     "Type": "SpriteRendererComponent",
                     "Data": {

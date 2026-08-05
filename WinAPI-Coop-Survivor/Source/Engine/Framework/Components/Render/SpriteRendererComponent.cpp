@@ -5,17 +5,15 @@
 
 static ComponentRegistrar<SpriteRendererComponent> registrar(EngineKey::Component::SpriteRenderer.data());
 
-SpriteRendererComponent::SpriteRendererComponent(GameObject* owner, TransformComponent* transform) : RenderComponent(owner, transform)
+SpriteRendererComponent::SpriteRendererComponent(GameObject* owner, TransformComponent* transform)
+	: RenderComponent(owner, transform)
 {
 	m_RenderCommand.type = RenderType::BITMAP;
 
-	ExposeTexture("Texture Key", &m_textureKey);
-	ExposeVariable("Flip X", &m_RenderCommand.bitmap.flipX);
-	ExposeVariable("Flip Y", &m_RenderCommand.bitmap.flipY);
-	ExposeVariable("Src Left", &m_RenderCommand.srcRect.left);
-	ExposeVariable("Src Top", &m_RenderCommand.srcRect.top);
-	ExposeVariable("Src Right", &m_RenderCommand.srcRect.right);
-	ExposeVariable("Src Bottom", &m_RenderCommand.srcRect.bottom);
+	ExposeTexture("TextureKey", &m_textureKey);
+	ExposeVariable("FlipX", &m_RenderCommand.bitmap.flipX);
+	ExposeVariable("FlipY", &m_RenderCommand.bitmap.flipY);
+	ExposeVariable("SrcRect", &m_RenderCommand.srcRect);
 }
 
 void SpriteRendererComponent::SetAsSprite(const Sprite& sprite)
@@ -60,41 +58,13 @@ void SpriteRendererComponent::SetNativeSize()
 	}
 }
 
-void SpriteRendererComponent::Serialize(json& outJson) const
+void SpriteRendererComponent::PostDeserialize(Scene* pScene)
 {
-	RenderComponent::Serialize(outJson);
-	std::string strKey(m_textureKey.begin(), m_textureKey.end());
-	outJson[EngineKey::Property::TextureKey.data()] = strKey;
-	outJson["FlipX"] = m_RenderCommand.bitmap.flipX;
-	outJson["FlipY"] = m_RenderCommand.bitmap.flipY;
-	outJson[EngineKey::Property::SrcRect.data()] =
-	{
-		{"left", m_RenderCommand.srcRect.left}, {"top", m_RenderCommand.srcRect.top},
-		{"right", m_RenderCommand.srcRect.right}, {"bottom", m_RenderCommand.srcRect.bottom}
-	};
-}
+	RenderComponent::PostDeserialize(pScene);
 
-void SpriteRendererComponent::Deserialize(const json& inJson)
-{
-	RenderComponent::Deserialize(inJson);
-	D2D1_RECT_F srcRect = { 0.0f, 0.0f, 0.0f, 0.0f };
-	if (inJson.contains(EngineKey::Property::SrcRect.data()))
+	m_RenderCommand.type = RenderType::BITMAP;
+	if (!m_textureKey.empty())
 	{
-		const auto& rect = inJson[EngineKey::Property::SrcRect.data()];
-		srcRect = D2D1::RectF(
-			rect["left"].get<float>(), rect["top"].get<float>(),
-			rect["right"].get<float>(), rect["bottom"].get<float>()
-		);
+		m_RenderCommand.bitmap.pTexture = ResourceManager::GetInstance()->GetTexture(m_textureKey);
 	}
-	if (inJson.contains(EngineKey::Property::TextureKey.data()))
-	{
-		std::string strKey = inJson[EngineKey::Property::TextureKey.data()].get<std::string>();
-		std::wstring wstrKey(strKey.begin(), strKey.end());
-		if (!wstrKey.empty())
-		{
-			SetAsBitmap(wstrKey, srcRect);
-		}
-	}
-	if (inJson.contains("FlipX")) m_RenderCommand.bitmap.flipX = inJson["FlipX"].get<bool>();
-	if (inJson.contains("FlipY")) m_RenderCommand.bitmap.flipY = inJson["FlipY"].get<bool>();
 }

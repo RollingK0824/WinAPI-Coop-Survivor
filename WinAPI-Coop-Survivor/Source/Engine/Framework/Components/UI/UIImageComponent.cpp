@@ -1,4 +1,3 @@
-// Source/Engine/Framework/Components/UI/UIImageComponent.cpp
 #include "Engine/Core/pch.h"
 #include "UIImageComponent.h"
 #include "Engine/Core/ComponentRegister.h"
@@ -13,15 +12,12 @@ UIImageComponent::UIImageComponent(GameObject* owner, TransformComponent* transf
 	m_RenderCommand.isUI = true;
 	m_RenderCommand.zOrder = 9999;
 
-	ExposeTexture("Texture Key", &m_textureKey);
+	ExposeTexture("TextureKey", &m_textureKey);
 	ExposeVariable("Size", &m_size);
-	ExposeVariable("Fill Amount", &m_fillAmount);
-	ExposeVariable("Flip X", &m_RenderCommand.bitmap.flipX);
-	ExposeVariable("Flip Y", &m_RenderCommand.bitmap.flipY);
-	ExposeVariable("Src Left", &m_RenderCommand.srcRect.left);
-	ExposeVariable("Src Top", &m_RenderCommand.srcRect.top);
-	ExposeVariable("Src Right", &m_RenderCommand.srcRect.right);
-	ExposeVariable("Src Bottom", &m_RenderCommand.srcRect.bottom);
+	ExposeVariable("FillAmount", &m_fillAmount);
+	ExposeVariable("FlipX", &m_RenderCommand.bitmap.flipX);
+	ExposeVariable("FlipY", &m_RenderCommand.bitmap.flipY);
+	ExposeVariable("SrcRect", &m_RenderCommand.srcRect);
 }
 
 void UIImageComponent::SetAsSprite(const Sprite& sprite)
@@ -67,54 +63,14 @@ void UIImageComponent::SetNativeSize()
 	}
 }
 
-void UIImageComponent::Serialize(json& outJson) const
+void UIImageComponent::PostDeserialize(Scene* pScene)
 {
-	RenderComponent::Serialize(outJson);
+	RenderComponent::PostDeserialize(pScene);
 
-	std::string strKey(m_textureKey.begin(), m_textureKey.end());
-	outJson["TextureKey"] = strKey;
-	outJson["Size"] = { {"x", m_size.x}, {"y", m_size.y} };
-	outJson["FillAmount"] = m_fillAmount;
-	outJson["FlipX"] = m_RenderCommand.bitmap.flipX;
-	outJson["FlipY"] = m_RenderCommand.bitmap.flipY;
-
-	outJson["SrcRect"] =
+	m_RenderCommand.type = RenderType::BITMAP;
+	m_RenderCommand.isUI = true;
+	if (!m_textureKey.empty())
 	{
-		{"left", m_RenderCommand.srcRect.left}, {"top", m_RenderCommand.srcRect.top},
-		{"right", m_RenderCommand.srcRect.right}, {"bottom", m_RenderCommand.srcRect.bottom}
-	};
-}
-
-void UIImageComponent::Deserialize(const json& inJson)
-{
-	RenderComponent::Deserialize(inJson);
-
-	D2D1_RECT_F srcRect = { 0.0f, 0.0f, 0.0f, 0.0f };
-	if (inJson.contains("SrcRect"))
-	{
-		const auto& rect = inJson["SrcRect"];
-		srcRect = D2D1::RectF(
-			rect["left"].get<float>(), rect["top"].get<float>(),
-			rect["right"].get<float>(), rect["bottom"].get<float>()
-		);
+		SetTextureKey(m_textureKey);
 	}
-
-	if (inJson.contains("TextureKey"))
-	{
-		std::string strKey = inJson["TextureKey"].get<std::string>();
-		std::wstring wstrKey(strKey.begin(), strKey.end());
-		if (!wstrKey.empty())
-		{
-			SetAsBitmap(wstrKey, srcRect);
-		}
-	}
-
-	if (inJson.contains("Size"))
-	{
-		m_size.x = inJson["Size"]["x"].get<float>();
-		m_size.y = inJson["Size"]["y"].get<float>();
-	}
-	if (inJson.contains("FillAmount")) m_fillAmount = inJson["FillAmount"].get<float>();
-	if (inJson.contains("FlipX")) m_RenderCommand.bitmap.flipX = inJson["FlipX"].get<bool>();
-	if (inJson.contains("FlipY")) m_RenderCommand.bitmap.flipY = inJson["FlipY"].get<bool>();
 }

@@ -325,6 +325,32 @@ void InspectorPanel::DrawComponents(GameObject* pObj)
 				}
 				break;
 
+				case PropType::Rect:
+				{
+					D2D1_RECT_F* rect = static_cast<D2D1_RECT_F*>(prop.data);
+					float itemW = (ImGui::GetContentRegionAvail().x - 40.0f) * 0.25f;
+					if (itemW < 25.0f) itemW = 25.0f;
+
+					ImGui::Text("L"); ImGui::SameLine();
+					ImGui::SetNextItemWidth(itemW);
+					LeftDragFloat(("##" + prop.name + "L").c_str(), &rect->left, 1.0f, "%.1f");
+					ImGui::SameLine();
+
+					ImGui::Text("T"); ImGui::SameLine();
+					ImGui::SetNextItemWidth(itemW);
+					LeftDragFloat(("##" + prop.name + "T").c_str(), &rect->top, 1.0f, "%.1f");
+					ImGui::SameLine();
+
+					ImGui::Text("R"); ImGui::SameLine();
+					ImGui::SetNextItemWidth(itemW);
+					LeftDragFloat(("##" + prop.name + "R").c_str(), &rect->right, 1.0f, "%.1f");
+					ImGui::SameLine();
+
+					ImGui::Text("B"); ImGui::SameLine();
+					ImGui::SetNextItemWidth(itemW);
+					LeftDragFloat(("##" + prop.name + "B").c_str(), &rect->bottom, 1.0f, "%.1f");
+				}
+				break;
 
 				case PropType::Texture:
 				{
@@ -410,10 +436,8 @@ void InspectorPanel::DrawComponents(GameObject* pObj)
 
 				case PropType::ObjectRef:
 				{
-					Component** ppComp = static_cast<Component**>(prop.data);
-					Component* pTarget = *ppComp;
-
-					std::string labelStr = (pTarget != nullptr) ? pTarget->gameObject.GetName() + "(" + std::string(pTarget->GetComponentType()) + ")" : "None (Drag & Drop Component Here)";
+					GameObject* pTargetObj = prop.getTargetGameObject ? prop.getTargetGameObject(prop.data) : nullptr;
+					std::string labelStr = (pTargetObj != nullptr) ? pTargetObj->GetName() + " (" + prop.name + ")" : "None (Drag & Drop GameObject Here)";
 
 					ImGui::Button(labelStr.c_str(), ImVec2(ImGui::GetContentRegionAvail().x, 25.0f));
 
@@ -422,9 +446,9 @@ void InspectorPanel::DrawComponents(GameObject* pObj)
 						if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("HIERARCHY_REORDER_OBJ"))
 						{
 							GameObject* pDroppedObj = *(GameObject**)payload->Data;
-							if (pDroppedObj)
+							if (pDroppedObj && prop.resolver)
 							{
-								*ppComp = pDroppedObj->GetComponent<UIButtonComponent>();
+								prop.resolver(pDroppedObj, prop.data);
 							}
 						}
 						ImGui::EndDragDropTarget();

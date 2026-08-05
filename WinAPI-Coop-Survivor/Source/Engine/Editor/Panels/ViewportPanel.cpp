@@ -38,6 +38,8 @@ void ViewportPanel::OnDrawGUI()
 	if (pSRV)
 	{
 		ImGui::Image((ImTextureID)pSRV, currentPanelSize);
+		m_viewportMin = ImGui::GetItemRectMin();
+		m_viewportMax = ImGui::GetItemRectMax();
 	}
 
 	m_bIsHovered = ImGui::IsWindowHovered();

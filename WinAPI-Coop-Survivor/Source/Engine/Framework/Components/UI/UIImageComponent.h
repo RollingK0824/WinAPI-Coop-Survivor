@@ -1,4 +1,3 @@
-﻿// Source/Engine/Framework/Components/UI/UIImageComponent.h
 #pragma once
 #include "Engine/Framework/Components/Core/RenderComponent.h"
 #include "Engine/Renderer/Sprite.h"
@@ -8,7 +7,7 @@ class UIImageComponent : public RenderComponent
 public:
 	CLONEABLE_COMPONENT(UIImageComponent)
 
-		UIImageComponent(GameObject* owner, TransformComponent* transform);
+	UIImageComponent(GameObject* owner, TransformComponent* transform);
 	virtual ~UIImageComponent() override = default;
 
 	void SetAsSprite(const Sprite& sprite);
@@ -27,8 +26,7 @@ public:
 	float GetFillAmount() const { return m_fillAmount; }
 	const std::wstring& GetTextureKey() const { return m_textureKey; }
 
-	virtual void Serialize(json& outJson) const override;
-	virtual void Deserialize(const json& inJson) override;
+	virtual void PostDeserialize(Scene* pScene) override;
 
 	virtual std::string_view GetComponentType() const override
 	{

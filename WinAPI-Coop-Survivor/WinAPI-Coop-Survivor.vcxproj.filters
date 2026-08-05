@@ -341,6 +341,9 @@
     <ClCompile Include="Source\Engine\Framework\Components\Render\SpriteRendererComponent.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Engine\Framework\Base\Component.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Game\Scripts\UI\TitleSceneController.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

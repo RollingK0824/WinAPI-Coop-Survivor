@@ -7,12 +7,14 @@
 
 static ComponentRegistrar<AnimatorComponent> registrar(EngineKey::Component::Animator.data());
 
-AnimatorComponent::AnimatorComponent(GameObject* owner, TransformComponent* transform) : ScriptComponent(owner, transform)
+AnimatorComponent::AnimatorComponent(GameObject* owner, TransformComponent* transform)
+	: ScriptComponent(owner, transform)
 {
-	ExposeVariable("Is Playing", &m_bIsPlaying);
-	ExposeVariable("Current Frame Idx", &m_CurrentFrameIdx);
-	ExposeVariable("Accumulated Time", &m_AccTime);
-	ExposeVariable("Clip Keys", &m_vClipKeys);
+	ExposeVariable("IsPlaying", &m_bIsPlaying);
+	ExposeVariable("CurrentFrameIdx", &m_CurrentFrameIdx);
+	ExposeVariable("AccumulatedTime", &m_AccTime);
+	ExposeVariable("ClipKeys", &m_vClipKeys);
+	ExposeVariable("DefaultPlay", &m_defaultPlayClip);
 }
 
 AnimatorComponent::AnimatorComponent(const AnimatorComponent& other)
@@ -21,7 +23,8 @@ AnimatorComponent::AnimatorComponent(const AnimatorComponent& other)
 	this->m_bIsPlaying = other.m_bIsPlaying;
 	this->m_CurrentFrameIdx = other.m_CurrentFrameIdx;
 	this->m_AccTime = other.m_AccTime;
-
+	this->m_vClipKeys = other.m_vClipKeys;
+	this->m_defaultPlayClip = other.m_defaultPlayClip;
 	this->m_MapClips = other.m_MapClips;
 
 	if (other.m_pCurrentClip != nullptr)
@@ -71,7 +74,6 @@ void AnimatorComponent::Update(float dt)
 			{
 				m_CurrentFrameIdx = static_cast<int>(m_pCurrentClip->frames.size()) - 1;
 				m_bIsPlaying = false;
-				// TODO : 애니메이션 종료 동작 추가
 			}
 		}
 
@@ -108,42 +110,23 @@ void AnimatorComponent::Stop()
 	m_bIsPlaying = false;
 }
 
-void AnimatorComponent::Serialize(json& outJson) const
+void AnimatorComponent::PostDeserialize(Scene* pScene)
 {
-	ScriptComponent::Serialize(outJson);
+	ScriptComponent::PostDeserialize(pScene);
 
-	outJson["ClipKeys"] = m_vClipKeys;
-	if (m_pCurrentClip != nullptr)
+	m_MapClips.clear();
+	for (const auto& clipKey : m_vClipKeys)
 	{
-		std::wstring wName = m_pCurrentClip->name;
-		std::string strName(wName.begin(), wName.end());
-		outJson["DefaultPlay"] = strName;
-	}
-}
-
-void AnimatorComponent::Deserialize(const json& inJson)
-{
-	ScriptComponent::Deserialize(inJson);
-
-	if (inJson.contains("ClipKeys"))
-	{
-		m_vClipKeys.clear();
-		for (const auto& keyJson : inJson["ClipKeys"])
+		std::wstring wClipKey(clipKey.begin(), clipKey.end());
+		const AnimationClip* pResClip = ResourceManager::GetInstance()->GetAnimationClip(wClipKey);
+		if (pResClip != nullptr)
 		{
-			std::string clipKey = keyJson.get<std::string>();
-			m_vClipKeys.push_back(clipKey);
-			std::wstring wClipKey(clipKey.begin(), clipKey.end());
-			const AnimationClip* pResClip = ResourceManager::GetInstance()->GetAnimationClip(wClipKey);
-			if (pResClip != nullptr)
-			{
-				m_MapClips[wClipKey] = *pResClip;
-			}
+			m_MapClips[wClipKey] = *pResClip;
 		}
 	}
-	if (inJson.contains("DefaultPlay"))
+	if (!m_defaultPlayClip.empty())
 	{
-		std::string defaultPlayStr = inJson["DefaultPlay"].get<std::string>();
-		std::wstring wDefaultPlay(defaultPlayStr.begin(), defaultPlayStr.end());
+		std::wstring wDefaultPlay(m_defaultPlayClip.begin(), m_defaultPlayClip.end());
 		Play(wDefaultPlay);
 	}
 }
