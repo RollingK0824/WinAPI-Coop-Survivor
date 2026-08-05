@@ -16,6 +16,16 @@ SpriteRendererComponent::SpriteRendererComponent(GameObject* owner, TransformCom
 	ExposeVariable("SrcRect", &m_RenderCommand.srcRect);
 }
 
+void SpriteRendererComponent::Awake()
+{
+	RenderComponent::Awake();
+
+	if (!m_RenderCommand.bitmap.pTexture && !m_textureKey.empty())
+	{
+		m_RenderCommand.bitmap.pTexture = ResourceManager::GetInstance()->GetTexture(m_textureKey);
+	}
+}
+
 void SpriteRendererComponent::SetAsSprite(const Sprite& sprite)
 {
 	m_RenderCommand.type = RenderType::BITMAP;

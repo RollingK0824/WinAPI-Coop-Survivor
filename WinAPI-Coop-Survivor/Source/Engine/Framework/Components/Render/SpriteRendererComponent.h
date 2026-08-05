@@ -10,6 +10,8 @@ public:
 	SpriteRendererComponent(GameObject* owner, TransformComponent* transform);
 	virtual ~SpriteRendererComponent() override = default;
 
+	virtual void Awake() override;
+
 	void SetAsSprite(const Sprite& sprite);
 
 	void SetTextureKey(const std::wstring& textureKey);

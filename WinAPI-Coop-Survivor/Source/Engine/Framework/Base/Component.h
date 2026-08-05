@@ -28,7 +28,7 @@ struct ExposedProperty
 	void* data = nullptr;
 	std::function<uint64(void*)> getInstanceID = nullptr;
 	std::function<void(GameObject*, void*)> resolver = nullptr;
-	std::function<GameObject*(void*)> getTargetGameObject = nullptr;
+	std::function<GameObject* (void*)> getTargetGameObject = nullptr;
 };
 
 #define CLONEABLE_COMPONENT(Type) \
@@ -56,6 +56,16 @@ public:
 		, m_pTransform(nullptr)
 		, m_bIsEnabled(other.m_bIsEnabled)
 	{
+		intptr_t offset = reinterpret_cast<intptr_t>(this) - reinterpret_cast<intptr_t>(&other);
+
+		m_vProperties = other.m_vProperties;
+		for (auto& prop : m_vProperties)
+		{
+			if (prop.data != nullptr)
+			{
+				prop.data = reinterpret_cast<void*>(reinterpret_cast<intptr_t>(prop.data) + offset);
+			}
+		}
 	}
 
 	virtual ~Component() = default;
@@ -85,26 +95,6 @@ public:
 			m_OnDestroyCallback = nullptr;
 		}
 	}
-
-	void ExposeVariable(const std::string& name, int* var) { m_vProperties.push_back({ name, PropType::Int, var }); }
-	void ExposeVariable(const std::string& name, int16* var) { m_vProperties.push_back({ name, PropType::Int, var }); }
-	void ExposeVariable(const std::string& name, float* var) { m_vProperties.push_back({ name, PropType::Float, var }); }
-	void ExposeVariable(const std::string& name, bool* var) { m_vProperties.push_back({ name, PropType::Bool, var }); }
-	void ExposeVariable(const std::string& name, std::string* var) { m_vProperties.push_back({ name, PropType::String, var }); }
-	void ExposeVariable(const std::string& name, std::wstring* var) { m_vProperties.push_back({ name, PropType::WString, var }); }
-	void ExposeVariable(const std::string& name, Vector2* var) { m_vProperties.push_back({ name, PropType::Vector2, var }); }
-	void ExposeVariable(const std::string& name, D2D1_COLOR_F* var) { m_vProperties.push_back({ name, PropType::Color, var }); }
-	void ExposeVariable(const std::string& name, D2D1_RECT_F* var) { m_vProperties.push_back({ name, PropType::Rect, var }); }
-	void ExposeVariable(const std::string& name, std::vector<std::string>* var) { m_vProperties.push_back({ name, PropType::StringVector, var }); }
-	void ExposeTexture(const std::string& name, std::wstring* textureKey) { m_vProperties.push_back({ name, PropType::Texture, textureKey }); }
-	void ExposeTexture(const std::string& name, std::string* textureKey) { m_vProperties.push_back({ name, PropType::String, textureKey }); }
-
-	template<typename T>
-	void ExposeComponent(const std::string& name, T** componentPtr);
-
-	void ExposeGameObject(const std::string& name, GameObject** gameObjectPtr);
-
-	const std::vector<ExposedProperty>& GetProperties() const { return m_vProperties; }
 
 	virtual void Awake() {};
 	virtual void Start() {};
@@ -139,6 +129,28 @@ public:
 	virtual void Serialize(json& outJson) const;
 	virtual void Deserialize(const json& inJson);
 	virtual void PostDeserialize(Scene* pScene);
+
+public:
+
+	void ExposeVariable(const std::string& name, int* var) { m_vProperties.push_back({ name, PropType::Int, var }); }
+	void ExposeVariable(const std::string& name, int16* var) { m_vProperties.push_back({ name, PropType::Int, var }); }
+	void ExposeVariable(const std::string& name, float* var) { m_vProperties.push_back({ name, PropType::Float, var }); }
+	void ExposeVariable(const std::string& name, bool* var) { m_vProperties.push_back({ name, PropType::Bool, var }); }
+	void ExposeVariable(const std::string& name, std::string* var) { m_vProperties.push_back({ name, PropType::String, var }); }
+	void ExposeVariable(const std::string& name, std::wstring* var) { m_vProperties.push_back({ name, PropType::WString, var }); }
+	void ExposeVariable(const std::string& name, Vector2* var) { m_vProperties.push_back({ name, PropType::Vector2, var }); }
+	void ExposeVariable(const std::string& name, D2D1_COLOR_F* var) { m_vProperties.push_back({ name, PropType::Color, var }); }
+	void ExposeVariable(const std::string& name, D2D1_RECT_F* var) { m_vProperties.push_back({ name, PropType::Rect, var }); }
+	void ExposeVariable(const std::string& name, std::vector<std::string>* var) { m_vProperties.push_back({ name, PropType::StringVector, var }); }
+	void ExposeTexture(const std::string& name, std::wstring* textureKey) { m_vProperties.push_back({ name, PropType::Texture, textureKey }); }
+	void ExposeTexture(const std::string& name, std::string* textureKey) { m_vProperties.push_back({ name, PropType::String, textureKey }); }
+
+	template<typename T>
+	void ExposeComponent(const std::string& name, T** componentPtr);
+
+	void ExposeGameObject(const std::string& name, GameObject** gameObjectPtr);
+
+	const std::vector<ExposedProperty>& GetProperties() const { return m_vProperties; }
 
 public:
 	GameObject& GetGameObjectInternal() const
