@@ -122,15 +122,17 @@ void GameObject::RemoveComponent(Component* comp)
 		m_vComponents.erase(it);
 	}
 }
-
-void GameObject::Serialize(json& outJson)const
+ 
+void GameObject::Serialize(json& outJson) const
 {
+	outJson[EngineKey::Property::Name.data()] = m_name;
+	outJson["InstanceID"] = m_instanceID;
 	outJson[EngineKey::Property::IsActive.data()] = m_bIsActive;
 	outJson[EngineKey::Property::Components.data()] = std::vector<json>();
 
 	for (auto* comp : m_vComponents)
 	{
-		if (!comp)continue;
+		if (!comp) continue;
 
 		json compJson;
 		compJson[EngineKey::Property::Type.data()] = comp->GetComponentType().data();
@@ -140,6 +142,24 @@ void GameObject::Serialize(json& outJson)const
 		compJson[EngineKey::Property::Data.data()] = compData;
 
 		outJson[EngineKey::Property::Components.data()].push_back(compJson);
+	}
+}
+
+void GameObject::Deserialize(const json& inJson)
+{
+	if (inJson.contains(EngineKey::Property::Name.data()))
+	{
+		m_name = inJson[EngineKey::Property::Name.data()].get<std::string>();
+	}
+
+	if (inJson.contains("InstanceID"))
+	{
+		SetInstanceID(inJson["InstanceID"].get<uint64>());
+	}
+
+	if (inJson.contains(EngineKey::Property::IsActive.data()))
+	{
+		m_bIsActive = inJson[EngineKey::Property::IsActive.data()].get<bool>();
 	}
 }
 

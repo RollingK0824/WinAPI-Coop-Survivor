@@ -43,6 +43,9 @@ public:
 	void ReorderGameObject(GameObject* targetObj, int newIndex);
 	void UpdateGameObjectIndices();
 
+	GameObject* FindGameObjectByName(const std::string& name) const;
+	GameObject* FindGameObjectByInstanceID(uint64 instanceID) const;
+
 	const std::vector<GameObject*>& GetGameObjects() const { return m_vGameObjects; }
 
 	void SetSceneName(const std::string& name) { m_SceneName = name; }

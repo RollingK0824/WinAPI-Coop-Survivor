@@ -3,23 +3,9 @@
     "GameObjects": [
         {
             "Name": "Main Camera",
+            "InstanceID": 5,
             "IsActive": true,
             "Components": [
-                {
-                    "Type": "TransformComponent",
-                    "Data": {
-                        "IsEnabled": true,
-                        "Position": {
-                            "x": 0.0,
-                            "y": 0.0
-                        },
-                        "Rotation": 0.0,
-                        "Scale": {
-                            "x": 1.0,
-                            "y": 1.0
-                        }
-                    }
-                },
                 {
                     "Type": "CameraComponent",
                     "Data": {
@@ -29,82 +15,37 @@
             ]
         },
         {
-            "Name": "TempBackground",
-            "IsActive": false,
+            "Name": "Test_Btn",
+            "InstanceID": 8,
+            "IsActive": true,
             "Components": [
                 {
-                    "Type": "TransformComponent",
-                    "Data": {
-                        "IsEnabled": true,
-                        "Position": {
-                            "x": 0.0,
-                            "y": 0.0
-                        },
-                        "Rotation": 0.0,
-                        "Scale": {
-                            "x": 1.0,
-                            "y": 1.0
-                        }
-                    }
-                },
-                {
-                    "Type": "RenderComponent",
+                    "Type": "UIImageComponent",
                     "Data": {
                         "IsEnabled": true,
                         "RenderType": 0,
-                        "ZOrder": 0,
-                        "TextureKey": "TempBackground.jpg",
+                        "ZOrder": 9999,
+                        "Opacity": 1.0,
+                        "Color": {
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 1.0,
+                            "a": 1.0
+                        },
+                        "TextureKey": "",
+                        "Size": {
+                            "x": 100.0,
+                            "y": 30.0
+                        },
+                        "FillAmount": 1.0,
+                        "FlipX": false,
+                        "FlipY": false,
                         "SrcRect": {
                             "left": 0.0,
                             "top": 0.0,
-                            "right": 1920.0,
-                            "bottom": 1080.0
+                            "right": 0.0,
+                            "bottom": 0.0
                         }
-                    }
-                }
-            ]
-        },
-        {
-            "Name": "Host_Btn",
-            "IsActive": true,
-            "Components": [
-                {
-                    "Type": "TransformComponent",
-                    "Data": {
-                        "IsEnabled": true,
-                        "Position": {
-                            "x": 0.0,
-                            "y": 0.0
-                        },
-                        "Rotation": 0.0,
-                        "Scale": {
-                            "x": 1.0,
-                            "y": 1.0
-                        }
-                    }
-                },
-                {
-                    "Type": "UIImageComponent",
-                    "Data": {
-                        "IsEnabled": true,
-                        "TextureKey": "TempBackground.jpg",
-                        "Size": {
-                            "x": 100.0,
-                            "y": 30.0
-                        },
-                        "Position": {
-                            "x": 0.0,
-                            "y": 0.0
-                        },
-                        "FillAmount": 1.0,
-                        "Opacity": 1.0,
-                        "ZOrder": 9999
-                    }
-                },
-                {
-                    "Type": "UITextComponent",
-                    "Data": {
-                        "IsEnabled": true
                     }
                 },
                 {
@@ -112,107 +53,14 @@
                     "Data": {
                         "IsEnabled": true
                     }
-                }
-            ]
-        },
-        {
-            "Name": "Join_Btn",
-            "IsActive": true,
-            "Components": [
+                },
                 {
-                    "Type": "TransformComponent",
+                    "Type": "TitleSceneController",
                     "Data": {
                         "IsEnabled": true,
-                        "Position": {
-                            "x": 0.0,
-                            "y": 0.0
-                        },
-                        "Rotation": 0.0,
-                        "Scale": {
-                            "x": 1.0,
-                            "y": 1.0
-                        }
-                    }
-                },
-                {
-                    "Type": "UIImageComponent",
-                    "Data": {
-                        "IsEnabled": true,
-                        "TextureKey": "",
-                        "Size": {
-                            "x": 100.0,
-                            "y": 30.0
-                        },
-                        "Position": {
-                            "x": 0.0,
-                            "y": 0.0
-                        },
-                        "FillAmount": 1.0,
-                        "Opacity": 1.0,
-                        "ZOrder": 24464
-                    }
-                },
-                {
-                    "Type": "UITextComponent",
-                    "Data": {
-                        "IsEnabled": true
-                    }
-                },
-                {
-                    "Type": "UIButtonComponent",
-                    "Data": {
-                        "IsEnabled": true
-                    }
-                }
-            ]
-        },
-        {
-            "Name": "Exit_Btn",
-            "IsActive": true,
-            "Components": [
-                {
-                    "Type": "TransformComponent",
-                    "Data": {
-                        "IsEnabled": true,
-                        "Position": {
-                            "x": 0.0,
-                            "y": 0.0
-                        },
-                        "Rotation": 0.0,
-                        "Scale": {
-                            "x": 1.0,
-                            "y": 1.0
-                        }
-                    }
-                },
-                {
-                    "Type": "UIImageComponent",
-                    "Data": {
-                        "IsEnabled": true,
-                        "TextureKey": "",
-                        "Size": {
-                            "x": 100.0,
-                            "y": 30.0
-                        },
-                        "Position": {
-                            "x": 0.0,
-                            "y": 0.0
-                        },
-                        "FillAmount": 1.0,
-                        "Opacity": 1.0,
-                        "ZOrder": 24464
-                    }
-                },
-                {
-                    "Type": "UITextComponent",
-                    "Data": {
-                        "IsEnabled": true
-                    }
-                },
-                {
-                    "Type": "UIButtonComponent",
-                    "Data": {
-                        "IsEnabled": true
+                        "HostBtnID": 8,
+                        "JoinBtnID": 8,
+                        "ExitBtnID": 8
                     }
                 }
             ]

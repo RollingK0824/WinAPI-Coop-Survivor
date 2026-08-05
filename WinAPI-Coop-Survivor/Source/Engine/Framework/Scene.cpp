@@ -300,3 +300,27 @@ void Scene::UpdateGameObjectIndices()
 	}
 }
 
+GameObject* Scene::FindGameObjectByName(const std::string& name) const
+{
+	for (GameObject* pObj : m_vGameObjects)
+	{
+		if (pObj != nullptr && pObj->GetName() == name)
+		{
+			return pObj;
+		}
+	}
+	return nullptr;
+}
+
+GameObject* Scene::FindGameObjectByInstanceID(uint64 instanceID) const
+{
+	for (GameObject* pObj : m_vGameObjects)
+	{
+		if (pObj != nullptr && pObj->GetInstanceID() == instanceID)
+		{
+			return pObj;
+		}
+	}
+	return nullptr;
+}
+

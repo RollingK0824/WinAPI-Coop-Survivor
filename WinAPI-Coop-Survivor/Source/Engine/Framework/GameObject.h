@@ -49,6 +49,7 @@ public:
 
 	const std::vector<Component*>& GetComponents()const { return m_vComponents; }
 	void Serialize(json& outJson)const;
+	void Deserialize(const json& inJson);
 
 	void SetSiblingIndex(int index);
 	int GetSiblingIndex() const;

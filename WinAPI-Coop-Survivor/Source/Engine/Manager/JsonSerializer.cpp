@@ -87,35 +87,9 @@ GameObject* JsonSerializer::InstantiateFromPrefabData(Scene* pScene, const json&
 json JsonSerializer::SerializeGameObject(GameObject* pObj)
 {
 	json objJson;
-	objJson[EngineKey::Property::Name.data()] = pObj->GetName();
-	objJson[EngineKey::Property::IsActive.data()] = pObj->IsActive();
-	objJson[EngineKey::Property::Components.data()] = std::vector<json>();
-
-	json transformJson;
-	std::string trName = pObj->transform.GetComponentType().data();
-	if (trName.empty())trName = EngineKey::Component::Trnasform.data();
-
-	transformJson[EngineKey::Property::Type.data()] = trName;
-
-	json transformData;
-	pObj->transform.Serialize(transformData);
-	transformJson[EngineKey::Property::Data.data()] = transformData;
-
-	objJson[EngineKey::Property::Components.data()].push_back(transformJson);
-
-	const auto& components = pObj->GetComponents();
-	for (auto* comp : components)
+	if (pObj != nullptr)
 	{
-		if (comp == nullptr)continue;
-
-		json compJson;
-		compJson[EngineKey::Property::Type.data()] = comp->GetComponentType();
-
-		json compData;
-		comp->Serialize(compData);
-		compJson[EngineKey::Property::Data.data()] = compData;
-
-		objJson[EngineKey::Property::Components.data()].push_back(compJson);
+		pObj->Serialize(objJson);
 	}
 	return objJson;
 }
@@ -124,14 +98,7 @@ void JsonSerializer::ApplyJsonToGameObject(GameObject* pObj, const json& objJson
 {
 	if (pObj == nullptr || objJson.empty()) return;
 
-	if (objJson.contains(EngineKey::Property::IsActive.data()))
-	{
-		pObj->SetActive(objJson[EngineKey::Property::IsActive.data()].get<bool>());
-	}
-	if (objJson.contains(EngineKey::Property::Name.data()))
-	{
-		pObj->SetName(objJson[EngineKey::Property::Name.data()].get<std::string>());
-	}
+	pObj->Deserialize(objJson);
 
 	if (objJson.contains(EngineKey::Property::Components.data()))
 	{

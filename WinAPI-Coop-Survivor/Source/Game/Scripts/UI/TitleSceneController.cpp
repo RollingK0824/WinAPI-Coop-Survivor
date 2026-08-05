@@ -20,6 +20,34 @@ TitleSceneController::TitleSceneController(GameObject* owner, TransformComponent
 void TitleSceneController::Awake()
 {
 	ScriptComponent::Awake();
+
+	Scene* pActiveScene = gameObject.GetOwnerScene();
+	if (pActiveScene != nullptr)
+	{
+		if (host_Btn == nullptr && m_hostBtnID != 0)
+		{
+			if (GameObject* pObj = pActiveScene->FindGameObjectByInstanceID(m_hostBtnID))
+			{
+				host_Btn = pObj->GetComponent<UIButtonComponent>();
+			}
+		}
+
+		if (join_Btn == nullptr && m_joinBtnID != 0)
+		{
+			if (GameObject* pObj = pActiveScene->FindGameObjectByInstanceID(m_joinBtnID))
+			{
+				join_Btn = pObj->GetComponent<UIButtonComponent>();
+			}
+		}
+
+		if (exit_Btn == nullptr && m_exitBtnID != 0)
+		{
+			if (GameObject* pObj = pActiveScene->FindGameObjectByInstanceID(m_exitBtnID))
+			{
+				exit_Btn = pObj->GetComponent<UIButtonComponent>();
+			}
+		}
+	}
 }
 
 void TitleSceneController::Start()
@@ -69,9 +97,39 @@ void TitleSceneController::OnClickExitBtn()
 void TitleSceneController::Serialize(json& outJson) const
 {
 	ScriptComponent::Serialize(outJson);
+
+	if (host_Btn != nullptr)
+	{
+		outJson["HostBtnID"] = host_Btn->gameObject.GetInstanceID();
+	}
+
+	if (join_Btn != nullptr)
+	{
+		outJson["JoinBtnID"] = join_Btn->gameObject.GetInstanceID();
+	}
+
+	if (exit_Btn != nullptr)
+	{
+		outJson["ExitBtnID"] = exit_Btn->gameObject.GetInstanceID();
+	}
 }
 
 void TitleSceneController::Deserialize(const json& inJson)
 {
 	ScriptComponent::Deserialize(inJson);
+
+	if (inJson.contains("HostBtnID"))
+	{
+		m_hostBtnID = inJson["HostBtnID"].get<uint64>();
+	}
+
+	if (inJson.contains("JoinBtnID"))
+	{
+		m_joinBtnID = inJson["JoinBtnID"].get<uint64>();
+	}
+
+	if (inJson.contains("ExitBtnID"))
+	{
+		m_exitBtnID = inJson["ExitBtnID"].get<uint64>();
+	}
 }
