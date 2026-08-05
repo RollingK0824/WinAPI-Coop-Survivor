@@ -11,6 +11,7 @@ GameObject::GameObject(Scene* pOwnerScene)
 	, m_bIsDead(false)
 	, transform(*(new TransformComponent(this)))
 {
+	m_instanceID = s_nextInstanceID++;
 	m_pTransform = &transform;
 }
 
@@ -90,6 +91,15 @@ void GameObject::Destroy()
 	if (m_pOwnerScene)
 	{
 		m_pOwnerScene->DestroyObjects(this);
+	}
+}
+
+void GameObject::SetInstanceID(uint64 id)
+{
+	m_instanceID = id;
+	if (id >= s_nextInstanceID)
+	{
+		s_nextInstanceID = id + 1;
 	}
 }
 

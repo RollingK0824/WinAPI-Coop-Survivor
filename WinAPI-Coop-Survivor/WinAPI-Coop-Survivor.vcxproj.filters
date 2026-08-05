@@ -75,7 +75,7 @@
     <ClInclude Include="Source\Engine\Framework\Scene.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Engine\Framework\Components\Render\RenderComponent.h">
+    <ClInclude Include="Source\Engine\Framework\Components\Core\RenderComponent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\Framework\Components\Core\TransformComponent.h">
@@ -204,7 +204,10 @@
     <ClInclude Include="Source\Engine\Editor\Panels\MainMenuBarPanel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Engine\Framework\Components\UI\UIComponent.h">
+    <ClInclude Include="Source\Engine\Framework\Components\Render\SpriteRendererComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Game\Scripts\UI\TitleSceneController.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -245,7 +248,7 @@
     <ClCompile Include="Source\Engine\Framework\Components\Core\ScriptComponent.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Engine\Framework\Components\Render\RenderComponent.cpp">
+    <ClCompile Include="Source\Engine\Framework\Components\Core\RenderComponent.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\Engine\Physics\PhysicsManager.cpp">
@@ -333,6 +336,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\Engine\Editor\Panels\ContentBrowserPanel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Engine\Framework\Components\Render\SpriteRendererComponent.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Game\Scripts\UI\TitleSceneController.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -6,9 +6,8 @@
 #include "Engine/Framework/GameObject.h"
 #include "Engine/Framework/Base/Component.h"
 #include "Engine/Framework/Components/Core/ScriptComponent.h"
-#include "Engine/Framework/Components/Render/RenderComponent.h"
+#include "Engine/Framework/Components/Core/RenderComponent.h"
 #include "Engine/Framework/Components/Core/TransformComponent.h"
-#include "Engine/Framework/Components/UI/UIComponent.h"
 
 Scene::~Scene()
 {
@@ -76,7 +75,7 @@ void Scene::Render()
 {
 	for (auto* renderComp : m_vRenderComponents)
 	{
-		if(renderComp == nullptr || !renderComp->IsEnabled() ||!renderComp->gameObject.IsActive()) continue;
+		if (renderComp == nullptr || !renderComp->IsEnabled() || !renderComp->gameObject.IsActive()) continue;
 
 		RenderCommand cmd = renderComp->GetRenderCommand();
 
@@ -90,14 +89,6 @@ void Scene::Render()
 		}
 
 		RenderSystem::GetInstance()->SubmitCommand(cmd);
-	}
-
-	for (auto* uiComp : m_vUIComponents)
-	{
-		if (uiComp != nullptr && uiComp->IsEnabled() && uiComp->gameObject.IsActive())
-		{
-			uiComp->RenderUI();
-		}
 	}
 }
 
@@ -154,16 +145,11 @@ void Scene::OnComponentAdded(Component* pComponent)
 			{
 				this->UnregisterRenderComponent(renderComp);
 			}
-
-			if (auto* uiComp = dynamic_cast<UIComponent*>(targetComp))
-			{
-				this->UnregisterUIComponent(uiComp);
-			}
 		});
 
 	m_vComponentCreationQueue.push_back(pComponent);
 }
- 
+
 void Scene::UnregisterScriptComponent(ScriptComponent* pComp)
 {
 	if (m_vUpdatableComponents.empty() || pComp == nullptr) return;
@@ -220,31 +206,6 @@ void Scene::UnregisterRenderComponent(RenderComponent* pComp)
 	m_vRenderComponents.pop_back();
 }
 
-void Scene::UnregisterUIComponent(UIComponent* pComp)
-{
-	if (m_vUIComponents.empty() || pComp == nullptr) return;
-	size_t deleteIdx = pComp->GetSceneVectorIndex();
-	if (deleteIdx >= m_vUIComponents.size() || m_vUIComponents[deleteIdx] != pComp)
-	{
-		auto it = std::find(m_vUIComponents.begin(), m_vUIComponents.end(), pComp);
-		if (it != m_vUIComponents.end())
-		{
-			deleteIdx = std::distance(m_vUIComponents.begin(), it);
-		}
-		else
-		{
-			return;
-		}
-	}
-	size_t lastIdx = m_vUIComponents.size() - 1;
-	if (deleteIdx != lastIdx)
-	{
-		m_vUIComponents[deleteIdx] = m_vUIComponents[lastIdx];
-		m_vUIComponents[deleteIdx]->SetSceneVectorIndex(deleteIdx);
-	}
-	m_vUIComponents.pop_back();
-}
-
 void Scene::DestroyObjects(GameObject* pObj)
 {
 	if (pObj == nullptr)return;
@@ -290,13 +251,6 @@ void Scene::PostFrameCleanUp()
 				pComp->SetSceneVectorIndex(m_vRenderComponents.size());
 				m_vRenderComponents.push_back(renderComp);
 			}
-
-			if (auto* uiComp = dynamic_cast<UIComponent*>(pComp))
-			{
-				pComp->SetSceneVectorIndex(m_vUIComponents.size());
-				m_vUIComponents.push_back(uiComp);
-			}
-
 		}
 		m_vComponentCreationQueue.clear();
 	}

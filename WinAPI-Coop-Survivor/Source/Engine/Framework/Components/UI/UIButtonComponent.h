@@ -1,5 +1,7 @@
+// Source/Engine/Framework/Components/UI/UIButtonComponent.h
 #pragma once
 #include "Engine/Framework/Components/Core/ScriptComponent.h"
+#include <functional>
 
 class UIImageComponent;
 
@@ -16,6 +18,9 @@ public:
 
 	virtual void Awake() override;
 	virtual void Update(float dt) override;
+
+	virtual void Serialize(json& outJson) const override;
+	virtual void Deserialize(const json& inJson) override;
 
 	virtual std::string_view GetComponentType() const override
 	{

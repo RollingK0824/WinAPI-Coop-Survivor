@@ -2,7 +2,7 @@
 #include "Engine/Framework/Components/Core/ScriptComponent.h"
 #include "Engine/Renderer/Sprite.h"
 
-class RenderComponent;
+class SpriteRendererComponent;
 
 class AnimatorComponent : public ScriptComponent
 {
@@ -27,12 +27,15 @@ public:
 	}
 
 	virtual std::string_view GetComponentType() const override { return EngineKey::Component::Animator; }
+
 	virtual void Serialize(json& outJson)const override;
 	virtual void Deserialize(const json& inJson)override;
+
 private:
-	RenderComponent* m_pRenderComp = nullptr;
+	SpriteRendererComponent* m_pSpriteRenderer = nullptr;
 
 	std::unordered_map<std::wstring, AnimationClip>m_MapClips;
+	std::vector<std::string> m_vClipKeys;
 	AnimationClip* m_pCurrentClip = nullptr;
 
 	int m_CurrentFrameIdx = 0;

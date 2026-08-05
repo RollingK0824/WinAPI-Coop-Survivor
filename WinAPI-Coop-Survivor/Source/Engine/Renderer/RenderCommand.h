@@ -5,6 +5,8 @@
 enum class RenderType : uint8
 {
 	BITMAP,
+	TEXT,
+	RECT,
 	DEBUG_RECT,
 	DEBUG_CIRCLE,
 	Debug_LINE,
@@ -49,7 +51,7 @@ struct RenderCommand
 	float rotation = 0.0f;
 	float scaleX = 1.0f;
 	float scaleY = 1.0f;
-	int16 zOrder = 0;
+	int32 zOrder = 0;
 	RenderType type = RenderType::BITMAP;
 	bool isUI = false;
 
