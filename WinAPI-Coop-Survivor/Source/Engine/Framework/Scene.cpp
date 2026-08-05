@@ -215,51 +215,65 @@ void Scene::DestroyObjects(GameObject* pObj)
 
 void Scene::PostFrameCleanUp()
 {
-	if (!m_vCreationQueue.empty())
+	int iterationCount = 0;
+	constexpr int MAX_CREATION_ITERATIONS = 100;
+
+	while (!m_vCreationQueue.empty() || !m_vComponentCreationQueue.empty())
 	{
-		for (GameObject* pObj : m_vCreationQueue)
+		if (++iterationCount > MAX_CREATION_ITERATIONS)
 		{
-			if (pObj == nullptr)continue;
-			pObj->SetSceneIndex(m_vGameObjects.size());
-			m_vGameObjects.push_back(pObj);
+			break;
 		}
-		m_vCreationQueue.clear();
-	}
 
-	if (!m_vComponentCreationQueue.empty())
-	{
-		for (Component* pComp : m_vComponentCreationQueue)
+		if (!m_vCreationQueue.empty())
 		{
-			if (pComp == nullptr)continue;
+			std::vector<GameObject*> tempObjQueue;
+			tempObjQueue.swap(m_vCreationQueue);
 
-
-			if (EngineKernel::GetInstance()->GetPlayState() == EnginePlayState::Play)
+			for (GameObject* pObj : tempObjQueue)
 			{
-				pComp->Awake();
-				pComp->Start();
-				pComp->OnEnable();
-			}
-
-			if (auto* updatable = dynamic_cast<ScriptComponent*>(pComp))
-			{
-				pComp->SetSceneVectorIndex(m_vUpdatableComponents.size());
-				m_vUpdatableComponents.push_back(updatable);
-			}
-
-			if (auto* renderComp = dynamic_cast<RenderComponent*>(pComp))
-			{
-				pComp->SetSceneVectorIndex(m_vRenderComponents.size());
-				m_vRenderComponents.push_back(renderComp);
+				if (pObj == nullptr) continue;
+				pObj->SetSceneIndex(m_vGameObjects.size());
+				m_vGameObjects.push_back(pObj);
 			}
 		}
-		m_vComponentCreationQueue.clear();
+
+		if (!m_vComponentCreationQueue.empty())
+		{
+			std::vector<Component*> tempCompQueue;
+			tempCompQueue.swap(m_vComponentCreationQueue);
+
+			for (Component* pComp : tempCompQueue)
+			{
+				if (pComp == nullptr) continue;
+
+				if (EngineKernel::GetInstance()->GetPlayState() == EnginePlayState::Play)
+				{
+					pComp->Awake();
+					pComp->Start();
+					pComp->OnEnable();
+				}
+
+				if (auto* updatable = dynamic_cast<ScriptComponent*>(pComp))
+				{
+					pComp->SetSceneVectorIndex(m_vUpdatableComponents.size());
+					m_vUpdatableComponents.push_back(updatable);
+				}
+
+				if (auto* renderComp = dynamic_cast<RenderComponent*>(pComp))
+				{
+					pComp->SetSceneVectorIndex(m_vRenderComponents.size());
+					m_vRenderComponents.push_back(renderComp);
+				}
+			}
+		}
 	}
 
 	if (!m_vDestroyQueue.empty())
 	{
 		for (GameObject* pObj : m_vDestroyQueue)
 		{
-			if (pObj == nullptr)continue;
+			if (pObj == nullptr) continue;
 
 			size_t targetIdx = pObj->GetSceneIndex();
 			size_t lastIdx = m_vGameObjects.size() - 1;
