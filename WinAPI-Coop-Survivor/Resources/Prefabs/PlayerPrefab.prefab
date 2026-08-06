@@ -1,6 +1,6 @@
 {
-    "Name": "TempPlayer",
-    "InstanceID": 25,
+    "Name": "PlayerPrefab",
+    "InstanceID": 55,
     "IsActive": true,
     "Components": [
         {
@@ -31,14 +31,40 @@
                     "b": 1.0,
                     "a": 1.0
                 },
-                "TextureKey": "Imeldat.png",
+                "SpriteKey": "Imeldat/Imeldat.png",
+                "Size": {
+                    "x": 320.0,
+                    "y": 340.0
+                },
+                "Pivot": {
+                    "x": 0.5,
+                    "y": 0.5
+                },
+                "Offset": {
+                    "x": 0.0,
+                    "y": 0.0
+                },
                 "FlipX": false,
-                "FlipY": false,
-                "SrcRect": {
-                    "left": 0.0,
-                    "top": 0.0,
-                    "right": 320.0,
-                    "bottom": 340.0
+                "FlipY": false
+            }
+        },
+        {
+            "Type": "BoxColliderComponent",
+            "Data": {
+                "IsEnabled": true,
+                "Offset": {
+                    "x": 0.0,
+                    "y": 0.0
+                },
+                "Density": 1.0,
+                "IsSensor": false,
+                "BodyType": 2,
+                "FixedRotation": true,
+                "CategoryBits": 1,
+                "MaskBits": -1,
+                "Size": {
+                    "x": 0.0,
+                    "y": 0.0
                 }
             }
         },
@@ -46,17 +72,6 @@
             "Type": "Player",
             "Data": {
                 "IsEnabled": true
-            }
-        },
-        {
-            "Type": "BoxColliderComponent",
-            "Data": {
-                "IsEnabled": true,
-                "Density": 1.0,
-                "IsSensor": false,
-                "BodyType": 2,
-                "HalfWidth": 0.0,
-                "HalfHeight": 0.0
             }
         }
     ]

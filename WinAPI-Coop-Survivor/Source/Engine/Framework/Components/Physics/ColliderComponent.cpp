@@ -6,6 +6,7 @@
 ColliderComponent::ColliderComponent(GameObject* owner, TransformComponent* transform)
 	: Component(owner, transform)
 {
+	ExposeVariable("Offset", &m_offset);
 	ExposeVariable("Density", &m_density);
 	ExposeVariable("IsSensor", &m_bIsSensor);
 	ExposeVariable("BodyType", reinterpret_cast<int*>(&m_BodyType));

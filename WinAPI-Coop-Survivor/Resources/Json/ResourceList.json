@@ -2,15 +2,18 @@
   "Textures": [
     {
       "Key": "TempBackground.jpg",
-      "Path": "Resources/Texture/TempBackground.jpg"
+      "Path": "Resources/Texture/TempBackground.jpg",
+      "AtlasPath": "Resources/Texture/TempBackground.json"
     },
     {
       "Key": "introBG.png",
-      "Path": "Resources/Texture/introBG.png"
+      "Path": "Resources/Texture/introBG.png",
+      "AtlasPath": "Resources/Texture/introBG.json"
     },
     {
       "Key": "Imeldat.png",
-      "Path": "Resources/Texture/Imeldat.png"
+      "Path": "Resources/Texture/Imeldat.png",
+      "AtlasPath": "Resources/Texture/Imeldat.json"
     },
     {
       "Key": "tilemap_packed.png",

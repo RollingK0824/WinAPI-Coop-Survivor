@@ -31,7 +31,7 @@ protected:
 		if (m_Radius <= 0.0f) return b2_nullShapeId;
 
 		b2Circle circle;
-		circle.center = b2Vec2{ 0.0f, 0.0f };
+		circle.center = b2Vec2{ PixelToMeter(m_offset.x), PixelToMeter(m_offset.y) };
 		circle.radius = PixelToMeter(m_Radius);
 		return b2CreateCircleShape(bodyId, shapeDef, &circle);
 	}

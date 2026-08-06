@@ -106,6 +106,7 @@ public:
 	void ExposeVariable(const std::string& name, std::string* var) { m_vProperties.push_back({ name, PropType::String, var }); }
 	void ExposeVariable(const std::string& name, std::wstring* var) { m_vProperties.push_back({ name, PropType::WString, var }); }
 	void ExposeVariable(const std::string& name, Vector2* var) { m_vProperties.push_back({ name, PropType::Vector2, var }); }
+	void ExposeVariable(const std::string& name, D2D1_POINT_2F* var) { m_vProperties.push_back({ name, PropType::Point2F, var }); }
 	void ExposeVariable(const std::string& name, D2D1_COLOR_F* var) { m_vProperties.push_back({ name, PropType::Color, var }); }
 	void ExposeVariable(const std::string& name, D2D1_RECT_F* var) { m_vProperties.push_back({ name, PropType::Rect, var }); }
 	void ExposeVariable(const std::string& name, std::vector<std::string>* var) { m_vProperties.push_back({ name, PropType::StringVector, var }); }

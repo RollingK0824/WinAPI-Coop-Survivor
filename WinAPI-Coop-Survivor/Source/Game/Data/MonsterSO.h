@@ -15,7 +15,8 @@ public:
 	float GetAttackDamage() const { return m_attackDamage; }
 	float GetColliderRadius() const { return m_colliderRadius; }
 	int32 GetExpAmount() const { return m_expAmount; }
-	const std::wstring& GetTextureKey() const { return m_textureKey; }
+	const std::wstring& GetSpriteKey() const { return m_spriteKey; }
+	const std::wstring& GetTextureKey() const { return m_spriteKey; }
 
 private:
 	float m_maxHP = 100.0f;
@@ -23,5 +24,5 @@ private:
 	float m_attackDamage = 10.0f;
 	float m_colliderRadius = 20.0f;
 	int32 m_expAmount = 10;
-	std::wstring m_textureKey = L"";
+	std::wstring m_spriteKey = L"";
 };

@@ -11,7 +11,7 @@ public:
 	RenderComponent(GameObject* owner, TransformComponent* transform);
 	virtual ~RenderComponent() override = default;
 
-	const RenderCommand& GetRenderCommand() const { return m_RenderCommand; }
+	virtual const RenderCommand& GetRenderCommand() { return m_RenderCommand; }
 	void SetZOrder(int zOrder) { m_RenderCommand.zOrder = zOrder; }
 	void SetOpacity(float opacity) { m_RenderCommand.bitmap.opacity = opacity; }
 	void SetColor(const D2D1::ColorF& color) { m_RenderCommand.color = color; }

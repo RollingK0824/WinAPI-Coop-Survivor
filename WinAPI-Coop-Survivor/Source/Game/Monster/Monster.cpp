@@ -135,7 +135,7 @@ void Monster::UpdateTargetSearch(float fixedDt)
 	if (!pScene) return;
 
 	float currentTargetDist = (std::numeric_limits<float>::max)();
-	if (m_targetPlayer.IsValid() && m_targetPlayer->IsActive())
+	if (m_targetPlayer.IsValid() && !m_targetPlayer->IsDead() && m_targetPlayer->IsActive())
 	{
 		currentTargetDist = Vector2::Distance(transform.GetPosition(), m_targetPlayer->transform.GetPosition());
 	}
@@ -150,7 +150,7 @@ void Monster::UpdateTargetSearch(float fixedDt)
 	const auto& sceneObjects = pScene->GetGameObjects();
 	for (const auto& pObj : sceneObjects)
 	{
-		if (!pObj || !pObj->IsActive()) continue;
+		if (!pObj || pObj->IsDead() || !pObj->IsActive()) continue;
 
 		if (pObj->GetComponent<Player>())
 		{
@@ -169,7 +169,7 @@ void Monster::UpdateTargetSearch(float fixedDt)
 
 void Monster::UpdateAI(float fixedDt)
 {
-	if (!m_targetPlayer.IsValid() || !m_targetPlayer->IsActive())
+	if (!m_targetPlayer.IsValid() || m_targetPlayer->IsDead() || !m_targetPlayer->IsActive())
 	{
 		m_state = EMonsterState::Chase;
 		return;

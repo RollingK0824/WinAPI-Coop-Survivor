@@ -76,7 +76,11 @@ public:
 
 	void SetInstanceID(uint64 id);
 	uint64 GetInstanceID() const { return m_instanceID; }
+
+	void RegisterObserverPtr(void** pObserverPtr);
+	void UnregisterObserverPtr(void** pObserverPtr);
 private:
+	std::vector<void**> m_vObservers;
 	void RegisterComponentToScene(Component* comp);
 
 	static inline uint64 s_nextInstanceID = 1;

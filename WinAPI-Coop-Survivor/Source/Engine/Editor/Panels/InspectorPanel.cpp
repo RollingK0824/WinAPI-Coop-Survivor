@@ -554,6 +554,22 @@ void InspectorPanel::DrawComponents(GameObject* pObj)
 				}
 				break;
 
+				case PropType::Point2F:
+				{
+					D2D1_POINT_2F* pt = static_cast<D2D1_POINT_2F*>(prop.data);
+					float itemW = (ImGui::GetContentRegionAvail().x - 30.0f) * 0.5f;
+					if (itemW < 35.0f) itemW = 35.0f;
+
+					ImGui::Text("X"); ImGui::SameLine();
+					ImGui::SetNextItemWidth(itemW);
+					LeftDragFloat(("##" + prop.name + "X").c_str(), &pt->x, 0.01f, "%.3f");
+					ImGui::SameLine();
+					ImGui::Text("Y"); ImGui::SameLine();
+					ImGui::SetNextItemWidth(itemW);
+					LeftDragFloat(("##" + prop.name + "Y").c_str(), &pt->y, 0.01f, "%.3f");
+				}
+				break;
+
 				case PropType::Color:
 				{
 					D2D1_COLOR_F* color = static_cast<D2D1_COLOR_F*>(prop.data);
@@ -598,9 +614,30 @@ void InspectorPanel::DrawComponents(GameObject* pObj)
 					std::wstring* wKey = static_cast<std::wstring*>(prop.data);
 					std::string keyStr(wKey->begin(), wKey->end());
 
-					ID3D11ShaderResourceView* pSRV = ResourceManager::GetInstance()->GetTextureSRV(*wKey);
-					if (pSRV) ImGui::Image((ImTextureID)pSRV, ImVec2(35.0f, 35.0f));
-					else ImGui::Button("No Image", ImVec2(35.0f, 35.0f));
+					const Sprite* pPreviewSprite = ResourceManager::GetInstance()->GetSprite(*wKey);
+					bool bRenderedPreview = false;
+
+					if (pPreviewSprite != nullptr && pPreviewSprite->pTexture != nullptr)
+					{
+						ID3D11ShaderResourceView* pSRV = ResourceManager::GetInstance()->GetTextureSRV(pPreviewSprite->pTexture);
+						if (pSRV != nullptr)
+						{
+							D2D1_SIZE_F texSz = pPreviewSprite->pTexture->GetSize();
+							if (texSz.width > 0.0f && texSz.height > 0.0f)
+							{
+								ImVec2 uv0(pPreviewSprite->srcRect.left / texSz.width, pPreviewSprite->srcRect.top / texSz.height);
+								ImVec2 uv1(pPreviewSprite->srcRect.right / texSz.width, pPreviewSprite->srcRect.bottom / texSz.height);
+
+								ImGui::Image((ImTextureID)pSRV, ImVec2(35.0f, 35.0f), uv0, uv1);
+								bRenderedPreview = true;
+							}
+						}
+					}
+
+					if (!bRenderedPreview)
+					{
+						ImGui::Button("No Image", ImVec2(35.0f, 35.0f));
+					}
 					ImGui::SameLine();
 
 					std::string btnLabel = keyStr.empty() ? "Select..." : keyStr;
@@ -622,15 +659,15 @@ void InspectorPanel::DrawComponents(GameObject* pObj)
 					}
 					if (ImGui::BeginPopup("TexturePickerPopup"))
 					{
-						auto loadedTextureKeys = ResourceManager::GetInstance()->GetLoadedTextureKeys();
-						for (const auto& keyName : loadedTextureKeys)
+						auto loadedSpriteKeys = ResourceManager::GetInstance()->GetLoadedSpriteKeys();
+						for (const auto& keyName : loadedSpriteKeys)
 						{
 							if (ImGui::Selectable(keyName.c_str()))
 							{
 								*wKey = std::wstring(keyName.begin(), keyName.end());
 								if (SpriteRendererComponent* spriteComp = dynamic_cast<SpriteRendererComponent*>(comp))
 								{
-									spriteComp->SetTextureKey(*wKey);
+									spriteComp->SetSpriteKey(*wKey);
 								}
 								else if (UIImageComponent* uiImg = dynamic_cast<UIImageComponent*>(comp))
 								{

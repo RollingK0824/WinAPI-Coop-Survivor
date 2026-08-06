@@ -37,6 +37,13 @@ public:
 	uint32 GetMaskBits() const { return m_maskBits; }
 	b2Filter GetFilter() const;
 
+	void SetOffset(const Vector2& offset) 
+	{
+		m_offset = offset; 
+		RebuildShape();
+	}
+	Vector2 GetOffset() const { return m_offset; }
+
 	float m_density = 1.0f;
 	bool m_bIsSensor = false;
 
@@ -52,4 +59,6 @@ protected:
 	uint32 m_maskBits = PhysicsLayer::All;
 
 	size_t m_PhysicsVectorIndex = 0;
+
+	Vector2 m_offset = { 0.0f,0.0f };
 };

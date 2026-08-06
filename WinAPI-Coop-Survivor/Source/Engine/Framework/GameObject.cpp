@@ -17,6 +17,17 @@ GameObject::GameObject(Scene* pOwnerScene)
 
 GameObject::~GameObject()
 {
+	m_bIsDead = true;
+
+	for (void** observerPtr : m_vObservers)
+	{
+		if (observerPtr)
+		{
+			*observerPtr = nullptr;
+		}
+	}
+	m_vObservers.clear();
+
 	if (EditorSystem::GetInstance()->GetSelectedObject() == this)
 	{
 		EditorSystem::GetInstance()->SetSelectedObject(nullptr);
@@ -249,5 +260,22 @@ void GameObject::SetActive(bool active)
 				comp->OnDisable();
 			}
 		}
+	}
+}
+
+void GameObject::RegisterObserverPtr(void** pObserverPtr)
+{
+	if (pObserverPtr && std::find(m_vObservers.begin(), m_vObservers.end(), pObserverPtr) == m_vObservers.end())
+	{
+		m_vObservers.push_back(pObserverPtr);
+	}
+}
+
+void GameObject::UnregisterObserverPtr(void** pObserverPtr)
+{
+	auto it = std::find(m_vObservers.begin(), m_vObservers.end(), pObserverPtr);
+	if (it != m_vObservers.end())
+	{
+		m_vObservers.erase(it);
 	}
 }

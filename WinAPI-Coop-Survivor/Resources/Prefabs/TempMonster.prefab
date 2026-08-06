@@ -1,86 +1,96 @@
 {
-  "Name": "TempMonster",
-  "InstanceID": 32,
-  "IsActive": true,
-  "Components": [
-    {
-      "Type": "TransformComponent",
-      "Data": {
-        "IsEnabled": true,
-        "Position": {
-          "x": 0.0,
-          "y": 0.0
+    "Name": "TempMonster",
+    "InstanceID": 48,
+    "IsActive": true,
+    "Components": [
+        {
+            "Type": "TransformComponent",
+            "Data": {
+                "IsEnabled": true,
+                "Position": {
+                    "x": 0.0,
+                    "y": 0.0
+                },
+                "Rotation": 0.0,
+                "Scale": {
+                    "x": 1.0,
+                    "y": 1.0
+                }
+            }
         },
-        "Rotation": 0.0,
-        "Scale": {
-          "x": 1.0,
-          "y": 1.0
-        }
-      }
-    },
-    {
-      "Type": "SpriteRendererComponent",
-      "Data": {
-        "IsEnabled": true,
-        "RenderType": 0,
-        "ZOrder": 0,
-        "Opacity": 1.0,
-        "Color": {
-          "r": 1.0,
-          "g": 1.0,
-          "b": 1.0,
-          "a": 1.0
+        {
+            "Type": "SpriteRendererComponent",
+            "Data": {
+                "IsEnabled": true,
+                "RenderType": 0,
+                "ZOrder": 0,
+                "Opacity": 1.0,
+                "Color": {
+                    "r": 1.0,
+                    "g": 1.0,
+                    "b": 1.0,
+                    "a": 1.0
+                },
+                "SpriteKey": "Characeter_Green/Character0.png",
+                "Size": {
+                    "x": 16.0,
+                    "y": 16.0
+                },
+                "Pivot": {
+                    "x": 0.5,
+                    "y": 0.5
+                },
+                "Offset": {
+                    "x": 0.0,
+                    "y": 0.0
+                },
+                "FlipX": false,
+                "FlipY": false
+            }
         },
-        "TextureKey": "Characeter_Green.png",
-        "FlipX": false,
-        "FlipY": false,
-        "SrcRect": {
-          "left": 0.0,
-          "top": 0.0,
-          "right": 96.0,
-          "bottom": 16.0
+        {
+            "Type": "AnimatorComponent",
+            "Data": {
+                "IsEnabled": true,
+                "IsPlaying": true,
+                "CurrentFrameIdx": 0,
+                "AccumulatedTime": 0.0,
+                "ClipKeys": [
+                    "Green_Player_Run",
+                    "Green_Player_Die"
+                ],
+                "DefaultPlay": "Green_Player_Run"
+            }
+        },
+        {
+            "Type": "CircleColliderComponent",
+            "Data": {
+                "IsEnabled": true,
+                "Offset": {
+                    "x": 0.0,
+                    "y": 0.0
+                },
+                "Density": 1.0,
+                "IsSensor": false,
+                "BodyType": 2,
+                "FixedRotation": true,
+                "CategoryBits": 1,
+                "MaskBits": -1,
+                "Radius": 0.0
+            }
+        },
+        {
+            "Type": "Monster",
+            "Data": {
+                "IsEnabled": true,
+                "MonsterSO": 101,
+                "CurrentHP": 100.0,
+                "MaxHP": 100.0,
+                "MoveSpeed": 120.0,
+                "AttackDamage": 10.0,
+                "AttackRange": 40.0,
+                "AttackCooldown": 1.0
+            }
         }
-      }
-    },
-    {
-      "Type": "AnimatorComponent",
-      "Data": {
-        "IsEnabled": true,
-        "IsPlaying": true,
-        "CurrentFrameIdx": 0,
-        "AccumulatedTime": 0.0,
-        "ClipKeys": [
-          "Green_Player_Run",
-          "Green_Player_Die"
-        ],
-        "DefaultPlay": "Green_Player_Run"
-      }
-    },
-    {
-      "Type": "CircleColliderComponent",
-      "Data": {
-        "IsEnabled": true,
-        "Density": 1.0,
-        "IsSensor": false,
-        "BodyType": 2,
-        "FixedRotation": true,
-        "CategoryBits": 1,
-        "MaskBits": -1,
-        "Radius": 48.0
-      }
-    },
-    {
-      "Type": "Monster",
-      "Data": {
-        "IsEnabled": true,
-        "MonsterSO": 101,
-        "CurrentHP": 0.0,
-        "MaxHP": 0.0,
-        "MoveSpeed": 0.0,
-        "AttackDamage": 0.0,
-        "AttackRange": 0.0,
-        "AttackCooldown": 0.0
-      }
-    }
-  ]
+    ]
 }

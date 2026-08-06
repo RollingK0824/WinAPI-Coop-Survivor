@@ -14,22 +14,25 @@ UIPanelComponent::UIPanelComponent(GameObject* owner, TransformComponent* transf
 	m_RenderCommand.zOrder = 9999;
 	m_RenderCommand.color = D2D1::ColorF(0.0f, 0.0f, 0.0f, 0.6f);
 
-	ExposeTexture("TextureKey", &m_textureKey);
+	ExposeTexture("SpriteKey", &m_spriteKey);
 	ExposeVariable("Size", &m_size);
 	ExposeVariable("RenderBackground", &m_bRenderBackground);
 }
 
-void UIPanelComponent::SetTextureKey(const std::wstring& textureKey)
+void UIPanelComponent::SetSpriteKey(const std::wstring& spriteKey)
 {
-	m_textureKey = textureKey;
-	m_RenderCommand.bitmap.pTexture = ResourceManager::GetInstance()->GetTexture(textureKey);
-	if (m_RenderCommand.bitmap.pTexture != nullptr)
+	m_spriteKey = spriteKey;
+	const Sprite* pSprite = ResourceManager::GetInstance()->GetSprite(spriteKey);
+	if (pSprite != nullptr && pSprite->pTexture != nullptr)
 	{
 		m_RenderCommand.type = RenderType::BITMAP;
+		m_RenderCommand.isUI = true;
+		m_RenderCommand.bitmap.sprite = *pSprite;
 	}
 	else
 	{
 		m_RenderCommand.type = RenderType::RECT;
+		m_RenderCommand.isUI = true;
 	}
 }
 
@@ -38,9 +41,9 @@ void UIPanelComponent::PostDeserialize(Scene* pScene)
 	RenderComponent::PostDeserialize(pScene);
 
 	m_RenderCommand.isUI = true;
-	if (!m_textureKey.empty())
+	if (!m_spriteKey.empty())
 	{
-		SetTextureKey(m_textureKey);
+		SetSpriteKey(m_spriteKey);
 	}
 	else
 	{

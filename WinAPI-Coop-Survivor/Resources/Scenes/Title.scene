@@ -74,15 +74,21 @@
                             "b": 1.0,
                             "a": 1.0
                         },
-                        "TextureKey": "introBG.png",
+                        "SpriteKey": "introBG/introBG.png",
+                        "Size": {
+                            "x": 1920.0,
+                            "y": 1080.0
+                        },
+                        "Pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "Offset": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
                         "FlipX": false,
-                        "FlipY": false,
-                        "SrcRect": {
-                            "left": 0.0,
-                            "top": 0.0,
-                            "right": 1920.0,
-                            "bottom": 1080.0
-                        }
+                        "FlipY": false
                     }
                 }
             ]
@@ -151,20 +157,22 @@
                             "b": 1.0,
                             "a": 1.0
                         },
-                        "TextureKey": "tilemap_packed.png",
+                        "SpriteKey": "tilemap_packed.png",
                         "Size": {
-                            "x": 416.0,
-                            "y": 224.0
+                            "x": 95.0,
+                            "y": 27.0
+                        },
+                        "Pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "Offset": {
+                            "x": 0.0,
+                            "y": 0.0
                         },
                         "FillAmount": 1.0,
                         "FlipX": false,
-                        "FlipY": false,
-                        "SrcRect": {
-                            "left": 128.0,
-                            "top": 194.0,
-                            "right": 223.0,
-                            "bottom": 221.0
-                        }
+                        "FlipY": false
                     }
                 },
                 {
@@ -226,20 +234,22 @@
                             "b": 1.0,
                             "a": 1.0
                         },
-                        "TextureKey": "tilemap_packed.png",
+                        "SpriteKey": "tilemap_packed.png",
                         "Size": {
-                            "x": 416.0,
-                            "y": 224.0
+                            "x": 95.0,
+                            "y": 27.0
+                        },
+                        "Pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "Offset": {
+                            "x": 0.0,
+                            "y": 0.0
                         },
                         "FillAmount": 1.0,
                         "FlipX": false,
-                        "FlipY": false,
-                        "SrcRect": {
-                            "left": 128.0,
-                            "top": 194.0,
-                            "right": 223.0,
-                            "bottom": 221.0
-                        }
+                        "FlipY": false
                     }
                 },
                 {
@@ -301,20 +311,22 @@
                             "b": 1.0,
                             "a": 1.0
                         },
-                        "TextureKey": "tilemap_packed.png",
+                        "SpriteKey": "tilemap_packed.png",
                         "Size": {
-                            "x": 416.0,
-                            "y": 224.0
+                            "x": 95.0,
+                            "y": 27.0
+                        },
+                        "Pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "Offset": {
+                            "x": 0.0,
+                            "y": 0.0
                         },
                         "FillAmount": 1.0,
                         "FlipX": false,
-                        "FlipY": false,
-                        "SrcRect": {
-                            "left": 128.0,
-                            "top": 194.0,
-                            "right": 223.0,
-                            "bottom": 221.0
-                        }
+                        "FlipY": false
                     }
                 },
                 {
