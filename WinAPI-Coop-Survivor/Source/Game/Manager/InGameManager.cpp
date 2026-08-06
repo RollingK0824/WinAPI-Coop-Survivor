@@ -9,6 +9,7 @@
 #include "Engine/Framework/Components/Network/NetworkIdentity.h"
 #include "Engine/Manager/DebugManager.h"
 #include "Game/Player/Player.h"
+#include "Game/Monster/MonsterSpawner.h"
 
 static ComponentRegistrar<InGameManager> registrar(EngineKey::CustomComponent::InGameManager.data());
 
@@ -22,6 +23,12 @@ void InGameManager::Start()
 	if (pScene)
 	{
 		DebugManager::GetInstance()->CreateDebugUIOverlay(pScene);
+	}
+
+	// MonsterSpawner 연동
+	if (!gameObject.GetComponent<MonsterSpawner>())
+	{
+		gameObject.AddComponent<MonsterSpawner>();
 	}
 
 	NetworkManager* net = NetworkManager::GetInstance();
@@ -79,7 +86,6 @@ void InGameManager::Start()
 			}
 		});
 
-	// CLIENT_DISCONN 수신 시 해당 플레이어 씬 및 매니저 맵에서 제거 (Despawn)
 	net->RegisterPacketHandler(PacketType::CLIENT_DISCONN,
 		[this](const PacketHeader* packet, const sockaddr_in& sender) {
 			auto disconnPkt = reinterpret_cast<const ClientDisconnPacket*>(packet);

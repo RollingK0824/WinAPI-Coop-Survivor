@@ -17,7 +17,8 @@ enum class PropType
 	Rect,
 	StringVector,
 	Texture,
-	ObjectRef
+	ObjectRef,
+	Asset
 };
 
 struct ExposedProperty

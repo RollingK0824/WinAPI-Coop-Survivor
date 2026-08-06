@@ -201,6 +201,7 @@
     <ClInclude Include="Source\Engine\Framework\Base\IRenderable.h" />
     <ClInclude Include="Source\Engine\Framework\Base\ISystem.h" />
     <ClInclude Include="Source\Engine\Framework\Base\IUpdatable.h" />
+    <ClInclude Include="Source\Game\Interface\IDamageable.h" />
     <ClInclude Include="Source\Engine\Renderer\RenderGizmo.h" />
     <ClInclude Include="Source\Engine\Renderer\RenderSystem.h" />
     <ClInclude Include="Source\Engine\Core\EngineKernel.h" />
@@ -224,6 +225,8 @@
     <ClInclude Include="Source\Game\UI\TitleSceneController.h" />
     <ClInclude Include="Source\Engine\Framework\Base\ScriptableObject.h" />
     <ClInclude Include="Source\Game\Data\MonsterSO.h" />
+    <ClInclude Include="Source\Game\Monster\Monster.h" />
+    <ClInclude Include="Source\Game\Monster\MonsterSpawner.h" />
     <ClInclude Include="Source\Engine\Manager\DataManager.h" />
   </ItemGroup>
   <ItemGroup>
@@ -281,6 +284,8 @@
     <ClCompile Include="Source\Game\UI\TitleSceneController.cpp" />
     <ClCompile Include="Source\Engine\Framework\Base\ScriptableObject.cpp" />
     <ClCompile Include="Source\Game\Data\MonsterSO.cpp" />
+    <ClCompile Include="Source\Game\Monster\Monster.cpp" />
+    <ClCompile Include="Source\Game\Monster\MonsterSpawner.cpp" />
     <ClCompile Include="Source\Engine\Manager\DataManager.cpp" />
   </ItemGroup>
   <ItemGroup>

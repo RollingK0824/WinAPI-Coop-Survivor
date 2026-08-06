@@ -1,6 +1,7 @@
 #include "Engine/Core/pch.h"
 #include "ColliderComponent.h"
 #include "Engine/Physics/PhysicsManager.h"
+#include "Engine/Framework/GameObject.h"
 
 ColliderComponent::ColliderComponent(GameObject* owner, TransformComponent* transform)
 	: Component(owner, transform)

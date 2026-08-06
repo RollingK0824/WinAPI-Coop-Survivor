@@ -97,6 +97,9 @@ void Component::Serialize(json& outJson) const
 			outJson[prop.name] = id;
 		}
 		break;
+		case PropType::Asset:
+			outJson[prop.name] = *static_cast<uint32*>(prop.data);
+			break;
 		}
 	}
 }
@@ -202,6 +205,9 @@ void Component::Deserialize(const json& inJson)
 			}
 		}
 		break;
+		case PropType::Asset:
+			if (pVal->is_number()) *static_cast<uint32*>(prop.data) = pVal->get<uint32>();
+			break;
 		}
 	}
 }

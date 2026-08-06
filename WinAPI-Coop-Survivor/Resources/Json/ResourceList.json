@@ -16,6 +16,11 @@
       "Key": "tilemap_packed.png",
       "Path": "Resources/Texture/tilemap_packed.png",
       "AtlasPath": "Resources/Texture/tilemap_packed.json"
+    },
+    {
+      "Key": "Characeter_Green.png",
+      "Path": "Resources/Texture/Characeter_Green.png",
+      "AtlasPath": "Resources/Texture/Characeter_Green.json"
     }
   ]
 }

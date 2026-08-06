@@ -123,6 +123,16 @@ public:
 	template<typename T>
 	void ExposeComponent(const std::string& name, T** componentPtr);
 
+	template<typename T>
+	void ExposeAsset(const std::string& name, uint32* assetID)
+	{
+		ExposedProperty prop;
+		prop.name = name;
+		prop.type = PropType::Asset;
+		prop.data = reinterpret_cast<void*>(assetID);
+		m_vProperties.push_back(prop);
+	}
+
 	void ExposeGameObject(const std::string& name, GameObject** gameObjectPtr);
 
 	const std::vector<ExposedProperty>& GetProperties() const { return m_vProperties; }

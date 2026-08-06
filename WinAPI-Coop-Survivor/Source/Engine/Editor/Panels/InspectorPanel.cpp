@@ -222,6 +222,47 @@ void InspectorPanel::DrawScriptableObjectData()
 			}
 		}
 		break;
+
+		case PropType::Asset:
+		{
+			uint32* pAssetID = static_cast<uint32*>(prop.data);
+			uint32 currentID = (pAssetID != nullptr) ? *pAssetID : 0;
+
+			std::string previewName = "None (Select SO Asset)";
+			const auto& allAssets = DataManager::GetInstance()->GetAllAssets();
+			auto it = allAssets.find(currentID);
+			if (it != allAssets.end() && it->second != nullptr)
+			{
+				previewName = it->second->GetAssetName() + " (ID: " + std::to_string(currentID) + ")";
+			}
+
+			ImGui::SetNextItemWidth(-1.0f);
+			if (ImGui::BeginCombo(("##" + prop.name + "_SOCombo").c_str(), previewName.c_str()))
+			{
+				if (ImGui::Selectable("None (0)", currentID == 0))
+				{
+					if (pAssetID) *pAssetID = 0;
+				}
+
+				for (const auto& [id, pAsset] : allAssets)
+				{
+					if (!pAsset) continue;
+					std::string label = pAsset->GetAssetName() + " (ID: " + std::to_string(id) + ")";
+					bool isSelected = (currentID == id);
+					if (ImGui::Selectable(label.c_str(), isSelected))
+					{
+						if (pAssetID) *pAssetID = id;
+					}
+
+					if (isSelected)
+					{
+						ImGui::SetItemDefaultFocus();
+					}
+				}
+				ImGui::EndCombo();
+			}
+		}
+		break;
 		}
 
 		ImGui::NextColumn();
@@ -652,6 +693,47 @@ void InspectorPanel::DrawComponents(GameObject* pObj)
 							}
 						}
 						ImGui::EndDragDropTarget();
+					}
+				}
+				break;
+
+				case PropType::Asset:
+				{
+					uint32* pAssetID = static_cast<uint32*>(prop.data);
+					uint32 currentID = (pAssetID != nullptr) ? *pAssetID : 0;
+
+					std::string previewName = "None (Select SO Asset)";
+					const auto& allAssets = DataManager::GetInstance()->GetAllAssets();
+					auto it = allAssets.find(currentID);
+					if (it != allAssets.end() && it->second != nullptr)
+					{
+						previewName = it->second->GetAssetName() + " (ID: " + std::to_string(currentID) + ")";
+					}
+
+					ImGui::SetNextItemWidth(-1.0f);
+					if (ImGui::BeginCombo(("##" + prop.name + "_Combo").c_str(), previewName.c_str()))
+					{
+						if (ImGui::Selectable("None (0)", currentID == 0))
+						{
+							if (pAssetID) *pAssetID = 0;
+						}
+
+						for (const auto& [id, pAsset] : allAssets)
+						{
+							if (!pAsset) continue;
+							std::string label = pAsset->GetAssetName() + " (ID: " + std::to_string(id) + ")";
+							bool isSelected = (currentID == id);
+							if (ImGui::Selectable(label.c_str(), isSelected))
+							{
+								if (pAssetID) *pAssetID = id;
+							}
+
+							if (isSelected)
+							{
+								ImGui::SetItemDefaultFocus();
+							}
+						}
+						ImGui::EndCombo();
 					}
 				}
 				break;
