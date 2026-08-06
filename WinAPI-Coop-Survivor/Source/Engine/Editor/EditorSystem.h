@@ -4,6 +4,7 @@
 #include "Engine/Framework/Base/IUpdatable.h"
 
 class GameObject;
+class ScriptableObject;
 class MainMenuBarPanel;
 class HierarchyPanel;
 class InspectorPanel;
@@ -18,8 +19,20 @@ public:
 	virtual void Release() override;
 	virtual void Update(float dt) override;
 
-	void SetSelectedObject(GameObject* pObj) { m_pSelectedObject = pObj; }
+	void SetSelectedObject(GameObject* pObj)
+	{
+		m_pSelectedObject = pObj;
+		if (pObj) m_pSelectedSO = nullptr;
+	}
 	GameObject* GetSelectedObject() const { return m_pSelectedObject; }
+
+	void SetSelectedScriptableObject(ScriptableObject* pSO)
+	{
+		m_pSelectedSO = pSO;
+		if (pSO) m_pSelectedObject = nullptr;
+	}
+	ScriptableObject* GetSelectedScriptableObject() const { return m_pSelectedSO; }
+
 	ViewportPanel* GetViewportPanel() const { return m_pViewportPanel.get(); }
 
 private:
@@ -28,6 +41,7 @@ private:
 
 private:
 	GameObject* m_pSelectedObject = nullptr;
+	ScriptableObject* m_pSelectedSO = nullptr;
 	// 분리된 패널 모듈 인스턴스 소유
 	std::unique_ptr<MainMenuBarPanel> m_pMainMenuBarPanel;
 	std::unique_ptr<HierarchyPanel> m_pHierarchyPanel;

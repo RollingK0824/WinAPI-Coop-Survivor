@@ -1,0 +1,11 @@
+{
+    "AssetID": 101,
+    "AssetName": "TempMonster",
+    "MaxHP": 100.0,
+    "MoveSpeed": 100.0,
+    "AttackDamage": 10.0,
+    "ColliderRadius": 20.0,
+    "ExpAmount": 10,
+    "TextureKey": "",
+    "Type": "MonsterSO"
+}

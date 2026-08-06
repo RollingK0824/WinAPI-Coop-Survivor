@@ -220,7 +220,11 @@
     <ClInclude Include="Source\Game\Player\NetworkController.h" />
     <ClInclude Include="Source\Game\Player\Player.h" />
     <ClInclude Include="Source\Game\Scripts\UI\TitleSceneController.h" />
+    <ClInclude Include="Source\Engine\Core\ExposedProperty.h" />
     <ClInclude Include="Source\Game\UI\TitleSceneController.h" />
+    <ClInclude Include="Source\Engine\Framework\Base\ScriptableObject.h" />
+    <ClInclude Include="Source\Game\Data\MonsterSO.h" />
+    <ClInclude Include="Source\Engine\Manager\DataManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Engine\Editor\Panels\ContentBrowserPanel.cpp" />
@@ -275,6 +279,9 @@
     <ClCompile Include="Source\Game\Player\NetworkController.cpp" />
     <ClCompile Include="Source\Game\Player\Player.cpp" />
     <ClCompile Include="Source\Game\UI\TitleSceneController.cpp" />
+    <ClCompile Include="Source\Engine\Framework\Base\ScriptableObject.cpp" />
+    <ClCompile Include="Source\Game\Data\MonsterSO.cpp" />
+    <ClCompile Include="Source\Engine\Manager\DataManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="imgui.ini" />

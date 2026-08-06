@@ -3,6 +3,8 @@
 #include "Engine/Editor/EditorSystem.h"
 #include "Engine/Manager/JsonSerializer.h"
 #include "Engine/Manager/ResourceManager.h"
+#include "Engine/Manager/DataManager.h"
+#include "Engine/Framework/Base/ScriptableObject.h"
 #include "Engine/Framework/GameObject.h"
 #include "Engine/Framework/Base/Component.h"
 #include "Engine/Framework/Components/Core/TransformComponent.h"
@@ -10,6 +12,9 @@
 #include "Engine/Framework/Components/UI/UIImageComponent.h"
 #include "Engine/Framework/Components/UI/UIPanelComponent.h"
 #include "Engine/Framework/Components/UI/UIButtonComponent.h"
+
+static bool LeftDragFloat(const char* label, float* v, float v_speed = 0.1f, const char* format = "%.3f");
+static bool LeftDragInt(const char* label, int* v, float v_speed = 1.0f);
 
 void InspectorPanel::Initialize()
 {
@@ -25,6 +30,8 @@ void InspectorPanel::OnDrawGUI()
 {
 	ImGui::Begin("Inspector");
 	GameObject* pSelectedObj = EditorSystem::GetInstance()->GetSelectedObject();
+	ScriptableObject* pSelectedSO = EditorSystem::GetInstance()->GetSelectedScriptableObject();
+
 	if (pSelectedObj)
 	{
 		if (pSelectedObj->IsDead())
@@ -38,7 +45,200 @@ void InspectorPanel::OnDrawGUI()
 		DrawComponents(pSelectedObj);
 		DrawAddComponentButton(pSelectedObj);
 	}
+	else if (pSelectedSO)
+	{
+		DrawScriptableObjectData();
+	}
+	else
+	{
+		ImGui::TextDisabled("No GameObject or ScriptableObject selected.");
+	}
+
 	ImGui::End();
+}
+
+void InspectorPanel::DrawScriptableObjectData()
+{
+	ScriptableObject* pAsset = EditorSystem::GetInstance()->GetSelectedScriptableObject();
+	if (!pAsset) return;
+
+	ImGui::PushID(pAsset);
+
+	ImGui::TextColored(ImVec4(0.3f, 0.9f, 0.3f, 1.0f), "[ ScriptableObject Data Asset ]");
+	ImGui::Separator();
+	ImGui::Spacing();
+
+	uint32 assetID = pAsset->GetAssetID();
+	std::string nameStr = pAsset->GetAssetName();
+	char nameBuf[256];
+	strcpy_s(nameBuf, nameStr.c_str());
+
+	ImGui::Text("Asset ID: %u", assetID);
+	ImGui::SetNextItemWidth(-1.0f);
+	if (ImGui::InputText("Asset Name", nameBuf, sizeof(nameBuf)))
+	{
+		pAsset->SetAssetName(nameBuf);
+	}
+	ImGui::Spacing();
+	ImGui::Separator();
+	ImGui::Spacing();
+
+	ImGui::Columns(2, "SOPropCols", false);
+	float totalWidth = ImGui::GetContentRegionAvail().x;
+	float col0Width = (std::max)(105.0f, totalWidth * 0.35f);
+	ImGui::SetColumnWidth(0, col0Width);
+
+	for (const auto& prop : pAsset->GetProperties())
+	{
+		if (prop.name == "AssetID" || prop.name == "AssetName") continue;
+
+		ImGui::PushID(prop.name.c_str());
+
+		ImGui::AlignTextToFramePadding();
+		ImGui::Text(prop.name.c_str());
+		ImGui::NextColumn();
+
+		ImGui::SetNextItemWidth(-1.0f);
+
+		switch (prop.type)
+		{
+		case PropType::Int:
+			LeftDragInt(("##" + prop.name).c_str(), static_cast<int*>(prop.data), 1.0f);
+			break;
+
+		case PropType::Float:
+			LeftDragFloat(("##" + prop.name).c_str(), static_cast<float*>(prop.data), 0.1f, "%.3f");
+			break;
+
+		case PropType::Bool:
+			ImGui::Checkbox(("##" + prop.name).c_str(), static_cast<bool*>(prop.data));
+			break;
+
+		case PropType::Vector2:
+		{
+			Vector2* vec = static_cast<Vector2*>(prop.data);
+			float itemW = (ImGui::GetContentRegionAvail().x - 30.0f) * 0.5f;
+			if (itemW < 35.0f) itemW = 35.0f;
+
+			ImGui::Text("X"); ImGui::SameLine();
+			ImGui::SetNextItemWidth(itemW);
+			LeftDragFloat(("##" + prop.name + "X").c_str(), &vec->x, 0.1f, "%.3f");
+			ImGui::SameLine();
+			ImGui::Text("Y"); ImGui::SameLine();
+			ImGui::SetNextItemWidth(itemW);
+			LeftDragFloat(("##" + prop.name + "Y").c_str(), &vec->y, 0.1f, "%.3f");
+		}
+		break;
+
+		case PropType::Color:
+		{
+			D2D1_COLOR_F* color = static_cast<D2D1_COLOR_F*>(prop.data);
+			float colVals[4] = { color->r, color->g, color->b, color->a };
+			if (ImGui::ColorEdit4(("##" + prop.name).c_str(), colVals))
+			{
+				color->r = colVals[0]; color->g = colVals[1];
+				color->b = colVals[2]; color->a = colVals[3];
+			}
+		}
+		break;
+
+		case PropType::Rect:
+		{
+			D2D1_RECT_F* rect = static_cast<D2D1_RECT_F*>(prop.data);
+			float itemW = (ImGui::GetContentRegionAvail().x - 40.0f) * 0.25f;
+			if (itemW < 25.0f) itemW = 25.0f;
+
+			ImGui::Text("L"); ImGui::SameLine();
+			ImGui::SetNextItemWidth(itemW);
+			LeftDragFloat(("##" + prop.name + "L").c_str(), &rect->left, 1.0f, "%.1f");
+			ImGui::SameLine();
+
+			ImGui::Text("T"); ImGui::SameLine();
+			ImGui::SetNextItemWidth(itemW);
+			LeftDragFloat(("##" + prop.name + "T").c_str(), &rect->top, 1.0f, "%.1f");
+			ImGui::SameLine();
+
+			ImGui::Text("R"); ImGui::SameLine();
+			ImGui::SetNextItemWidth(itemW);
+			LeftDragFloat(("##" + prop.name + "R").c_str(), &rect->right, 1.0f, "%.1f");
+			ImGui::SameLine();
+
+			ImGui::Text("B"); ImGui::SameLine();
+			ImGui::SetNextItemWidth(itemW);
+			LeftDragFloat(("##" + prop.name + "B").c_str(), &rect->bottom, 1.0f, "%.1f");
+		}
+		break;
+
+		case PropType::StringVector:
+		{
+			auto* vec = static_cast<std::vector<std::string>*>(prop.data);
+			std::string headerText = prop.name + " (" + std::to_string(vec->size()) + ")";
+			if (ImGui::TreeNode(headerText.c_str()))
+			{
+				int removeIdx = -1;
+				for (size_t i = 0; i < vec->size(); ++i)
+				{
+					ImGui::PushID(static_cast<int>(i));
+					char buf[256];
+					strcpy_s(buf, (*vec)[i].c_str());
+					ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - 30.0f);
+					if (ImGui::InputText(("Element " + std::to_string(i)).c_str(), buf, sizeof(buf)))
+					{
+						(*vec)[i] = buf;
+					}
+					ImGui::SameLine();
+					if (ImGui::Button("-", ImVec2(20, 20))) removeIdx = static_cast<int>(i);
+					ImGui::PopID();
+				}
+				if (removeIdx != -1) vec->erase(vec->begin() + removeIdx);
+				if (ImGui::Button("+ Add Element")) vec->push_back("");
+				ImGui::TreePop();
+			}
+		}
+		break;
+
+		case PropType::String:
+		{
+			std::string* str = static_cast<std::string*>(prop.data);
+			char buffer[256];
+			strcpy_s(buffer, str->c_str());
+			if (ImGui::InputText(("##" + prop.name).c_str(), buffer, sizeof(buffer)))
+			{
+				*str = buffer;
+			}
+		}
+		break;
+
+		case PropType::WString:
+		case PropType::Texture:
+		{
+			std::wstring* wstr = static_cast<std::wstring*>(prop.data);
+			std::string str(wstr->begin(), wstr->end());
+			char buffer[256];
+			strcpy_s(buffer, str.c_str());
+			if (ImGui::InputText(("##" + prop.name).c_str(), buffer, sizeof(buffer)))
+			{
+				*wstr = std::wstring(buffer, buffer + strlen(buffer));
+			}
+		}
+		break;
+		}
+
+		ImGui::NextColumn();
+		ImGui::PopID();
+	}
+
+	ImGui::Columns(1);
+	ImGui::Spacing();
+	ImGui::Separator();
+	ImGui::Spacing();
+
+	if (ImGui::Button("Save Asset (.asset)", ImVec2(-1.0f, 30.0f)))
+	{
+		DataManager::GetInstance()->SaveAssetFile(pAsset);
+	}
+
+	ImGui::PopID();
 }
 
 void InspectorPanel::DrawHeader(GameObject* pObj)
@@ -63,7 +263,7 @@ void InspectorPanel::DrawHeader(GameObject* pObj)
 }
 
 // 퍼블릭 ImGui API 전용 좌측 정렬(Left-Aligned) DragFloat 위젯 (드래그 + 더블클릭 직접 입력 지원)
-static bool LeftDragFloat(const char* label, float* v, float v_speed = 0.1f, const char* format = "%.3f")
+static bool LeftDragFloat(const char* label, float* v, float v_speed, const char* format)
 {
 	ImGui::PushID(label);
 	ImGuiID id = ImGui::GetID("##LeftDragField");
@@ -143,7 +343,7 @@ static bool LeftDragFloat(const char* label, float* v, float v_speed = 0.1f, con
 }
 
 // 퍼블릭 ImGui API 전용 좌측 정렬 DragInt 위젯
-static bool LeftDragInt(const char* label, int* v, float v_speed = 1.0f)
+static bool LeftDragInt(const char* label, int* v, float v_speed)
 {
 	float fVal = static_cast<float>(*v);
 	bool changed = LeftDragFloat(label, &fVal, v_speed, "%.0f");
