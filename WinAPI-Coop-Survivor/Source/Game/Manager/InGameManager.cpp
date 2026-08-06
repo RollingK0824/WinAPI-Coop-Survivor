@@ -24,6 +24,14 @@ void InGameManager::Start()
 	{
 		SpawnPlayer(myNetID, true, { 0.0f, 0.0f });
 	}
+	else if (net->GetRole() == NetRole::CLIENT)
+	{
+		net->RegisterPacketHandler(PacketType::HOST_WELCOME,
+			[this](const PacketHeader* packet, const sockaddr_in& sender) {
+				auto welcome = reinterpret_cast<const WelcomePacket*>(packet);
+				this->SpawnPlayer(welcome->assignedNetID, true, { 0.0f, 0.0f });
+			});
+	}
 
 	if (net->GetRole() == NetRole::HOST)
 	{
@@ -31,6 +39,20 @@ void InGameManager::Start()
 		{
 			SpawnPlayer(clientNetID, false, { 100.0f, 0.0f });
 		}
+
+		net->RegisterPacketHandler(PacketType::PLAYER_INPUT,
+			[this](const PacketHeader* packet, const sockaddr_in& sender) {
+				auto inputPkt = reinterpret_cast<const PlayerInputPacket*>(packet);
+				uint32 clientNetID = inputPkt->netID;
+
+				if (clientNetID != 0 && !NetworkManager::GetInstance()->GetNetworkObject(clientNetID))
+				{
+					this->SpawnPlayer(clientNetID, false, { inputPkt->posX, inputPkt->posY });
+				}
+
+				NetworkManager::GetInstance()->UpdateInterpolationTarget(
+					clientNetID, inputPkt->posX, inputPkt->posY, inputPkt->angle);
+			});
 	}
 
 	net->RegisterPacketHandler(PacketType::ENTITY_STATE_SYNC,
@@ -47,6 +69,24 @@ void InGameManager::Start()
 					bool isLocal = (entity.netID == myID);
 					this->SpawnPlayer(entity.netID, isLocal, { entity.posX, entity.posY });
 				}
+			}
+		});
+
+	// CLIENT_DISCONN 수신 시 해당 플레이어 씬 및 매니저 맵에서 제거 (Despawn)
+	net->RegisterPacketHandler(PacketType::CLIENT_DISCONN,
+		[this](const PacketHeader* packet, const sockaddr_in& sender) {
+			auto disconnPkt = reinterpret_cast<const ClientDisconnPacket*>(packet);
+			uint32 deadNetID = disconnPkt->disconnectedNetID;
+
+			auto iter = m_playerObjects.find(deadNetID);
+			if (iter != m_playerObjects.end())
+			{
+				Scene* pScene = gameObject.GetOwnerScene();
+				if (pScene && iter->second)
+				{
+					pScene->DestroyObjects(iter->second);
+				}
+				m_playerObjects.erase(iter);
 			}
 		});
 }

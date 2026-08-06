@@ -5,7 +5,7 @@ class ColliderComponent : public Component
 {
 public:
 	ColliderComponent(GameObject* owner, TransformComponent* transform);
-	virtual ~ColliderComponent() override = default;
+	virtual ~ColliderComponent() override;
 
 	virtual void OnEnable() override;
 	virtual void OnDisable() override;

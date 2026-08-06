@@ -10,6 +10,11 @@ ColliderComponent::ColliderComponent(GameObject* owner, TransformComponent* tran
 	ExposeVariable("BodyType", reinterpret_cast<int*>(&m_BodyType));
 }
 
+ColliderComponent::~ColliderComponent()
+{
+	PhysicsManager::GetInstance()->UnRegisterCollider(this);
+}
+
 void ColliderComponent::Awake()
 {
 	PhysicsManager::GetInstance()->RegisterCollider(this);

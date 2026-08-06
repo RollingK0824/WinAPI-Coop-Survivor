@@ -342,64 +342,6 @@
                     }
                 }
             ]
-        },
-        {
-            "Name": "TempPlayer",
-            "InstanceID": 18,
-            "IsActive": true,
-            "Components": [
-                {
-                    "Type": "TransformComponent",
-                    "Data": {
-                        "IsEnabled": true,
-                        "Position": {
-                            "x": 0.0,
-                            "y": 0.0
-                        },
-                        "Rotation": 0.0,
-                        "Scale": {
-                            "x": 1.0,
-                            "y": 1.0
-                        }
-                    }
-                },
-                {
-                    "Type": "SpriteRendererComponent",
-                    "Data": {
-                        "IsEnabled": true,
-                        "RenderType": 0,
-                        "ZOrder": 0,
-                        "Opacity": 1.0,
-                        "Color": {
-                            "r": 1.0,
-                            "g": 1.0,
-                            "b": 1.0,
-                            "a": 1.0
-                        },
-                        "TextureKey": "Imeldat.png",
-                        "FlipX": false,
-                        "FlipY": false,
-                        "SrcRect": {
-                            "left": 0.0,
-                            "top": 0.0,
-                            "right": 320.0,
-                            "bottom": 340.0
-                        }
-                    }
-                },
-                {
-                    "Type": "Player",
-                    "Data": {
-                        "IsEnabled": true
-                    }
-                },
-                {
-                    "Type": "LocalController",
-                    "Data": {
-                        "IsEnabled": true
-                    }
-                }
-            ]
         }
     ]
 }
