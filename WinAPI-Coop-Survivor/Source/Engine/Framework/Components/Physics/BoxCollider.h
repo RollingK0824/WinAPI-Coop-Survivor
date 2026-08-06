@@ -9,6 +9,9 @@ public:
     BoxCollider(GameObject* owner, TransformComponent* transform);
 	virtual ~BoxCollider() override = default;
 
+	virtual void Awake() override;
+	virtual void PostDeserialize(Scene* pScene) override;
+
 	void SetSize(float width, float height)
 	{
 		m_HalfWidth = width * 0.5f;

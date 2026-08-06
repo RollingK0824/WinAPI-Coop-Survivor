@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Engine/Core/Singleton.h"
 #include "Engine/Framework/Base/ISystem.h"
 #include "Engine/Framework/Base/IUpdatable.h"
@@ -21,6 +21,8 @@ public:
 
 	void RegisterCollider(ColliderComponent* pCollider);
 	void UnRegisterCollider(ColliderComponent* pCollider);
+
+	const std::vector<ColliderComponent*>& GetColliders() const { return m_vColliders; }
 
 private:
 	PhysicsManager() = default;

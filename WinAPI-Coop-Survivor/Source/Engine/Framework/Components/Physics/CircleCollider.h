@@ -9,6 +9,9 @@ public:
 	CircleCollider(GameObject* owner, TransformComponent* transform);
 	virtual ~CircleCollider() override = default;
 
+	virtual void Awake() override;
+	virtual void PostDeserialize(Scene* pScene) override;
+
 	void SetRadius(float radius) 
 	{ 
 		m_Radius = radius; 
@@ -19,6 +22,8 @@ public:
 	{
 		return EngineKey::Component::CircleCollider;
 	}
+
+	virtual void DrawDebug() override;
 
 protected:
 	virtual b2ShapeId CreateShape(b2BodyId bodyId, const b2ShapeDef* shapeDef) override

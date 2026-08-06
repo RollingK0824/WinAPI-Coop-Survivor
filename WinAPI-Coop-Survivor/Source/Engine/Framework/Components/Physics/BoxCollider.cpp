@@ -4,6 +4,9 @@
 #include "Engine/Renderer/RenderCommand.h"
 #include "Engine/Renderer/RenderSystem.h"
 
+#include "Engine/Framework/GameObject.h"
+#include "Engine/Framework/Components/Render/SpriteRendererComponent.h"
+
 static ComponentRegistrar<BoxCollider> registrar(EngineKey::Component::BoxCollider.data());
 
 BoxCollider::BoxCollider(GameObject* owner, TransformComponent* transform) 
@@ -11,6 +14,40 @@ BoxCollider::BoxCollider(GameObject* owner, TransformComponent* transform)
 {
     ExposeVariable("HalfWidth", &m_HalfWidth);
     ExposeVariable("HalfHeight", &m_HalfHeight);
+}
+
+void BoxCollider::Awake()
+{
+	ColliderComponent::Awake();
+
+	if (m_HalfWidth <= 0.0f || m_HalfHeight <= 0.0f)
+	{
+		if (auto* spriteComp = gameObject.GetComponent<SpriteRendererComponent>())
+		{
+			Vector2 size = spriteComp->GetSpriteSize();
+			if (size.x > 0.0f && size.y > 0.0f)
+			{
+				SetSize(size.x, size.y);
+			}
+		}
+	}
+}
+
+void BoxCollider::PostDeserialize(Scene* pScene)
+{
+	ColliderComponent::PostDeserialize(pScene);
+
+	if (m_HalfWidth <= 0.0f || m_HalfHeight <= 0.0f)
+	{
+		if (auto* spriteComp = gameObject.GetComponent<SpriteRendererComponent>())
+		{
+			Vector2 size = spriteComp->GetSpriteSize();
+			if (size.x > 0.0f && size.y > 0.0f)
+			{
+				SetSize(size.x, size.y);
+			}
+		}
+	}
 }
 
 void BoxCollider::DrawDebug()

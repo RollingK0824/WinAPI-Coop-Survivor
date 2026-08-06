@@ -8,6 +8,9 @@ ColliderComponent::ColliderComponent(GameObject* owner, TransformComponent* tran
 	ExposeVariable("Density", &m_density);
 	ExposeVariable("IsSensor", &m_bIsSensor);
 	ExposeVariable("BodyType", reinterpret_cast<int*>(&m_BodyType));
+	ExposeVariable("FixedRotation", &m_bFixedRotation);
+	ExposeVariable("CategoryBits", reinterpret_cast<int*>(&m_categoryBits));
+	ExposeVariable("MaskBits", reinterpret_cast<int*>(&m_maskBits));
 }
 
 ColliderComponent::~ColliderComponent()
@@ -56,6 +59,35 @@ void ColliderComponent::SetBodyType(b2BodyType type)
 	}
 }
 
+void ColliderComponent::SetFixedRotation(bool fixed)
+{
+	m_bFixedRotation = fixed;
+	if (b2Body_IsValid(m_BodyId))
+	{
+		b2Body_SetFixedRotation(m_BodyId, fixed);
+	}
+}
+
+void ColliderComponent::SetFilter(uint32 categoryBits, uint32 maskBits)
+{
+	m_categoryBits = categoryBits;
+	m_maskBits = maskBits;
+
+	if (b2Shape_IsValid(m_ShapeId))
+	{
+		b2Filter filter = GetFilter();
+		b2Shape_SetFilter(m_ShapeId, filter);
+	}
+}
+
+b2Filter ColliderComponent::GetFilter() const
+{
+	b2Filter filter = b2DefaultFilter();
+	filter.categoryBits = m_categoryBits;
+	filter.maskBits = m_maskBits;
+	return filter;
+}
+
 void ColliderComponent::RebuildShape()
 {
 	if (!b2Body_IsValid(m_BodyId)) return;
@@ -69,9 +101,7 @@ void ColliderComponent::RebuildShape()
 	b2ShapeDef shapeDef = b2DefaultShapeDef();
 	shapeDef.density = m_density;
 	shapeDef.isSensor = m_bIsSensor;
-
-	shapeDef.filter.categoryBits = 0xFFFFFFFF;
-	shapeDef.filter.maskBits = 0xFFFFFFFF;
+	shapeDef.filter = GetFilter();
 
 	m_ShapeId = CreateShape(m_BodyId, &shapeDef);
 

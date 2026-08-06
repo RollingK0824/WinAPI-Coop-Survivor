@@ -22,6 +22,8 @@ public:
 
 	void SetNativeSize();
 
+	Vector2 GetSpriteSize() const;
+
 	void SetFlip(bool flipX, bool flipY) { m_RenderCommand.bitmap.flipX = flipX; m_RenderCommand.bitmap.flipY = flipY; }
 	void SetScale(float scaleX, float scaleY) { m_RenderCommand.scaleX = scaleX; m_RenderCommand.scaleY = scaleY; }
 

@@ -3,10 +3,13 @@
 #include "Engine/Manager/ActionManager.h"
 #include "Engine/Manager/TimeManager.h"
 #include "Engine/Manager/PrefabManager.h"
+#include "Engine/Physics/PhysicsManager.h"
 #include "Engine/Network/NetworkManager.h"
 #include "Engine/Renderer/RenderSystem.h"
 #include "Engine/Framework/Scene.h"
 #include "Engine/Framework/GameObject.h"
+#include "Engine/Framework/Components/Core/TransformComponent.h"
+#include "Engine/Framework/Components/Physics/ColliderComponent.h"
 #include "Engine/Framework/Components/UI/UIPanelComponent.h"
 #include "Engine/Framework/Components/UI/UITextComponent.h"
 #include "Engine/Framework/Components/UI/UIImageComponent.h"
@@ -26,7 +29,18 @@ void DebugManager::Update(float dt)
         SetVisible(!m_bVisible);
     }
 
-    if (!m_bVisible || !m_pDebugHUDComp) return;
+    if (!m_bVisible) return;
+
+    const auto& colliders = PhysicsManager::GetInstance()->GetColliders();
+    for (auto* pCollider : colliders)
+    {
+        if (pCollider && pCollider->IsEnabled() && pCollider->gameObject.IsActive())
+        {
+            pCollider->DrawDebug();
+        }
+    }
+
+    if (!m_pDebugHUDComp) return;
 
     uint32 fps = TimeManager::GetInstance()->GetFPS();
     float gameTime = TimeManager::GetInstance()->GetGameTime();
@@ -63,22 +77,27 @@ void DebugManager::SetVisible(bool visible)
 
 GameObject* DebugManager::CreateDebugUIOverlay(Scene* pScene)
 {
-    if (!pScene)return nullptr;
+    if (!pScene) return nullptr;
+
+    if (m_pDebugUIRoot) return m_pDebugUIRoot;
 
     GameObject* pDebugObj = pScene->CreateGameObject("DebugHUD_Root");
+    pDebugObj->transform.SetPosition(10.0f, 10.0f);
 
     auto* pPanel = pDebugObj->AddComponent<UIPanelComponent>();
     if (pPanel)
     {
-        pPanel->SetSize({ 220.0f, 150.0f });
-        pPanel->SetColor(D2D1::ColorF(0.0f, 0.0f, 0.0f, 0.6f)); // ¹ÝÅõ¸í °ËÀº»ö
+        pPanel->SetPivot(0.0f, 0.0f);
+        pPanel->SetSize({ 240.0f, 160.0f });
+        pPanel->SetColor(D2D1::ColorF(0.0f, 0.0f, 0.0f, 0.6f)); // ë°˜íˆ¬ëª… ê²€ì€ìƒ‰
     }
 
     auto* pText = pDebugObj->AddComponent<UITextComponent>();
     if (pText)
     {
+        pText->SetPivot(0.0f, 0.0f);
         pText->SetFontSize(14.0f);
-        pText->SetColor(D2D1::ColorF(D2D1::ColorF::Green)); // ¿¬µÎ»ö ÅØ½ºÆ®
+        pText->SetColor(D2D1::ColorF(D2D1::ColorF::Green)); // ì—°ë‘ìƒ‰ í…ìŠ¤íŠ¸
     }
 
     pDebugObj->AddComponent<HUDPresenter>();

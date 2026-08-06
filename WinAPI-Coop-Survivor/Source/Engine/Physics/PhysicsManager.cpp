@@ -1,4 +1,4 @@
-﻿#include "Engine/Core/pch.h"
+#include "Engine/Core/pch.h"
 #include "PhysicsManager.h"
 #include "Engine/Manager/ActionManager.h"
 #include "Engine/Framework/GameObject.h"
@@ -8,7 +8,7 @@
 bool PhysicsManager::Initialize()
 {
 	b2WorldDef worldDef = b2DefaultWorldDef();
-	b2Vec2 gravity{ 0.0f, 9.8f };
+	b2Vec2 gravity{ 0.0f, 0.0f };
 	worldDef.gravity = gravity;
 
 	m_worldId = b2CreateWorld(&worldDef);
@@ -61,22 +61,6 @@ void PhysicsManager::FixedUpdate(float fixedDt)
 
 void PhysicsManager::Update(float dt)
 {
-	if (ActionManager::GetInstance()->GetActionDown("Debug_Mode"))
-	{
-		m_bEnableDebugDraw = !m_bEnableDebugDraw;
-	}
-
-	// 디버그 모드가 켜져 있다면 모든 콜라이더에게 그리기 명령 제출 지시
-	if (m_bEnableDebugDraw)
-	{
-		for (auto* pCollider : m_vColliders)
-		{
-			if (pCollider && pCollider->IsEnabled() && pCollider->gameObject.IsActive())
-			{
-				pCollider->DrawDebug();
-			}
-		}
-	}
 }
 
 void PhysicsManager::ProcessContanctEvents()
@@ -124,6 +108,7 @@ void PhysicsManager::RegisterCollider(ColliderComponent* pCollider)
 
 	b2BodyDef bodyDef = b2DefaultBodyDef();
 	bodyDef.type = pCollider->GetBodyType();
+	bodyDef.fixedRotation = pCollider->IsFixedRotation();
 
 	bodyDef.position = b2Vec2{ PixelToMeter(pTransform->GetPosition().x),PixelToMeter(pTransform->GetPosition().y) };
 	bodyDef.rotation = b2MakeRot(pTransform->GetRotation().angle);

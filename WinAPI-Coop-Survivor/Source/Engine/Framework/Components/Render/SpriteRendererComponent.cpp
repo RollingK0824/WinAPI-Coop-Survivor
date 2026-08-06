@@ -68,6 +68,27 @@ void SpriteRendererComponent::SetNativeSize()
 	}
 }
 
+Vector2 SpriteRendererComponent::GetSpriteSize() const
+{
+	float width = m_RenderCommand.srcRect.right - m_RenderCommand.srcRect.left;
+	float height = m_RenderCommand.srcRect.bottom - m_RenderCommand.srcRect.top;
+
+	ID2D1Bitmap* pTex = m_RenderCommand.bitmap.pTexture;
+	if (!pTex && !m_textureKey.empty())
+	{
+		pTex = ResourceManager::GetInstance()->GetTexture(m_textureKey);
+	}
+
+	if ((width <= 0.0f || height <= 0.0f) && pTex)
+	{
+		D2D1_SIZE_F size = pTex->GetSize();
+		width = size.width;
+		height = size.height;
+	}
+
+	return Vector2(width * m_RenderCommand.scaleX, height * m_RenderCommand.scaleY);
+}
+
 void SpriteRendererComponent::PostDeserialize(Scene* pScene)
 {
 	RenderComponent::PostDeserialize(pScene);
