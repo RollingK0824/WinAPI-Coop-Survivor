@@ -7,13 +7,16 @@ public:
 	CLONEABLE_COMPONENT(NetworkIdentity)
 
 	NetworkIdentity(GameObject* owner, TransformComponent* transform);
-	virtual ~NetworkIdentity() override = default;
+	virtual ~NetworkIdentity() override;
+
+	virtual void Start() override;
 
 	void SetNetID(unsigned int netID) { m_netID = netID; }
 	unsigned int GetNetID() const { return m_netID; }
 
 	void SetLocalPlayer(bool isLocal) { m_bIsLocalPlayer = isLocal; }
 	bool IsLocalPlayer() const { return m_bIsLocalPlayer; }
+	bool HasAuthority() const { return m_bIsLocalPlayer; }
 
 	virtual std::string_view GetComponentType() const override
 	{

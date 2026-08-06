@@ -341,10 +341,13 @@
     <ClCompile Include="Source\Engine\Framework\Components\Render\SpriteRendererComponent.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Engine\Framework\Base\Component.cpp">
+    <ClCompile Include="Source\Game\Manager\InGameManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Game\Scripts\UI\TitleSceneController.cpp">
+    <ClCompile Include="Source\Game\Player\Player.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Game\UI\TitleSceneController.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

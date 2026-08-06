@@ -5,6 +5,8 @@
 #include "Engine/Framework/Base/IUpdatable.h"
 #include "Engine/Manager/GUISystem.h"
 
+class GameObject;
+
 enum class NetRole {
     NONE,
     HOST,
@@ -25,7 +27,7 @@ struct InterpolationData {
     float startAngle = 0.0f;
     float targetAngle = 0.0f;
     float elapsed = 0.0f;
-    float duration = 0.0166f; // 30Hz -> 33ms
+    float duration = 0.0166f;
 };
 
 using PacketHandler = std::function<void(const PacketHeader* packet, const sockaddr_in& sender)>;
@@ -46,12 +48,17 @@ public:
 
     void SendReliablePacket(const void* data, int size, const sockaddr_in* targetAddr = nullptr);
 
+    void RegisterNetworkObject(uint32 netID, GameObject* obj);
+    void UnRegisterNetworkObject(uint32 netID);
+    GameObject* GetNetworkObject(uint32 netID);
+
     void RegisterPacketHandler(PacketType type, PacketHandler handler) { m_packetHandlers[type] = handler; }
     void UnregisterPacketHandler(PacketType type) { m_packetHandlers.erase(type); }
 
     NetRole GetRole() const { return m_Role; }
     unsigned int GetMyNetID() const { return m_MyNetID; }
     bool IsConnected() const { return m_bConnected; }
+    const std::unordered_map<uint32, NetClientInfo>& GetConnectedClients() const { return m_ConnectedClients; }
 
     bool GetInterpolatedPosition(unsigned int netID, float& outX, float& outY, float& outAngle);
     void UpdateInterpolationTarget(unsigned int netID, float targetX, float targetY, float targetAngle);
@@ -70,16 +77,17 @@ private:
     SOCKET m_Socket = INVALID_SOCKET;
     sockaddr_in m_HostAddr{};
 
-    std::unordered_map<unsigned int, NetClientInfo> m_ConnectedClients; 
-    std::unordered_map<unsigned int, InterpolationData> m_InterpolationMap; 
+    std::unordered_map<uint32, GameObject*> m_networkObjects;
+    std::unordered_map<uint32, NetClientInfo> m_ConnectedClients; 
+    std::unordered_map<uint32, InterpolationData> m_InterpolationMap; 
     std::unordered_map<PacketType, PacketHandler> m_packetHandlers;
 
-    unsigned int m_MyNetID = 0;
+    uint32 m_MyNetID = 0;
     bool m_bConnected = false;
 
     float m_SendTimer = 0.0f;
     const float m_SendInterval = 0.0166f; 
-    unsigned int m_NextNetID = 1000; 
+    uint32 m_NextNetID = 1000; 
 
     float m_PingMs = 0.0f;
     double m_LastHeartbeatSentMs = 0.0;

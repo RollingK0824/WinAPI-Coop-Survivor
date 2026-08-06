@@ -1,11 +1,11 @@
 #include "Engine/Core/pch.h"
 #include "TitleSceneController.h"
 #include "Engine/Core/ComponentRegister.h"
-#include "Engine/Framework/Components/UI/UIButtonComponent.h"
 #include "Engine/Network/NetworkManager.h"
 #include "Engine/Manager/SceneManager.h"
-#include "Engine/Framework/GameObject.h"
 #include "Engine/Framework/Scene.h"
+#include "Engine/Framework/GameObject.h"
+#include "Engine/Framework/Components/UI/UIButtonComponent.h"
 
 static ComponentRegistrar<TitleSceneController> registrar(EngineKey::CustomComponent::TitleSceneController.data());
 

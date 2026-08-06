@@ -76,6 +76,7 @@ namespace EngineKey
 		constexpr std::string_view Bullet = "Bullet";
 		constexpr std::string_view Effect = "Effect";
 		constexpr std::string_view TitleSceneController = "TitleSceneController";
+		constexpr std::string_view InGameManager = "InGameManager";
 	}
 }
 
