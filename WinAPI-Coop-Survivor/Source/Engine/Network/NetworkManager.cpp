@@ -43,6 +43,7 @@ void NetworkManager::Release() {
 	WSACleanup();
 	m_Role = NetRole::NONE;
 	m_bConnected = false;
+	m_networkObjects.clear();
 	m_ConnectedClients.clear();
 	m_InterpolationMap.clear();
 }
@@ -334,6 +335,27 @@ void NetworkManager::SendReliablePacket(const void* data, int size, const sockad
 	{
 		SendPacket(data, size, targetAddr);
 	}
+}
+
+void NetworkManager::RegisterNetworkObject(uint32 netID, GameObject* obj)
+{
+	m_networkObjects[netID] = obj;
+}
+
+void NetworkManager::UnRegisterNetworkObject(uint32 netID)
+{
+	m_networkObjects.erase(netID);
+	m_InterpolationMap.erase(netID);
+}
+
+GameObject* NetworkManager::GetNetworkObject(uint32 netID)
+{
+	auto it = m_networkObjects.find(netID);
+	if (it != m_networkObjects.end())
+	{
+		return it->second;
+	}
+	return nullptr;
 }
 
 void NetworkManager::ProcessIncomingPackets() {
