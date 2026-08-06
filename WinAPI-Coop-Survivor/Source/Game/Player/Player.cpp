@@ -34,6 +34,5 @@ void Player::Start()
 
 void Player::Update(float dt)
 {
-	// 실제 이동 로직은 각 Controller 컴포넌트가 담당함
 }
 

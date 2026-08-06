@@ -20,15 +20,12 @@ void NetworkController::Update(float dt) {
     float y = 0.0f;
     float angle = 0.0f;
 
-    // NetworkManager로부터 보간된 좌표 및 각도 조회
     if (NetworkManager::GetInstance()->GetInterpolatedPosition(m_NetID, x, y, angle)) {
-        if (m_pCollider && b2Body_IsValid(m_pCollider->GetBodyId())) {
-            // Box2D 물리 엔진에 강제 좌표 주입
+        if (m_pCollider.IsValid() && b2Body_IsValid(m_pCollider->GetBodyId())) {
             b2Vec2 b2Pos = { PixelToMeter(x), PixelToMeter(y) };
             b2Body_SetTransform(m_pCollider->GetBodyId(), b2Pos, b2MakeRot(angle));
-            b2Body_SetLinearVelocity(m_pCollider->GetBodyId(), { 0.0f, 0.0f }); // 원격 플레이어이므로 누적 속도 0으로 설정
+            b2Body_SetLinearVelocity(m_pCollider->GetBodyId(), { 0.0f, 0.0f });
         } else {
-            // 물리 바디가 없으면 직접 Transform에 적용
             transform.SetPosition({ x, y });
             transform.SetRotation(angle);
         }

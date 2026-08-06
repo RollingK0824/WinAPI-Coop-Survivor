@@ -1,5 +1,6 @@
 #pragma once
 #include "Controller.h"
+#include "Engine/Core/ObserverPtr.h"
 
 class Player;
 class ColliderComponent;
@@ -22,8 +23,8 @@ private:
     void Move(float dt);
 
 private:
-    Player* m_pPlayer = nullptr;
-    ColliderComponent* m_pCollider = nullptr;
+    ObserverPtr<Player> m_pPlayer;
+    ObserverPtr<ColliderComponent> m_pCollider = nullptr;
     float m_SendTimer = 0.0f;
     const float m_SendInterval = 0.033f; // 30Hz
 };

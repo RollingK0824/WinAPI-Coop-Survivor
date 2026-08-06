@@ -1,5 +1,6 @@
 #pragma once
 #include "Controller.h"
+#include "Engine/Core/ObserverPtr.h"
 
 class Player;
 
@@ -18,7 +19,7 @@ public:
     virtual void Update(float dt) override;
 
 private:
-    Player* m_pPlayer = nullptr;
-    ColliderComponent* m_pCollider = nullptr;
+    ObserverPtr<Player> m_pPlayer;
+    ObserverPtr<ColliderComponent> m_pCollider;
     unsigned int m_NetID = 0;
 };

@@ -274,7 +274,7 @@
     <ClCompile Include="Source\Game\Player\LocalController.cpp" />
     <ClCompile Include="Source\Game\Player\NetworkController.cpp" />
     <ClCompile Include="Source\Game\Player\Player.cpp" />
-    <ClCompile Include="Source\Game\Scripts\UI\TitleSceneController.cpp" />
+    <ClCompile Include="Source\Game\UI\TitleSceneController.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="imgui.ini" />

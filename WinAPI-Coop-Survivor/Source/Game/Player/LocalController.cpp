@@ -43,7 +43,7 @@ void LocalController::Update(float dt) {
 
         NetworkManager* net = NetworkManager::GetInstance();
         if (net->GetRole() != NetRole::NONE && net->IsConnected()) {
-            if (m_pCollider && b2Body_IsValid(m_pCollider->GetBodyId())) {
+            if (m_pCollider.IsValid() && b2Body_IsValid(m_pCollider->GetBodyId())) {
                 b2Vec2 pos = b2Body_GetPosition(m_pCollider->GetBodyId());
                 b2Vec2 vel = b2Body_GetLinearVelocity(m_pCollider->GetBodyId());
                 float angle = b2Rot_GetAngle(b2Body_GetRotation(m_pCollider->GetBodyId()));
@@ -65,7 +65,7 @@ void LocalController::Update(float dt) {
 }
 
 void LocalController::Move(float dt) {
-    if (m_pCollider == nullptr || !b2Body_IsValid(m_pCollider->GetBodyId())) {
+    if (!m_pCollider.IsValid() || !b2Body_IsValid(m_pCollider->GetBodyId())) {
         return;
     }
 
