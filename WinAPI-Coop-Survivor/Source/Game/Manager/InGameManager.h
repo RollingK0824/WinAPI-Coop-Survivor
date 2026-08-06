@@ -17,9 +17,10 @@ public:
 	}
 
 	virtual void Start() override;
-	virtual void Update(float dt)override;
+	virtual void Update(float dt) override;
 
 	GameObject* SpawnPlayer(uint32 netId, bool isLocal, Vector2 spawnPos);
+
 private:
 	std::unordered_map<uint32, GameObject*> m_playerObjects;
 };

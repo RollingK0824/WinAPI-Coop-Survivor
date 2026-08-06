@@ -220,6 +220,7 @@
     <ClInclude Include="Source\Game\Player\NetworkController.h" />
     <ClInclude Include="Source\Game\Player\Player.h" />
     <ClInclude Include="Source\Game\Scripts\UI\TitleSceneController.h" />
+    <ClInclude Include="Source\Game\UI\TitleSceneController.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Engine\Editor\Panels\ContentBrowserPanel.cpp" />

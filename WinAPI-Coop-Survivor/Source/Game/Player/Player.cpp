@@ -3,11 +3,7 @@
 #include "LocalController.h"
 #include "NetworkController.h"
 #include "Engine/Core/ComponentRegister.h"
-#include "Engine/Manager/ActionManager.h"
-#include "Engine/Framework/Scene.h"
-#include "Engine/Framework/GameObject.h"
-#include "Engine/Framework/Components/Core/TransformComponent.h"
-#include "Engine/Framework/Components/Render/SpriteRendererComponent.h"
+#include "Engine/Framework/Components/Network/NetworkIdentity.h"
 #include "Engine/Framework/Components/Physics/BoxCollider.h"
 
 static ComponentRegistrar<Player> registrar(EngineKey::CustomComponent::Player.data());
@@ -18,21 +14,16 @@ void Player::Start()
 {
 	m_pCollider = gameObject.GetComponent<ColliderComponent>();
 
-	InitializeNetworkController(m_NetID, m_bIsLocal);
-}
+	NetworkIdentity* netIdentity = gameObject.GetComponent<NetworkIdentity>();
+	if (!netIdentity) return;
 
-void Player::InitializeNetworkController(unsigned int netID, bool isLocal)
-{
-	m_NetID = netID;
-	m_bIsLocal = isLocal;
-
-	if (m_bIsLocal)
+	if (netIdentity->HasAuthority())
 	{
 		gameObject.AddComponent<LocalController>();
 	}
 	else
 	{
-		gameObject.AddComponent<NetworkController>(m_NetID);
+		gameObject.AddComponent<NetworkController>(netIdentity->GetNetID());
 
 		if (m_pCollider.IsValid() && b2Body_IsValid(m_pCollider->GetBodyId()))
 		{
