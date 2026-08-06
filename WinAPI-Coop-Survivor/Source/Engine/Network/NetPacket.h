@@ -71,4 +71,10 @@ struct GameStateSyncPacket
 	float gameElapsedTime;
 };
 
+// ClientDisconnPacket
+struct ClientDisconnPacket
+{
+	PacketHeader header;
+	uint32 disconnectedNetID;
+};
 #pragma pack(pop)

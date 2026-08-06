@@ -1,5 +1,7 @@
 #include "Engine/Core/pch.h"
 #include "Player.h"
+#include "LocalController.h"
+#include "NetworkController.h"
 #include "Engine/Core/ComponentRegister.h"
 #include "Engine/Framework/Components/Network/NetworkIdentity.h"
 #include "Engine/Framework/Components/Physics/BoxCollider.h"
@@ -17,11 +19,11 @@ void Player::Start()
 
 	if (netIdentity->HasAuthority())
 	{
-		//gameObject.AddComponent<LocalController>();
+		gameObject.AddComponent<LocalController>();
 	}
 	else
 	{
-		//gameObject.AddComponent<NetworkController>(netIdentity->GetNetID());
+		gameObject.AddComponent<NetworkController>(netIdentity->GetNetID());
 
 		if (m_pCollider.IsValid() && b2Body_IsValid(m_pCollider->GetBodyId()))
 		{
@@ -33,3 +35,4 @@ void Player::Start()
 void Player::Update(float dt)
 {
 }
+

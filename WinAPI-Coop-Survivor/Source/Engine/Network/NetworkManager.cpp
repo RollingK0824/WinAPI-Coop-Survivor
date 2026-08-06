@@ -31,10 +31,11 @@ void NetworkManager::Release() {
 	if (m_Socket != INVALID_SOCKET) {
 		// 클라이언트인 경우 종료 알림 전송
 		if (m_Role == NetRole::CLIENT && m_bConnected) {
-			PacketHeader disconnPacket;
-			disconnPacket.type = PacketType::CLIENT_DISCONN;
-			disconnPacket.size = sizeof(PacketHeader);
-			SendPacket(&disconnPacket, sizeof(PacketHeader));
+			ClientDisconnPacket disconnPacket;
+			disconnPacket.header.type = PacketType::CLIENT_DISCONN;
+			disconnPacket.header.size = sizeof(ClientDisconnPacket);
+			disconnPacket.disconnectedNetID = m_MyNetID;
+			SendPacket(&disconnPacket, sizeof(ClientDisconnPacket));
 		}
 
 		closesocket(m_Socket);
@@ -80,7 +81,7 @@ bool NetworkManager::StartHost(int port) {
 	uint32 newSeed = RandomManager::GetInstance()->GenerateNewSeed();
 	m_ConnectedClients.clear();
 	m_InterpolationMap.clear();
-	m_NextNetID = 1000;
+	m_NextNetID = 2;
 
 	Scene* scene = SceneManager::GetInstance()->GetActiveScene();
 	if (scene) {
@@ -192,7 +193,16 @@ void NetworkManager::Update(float dt) {
 			float currentTime = TimeManager::GetInstance()->GetRealTime();
 			for (auto it = m_ConnectedClients.begin(); it != m_ConnectedClients.end();) {
 				if (currentTime - it->second.lastHeartbeatTime > 5.0f) {
-					std::cout << "Client (NetID: " << it->first << ") timed out." << std::endl;
+					uint32 deadNetID = it->first;
+					std::cout << "Client (NetID: " << deadNetID << ") timed out." << std::endl;
+
+					// 다른 클라이언트들에게 이탈 브로드캐스트
+					ClientDisconnPacket disconnPkt{};
+					disconnPkt.header.type = PacketType::CLIENT_DISCONN;
+					disconnPkt.header.size = sizeof(ClientDisconnPacket);
+					disconnPkt.disconnectedNetID = deadNetID;
+					SendPacket(&disconnPkt, sizeof(ClientDisconnPacket));
+
 					it = m_ConnectedClients.erase(it);
 				}
 				else {
@@ -496,11 +506,24 @@ void NetworkManager::HandlePacket(const char* buffer, int size, const sockaddr_i
 	case PacketType::CLIENT_DISCONN:
 	{
 		if (m_Role != NetRole::HOST) break;
+		const ClientDisconnPacket* disconnPkt = (const ClientDisconnPacket*)buffer;
+		uint32 targetNetID = disconnPkt->disconnectedNetID;
+
 		for (auto it = m_ConnectedClients.begin(); it != m_ConnectedClients.end(); ++it) {
-			if (it->second.address.sin_addr.s_addr == senderAddr.sin_addr.s_addr &&
-				it->second.address.sin_port == senderAddr.sin_port) {
-				std::cout << "Client (NetID: " << it->first << ") disconnected." << std::endl;
+			if (it->first == targetNetID || 
+				(it->second.address.sin_addr.s_addr == senderAddr.sin_addr.s_addr &&
+				 it->second.address.sin_port == senderAddr.sin_port)) {
+				
+				uint32 deadNetID = it->first;
+				std::cout << "Client (NetID: " << deadNetID << ") disconnected." << std::endl;
 				m_ConnectedClients.erase(it);
+
+				// 남아있는 다른 클라이언트들에게 이탈 브로드캐스트
+				ClientDisconnPacket broadcastPkt{};
+				broadcastPkt.header.type = PacketType::CLIENT_DISCONN;
+				broadcastPkt.header.size = sizeof(ClientDisconnPacket);
+				broadcastPkt.disconnectedNetID = deadNetID;
+				SendPacket(&broadcastPkt, sizeof(ClientDisconnPacket));
 				break;
 			}
 		}
