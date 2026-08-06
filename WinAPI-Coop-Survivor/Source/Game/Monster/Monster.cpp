@@ -39,6 +39,33 @@ void Monster::Start()
 	}
 }
 
+void Monster::OnEnable()
+{
+	m_state = EMonsterState::Chase;
+	m_targetPlayer = nullptr;
+	m_attackTimer = 0.0f;
+	m_targetSearchTimer = 0.0f;
+
+	if (!m_pCollider.IsValid())
+	{
+		m_pCollider = gameObject.GetComponent<CircleCollider>();
+	}
+
+	if (m_pCollider.IsValid() && b2Body_IsValid(m_pCollider->GetBodyId()))
+	{
+		b2Body_SetLinearVelocity(m_pCollider->GetBodyId(), { 0.0f, 0.0f });
+	}
+}
+
+void Monster::OnDisable()
+{
+	m_targetPlayer = nullptr;
+	if (m_pCollider.IsValid() && b2Body_IsValid(m_pCollider->GetBodyId()))
+	{
+		b2Body_SetLinearVelocity(m_pCollider->GetBodyId(), { 0.0f, 0.0f });
+	}
+}
+
 void Monster::Init(uint32 spawnSeqId, MonsterSO* monsterData, const Vector2& spawnPos, MonsterSpawner* spawner)
 {
 	m_spawnSeqID = spawnSeqId;

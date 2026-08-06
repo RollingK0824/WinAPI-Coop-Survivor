@@ -44,20 +44,6 @@ void MonsterSpawner::InitPool(size_t defaultCapacity, size_t maxSize)
 			if (pObj)
 			{
 				pObj->SetActive(false);
-				for (auto* comp : pObj->GetComponents())
-				{
-					if (comp)
-					{
-						comp->SetEnabled(false);
-						if (auto* collider = dynamic_cast<ColliderComponent*>(comp))
-						{
-							if (b2Body_IsValid(collider->GetBodyId()))
-							{
-								b2Body_Disable(collider->GetBodyId());
-							}
-						}
-					}
-				}
 			}
 			return pObj;
 		},
@@ -65,40 +51,12 @@ void MonsterSpawner::InitPool(size_t defaultCapacity, size_t maxSize)
 			if (pObj)
 			{
 				pObj->SetActive(true);
-				for (auto* comp : pObj->GetComponents())
-				{
-					if (comp)
-					{
-						comp->SetEnabled(true);
-						if (auto* collider = dynamic_cast<ColliderComponent*>(comp))
-						{
-							if (b2Body_IsValid(collider->GetBodyId()))
-							{
-								b2Body_Enable(collider->GetBodyId());
-							}
-						}
-					}
-				}
 			}
 		},
 		[](GameObject* pObj) {
 			if (pObj)
 			{
 				pObj->SetActive(false);
-				for (auto* comp : pObj->GetComponents())
-				{
-					if (comp)
-					{
-						comp->SetEnabled(false);
-						if (auto* collider = dynamic_cast<ColliderComponent*>(comp))
-						{
-							if (b2Body_IsValid(collider->GetBodyId()))
-							{
-								b2Body_Disable(collider->GetBodyId());
-							}
-						}
-					}
-				}
 			}
 		},
 		nullptr,
@@ -163,20 +121,6 @@ Monster* MonsterSpawner::SpawnMonster(MonsterSO* monsterData, const Vector2& spa
 	if (!pMonsterObj) return nullptr;
 
 	pMonsterObj->SetActive(true);
-	for (auto* comp : pMonsterObj->GetComponents())
-	{
-		if (comp)
-		{
-			comp->SetEnabled(true);
-			if (auto* collider = dynamic_cast<ColliderComponent*>(comp))
-			{
-				if (b2Body_IsValid(collider->GetBodyId()))
-				{
-					b2Body_Enable(collider->GetBodyId());
-				}
-			}
-		}
-	}
 
 	Monster* pMonsterComp = pMonsterObj->GetComponent<Monster>();
 	if (!pMonsterComp) return nullptr;
@@ -193,21 +137,6 @@ void MonsterSpawner::DespawnMonster(GameObject* pMonsterObj)
 	if (!pMonsterObj) return;
 
 	pMonsterObj->SetActive(false);
-	for (auto* comp : pMonsterObj->GetComponents())
-	{
-		if (comp)
-		{
-			comp->SetEnabled(false);
-			if (auto* collider = dynamic_cast<ColliderComponent*>(comp))
-			{
-				if (b2Body_IsValid(collider->GetBodyId()))
-				{
-					b2Body_Disable(collider->GetBodyId());
-				}
-			}
-		}
-	}
-
 	PoolManager::GetInstance()->Despawn<GameObject>(m_prefabKey, pMonsterObj);
 	if (m_activeMonsterCount > 0)
 	{

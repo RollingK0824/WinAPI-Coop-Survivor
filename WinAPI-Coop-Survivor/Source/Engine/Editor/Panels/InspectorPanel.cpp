@@ -465,7 +465,7 @@ void InspectorPanel::DrawComponents(GameObject* pObj)
 		bool isEnabled = comp->IsEnabled();
 		if (ImGui::Checkbox("##IsEnabled", &isEnabled))
 		{
-			comp->SetEnabled(isEnabled);
+			comp->SetEnable(isEnabled);
 		}
 		ImGui::SameLine();
 

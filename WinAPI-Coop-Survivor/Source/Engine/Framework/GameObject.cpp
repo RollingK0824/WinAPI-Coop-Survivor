@@ -221,13 +221,30 @@ void GameObject::SetActive(bool active)
 
 	for (auto* comp : m_vComponents)
 	{
-		if (comp && comp->IsEnabled())
+		if (!comp) continue;
+
+		if (m_bIsActive)
 		{
-			if (m_bIsActive)
+			if (!comp->HasAwoken())
+			{
+				comp->Awake();
+				comp->MarkAwoken();
+			}
+
+			if (comp->IsEnabled())
 			{
 				comp->OnEnable();
+
+				if (!comp->HasStarted())
+				{
+					comp->Start();
+					comp->MarkStarted();
+				}
 			}
-			else
+		}
+		else
+		{
+			if (comp->IsEnabled())
 			{
 				comp->OnDisable();
 			}

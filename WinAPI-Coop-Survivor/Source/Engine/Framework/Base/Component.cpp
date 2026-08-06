@@ -36,6 +36,25 @@ namespace
 	}
 }
 
+void Component::SetEnable(bool isEnabled)
+{
+	if (m_bIsEnabled == isEnabled) return;
+
+	m_bIsEnabled = isEnabled;
+
+	if (GetGameObjectInternal().IsActive())
+	{
+		if (m_bIsEnabled)
+		{
+			OnEnable();
+		}
+		else
+		{
+			OnDisable();
+		}
+	}
+}
+
 void Component::Serialize(json& outJson) const
 {
 	outJson[EngineKey::Property::IsEnabled.data()] = m_bIsEnabled;

@@ -30,6 +30,8 @@ public:
 	}
 
 	virtual void Start() override;
+	virtual void OnEnable() override;
+	virtual void OnDisable() override;
 	virtual void FixedUpdate(float fixedDt) override;
 
 	void Init(uint32 spawnSeqId, MonsterSO* monsterData, const Vector2& spawnPos, MonsterSpawner* spawner = nullptr);
