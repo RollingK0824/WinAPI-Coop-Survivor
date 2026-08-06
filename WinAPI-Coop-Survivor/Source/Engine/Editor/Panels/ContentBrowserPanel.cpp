@@ -3,6 +3,10 @@
 #include "Engine/Manager/SceneManager.h"
 #include "Engine/Manager/JsonSerializer.h"
 #include "Engine/Manager/PrefabManager.h"
+#include "Engine/Manager/DataManager.h"
+#include "Engine/Framework/Base/ScriptableObject.h"
+#include "Game/Data/MonsterSO.h"
+#include "Engine/Editor/EditorSystem.h"
 #include "Engine/Framework/Scene.h"
 #include "Engine/Framework/GameObject.h"
 
@@ -54,9 +58,54 @@ void ContentBrowserPanel::DrawContentGrid()
         }
         else
         {
-            bool isSceneFile = (path.extension() == ".scene" || path.extension() == ".json");
+            bool isSceneFile = (path.extension() == ".scene");
             bool isPrefabFile = (path.extension() == ".prefab");
-            if (ImGui::Selectable(("[File] " + filenameStr).c_str())) {}
+            bool isSOAssetFile = (path.extension() == ".asset");
+
+            std::string prefix = isSOAssetFile ? "[SO Asset] " : "[File] ";
+            bool isSelected = false;
+
+            if (isSOAssetFile)
+            {
+                ScriptableObject* pSelectedSO = EditorSystem::GetInstance()->GetSelectedScriptableObject();
+                if (pSelectedSO && pSelectedSO->GetFilePath() == path.string())
+                {
+                    isSelected = true;
+                }
+            }
+
+            if (ImGui::Selectable((prefix + filenameStr).c_str(), isSelected))
+            {
+                if (isSOAssetFile)
+                {
+                    // 해당 .asset 파일의 SO 찾기
+                    const auto& assets = DataManager::GetInstance()->GetAllAssets();
+                    bool found = false;
+                    for (const auto& [id, pAsset] : assets)
+                    {
+                        if (pAsset && pAsset->GetFilePath() == path.string())
+                        {
+                            EditorSystem::GetInstance()->SetSelectedScriptableObject(pAsset.get());
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found)
+                    {
+                        DataManager::GetInstance()->LoadAssetFile(path.string());
+                        const auto& updatedAssets = DataManager::GetInstance()->GetAllAssets();
+                        for (const auto& [id, pAsset] : updatedAssets)
+                        {
+                            if (pAsset && pAsset->GetFilePath() == path.string())
+                            {
+                                EditorSystem::GetInstance()->SetSelectedScriptableObject(pAsset.get());
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
             if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
             {
                 if (isSceneFile)
@@ -64,12 +113,41 @@ void ContentBrowserPanel::DrawContentGrid()
                     SceneManager::GetInstance()->LoadSceneFromFile(path.string());
                 }
             }
+
             if (ImGui::BeginPopupContextItem())
             {
+                if (isSOAssetFile && ImGui::MenuItem("Delete Asset"))
+                {
+                    const auto& assets = DataManager::GetInstance()->GetAllAssets();
+                    uint32 toDeleteID = 0;
+                    for (const auto& [id, pAsset] : assets)
+                    {
+                        if (pAsset && pAsset->GetFilePath() == path.string())
+                        {
+                            toDeleteID = id;
+                            break;
+                        }
+                    }
+                    if (toDeleteID != 0)
+                    {
+                        ScriptableObject* pSelectedSO = EditorSystem::GetInstance()->GetSelectedScriptableObject();
+                        if (pSelectedSO && pSelectedSO->GetAssetID() == toDeleteID)
+                        {
+                            EditorSystem::GetInstance()->SetSelectedScriptableObject(nullptr);
+                        }
+                        DataManager::GetInstance()->RemoveSO(toDeleteID);
+                    }
+                    else if (std::filesystem::exists(path))
+                    {
+                        std::filesystem::remove(path);
+                    }
+                }
+
                 if (isSceneFile && ImGui::MenuItem("Set as Active Scene"))
                 {
                     SceneManager::GetInstance()->LoadSceneFromFile(path.string());
                 }
+
                 if (isPrefabFile && ImGui::MenuItem("Instantiate Prefab"))
                 {
                     Scene* pActiveScene = SceneManager::GetInstance()->GetActiveScene();
@@ -84,6 +162,7 @@ void ContentBrowserPanel::DrawContentGrid()
                         }
                     }
                 }
+
                 if (ImGui::MenuItem("Rename"))
                 {
                     m_RenameTargetEntry = path;
@@ -92,6 +171,7 @@ void ContentBrowserPanel::DrawContentGrid()
                 }
                 ImGui::EndPopup();
             }
+
             if (ImGui::BeginDragDropSource())
             {
                 std::string pathStr = path.string();
@@ -130,6 +210,15 @@ void ContentBrowserPanel::HandleWindowContextMenu()
     {
         if (ImGui::BeginMenu("Create"))
         {
+            if (ImGui::MenuItem("Monster ScriptableObject"))
+            {
+                auto newSO = DataManager::GetInstance()->CreateMonsterSO("NewMonster", m_CurrentDirectory.string());
+                if (newSO)
+                {
+                    EditorSystem::GetInstance()->SetSelectedScriptableObject(newSO.get());
+                }
+            }
+            ImGui::Separator();
             if (ImGui::MenuItem("New Scene"))
             {
                 SceneManager::GetInstance()->CreateDefaultTemplateScene("NewScene");

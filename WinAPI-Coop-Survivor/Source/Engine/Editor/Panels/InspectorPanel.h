@@ -19,4 +19,5 @@ private:
     void DrawTransform(GameObject* pObj);          // TransformComponent 전용 UI
     void DrawComponents(GameObject* pObj);         // 일반 컴포넌트 목록 및 우클릭 삭제
     void DrawAddComponentButton(GameObject* pObj); // Add Component 버튼 및 팝업
+    void DrawScriptableObjectData();              // DataManager 내 ScriptableObject 어셋 편집 UI
 };

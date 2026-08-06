@@ -1,35 +1,11 @@
 #pragma once
 #include "Engine/Core/Define.h"
+#include "Engine/Core/ExposedProperty.h"
 
 class GameObject;
 class ColliderComponent;
 class TransformComponent;
 class Scene;
-
-enum class PropType
-{
-	Int,
-	Float,
-	Bool,
-	String,
-	WString,
-	Vector2,
-	Color,
-	Rect,
-	StringVector,
-	Texture,
-	ObjectRef
-};
-
-struct ExposedProperty
-{
-	std::string name;
-	PropType type;
-	void* data = nullptr;
-	std::function<uint64(void*)> getInstanceID = nullptr;
-	std::function<void(GameObject*, void*)> resolver = nullptr;
-	std::function<GameObject* (void*)> getTargetGameObject = nullptr;
-};
 
 #define CLONEABLE_COMPONENT(Type) \
 	virtual Component* Clone() override { return new Type(*this); }
@@ -131,7 +107,6 @@ public:
 	virtual void PostDeserialize(Scene* pScene);
 
 public:
-
 	void ExposeVariable(const std::string& name, int* var) { m_vProperties.push_back({ name, PropType::Int, var }); }
 	void ExposeVariable(const std::string& name, int16* var) { m_vProperties.push_back({ name, PropType::Int, var }); }
 	void ExposeVariable(const std::string& name, float* var) { m_vProperties.push_back({ name, PropType::Float, var }); }
