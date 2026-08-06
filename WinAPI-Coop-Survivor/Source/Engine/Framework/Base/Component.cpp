@@ -42,7 +42,7 @@ void Component::SetEnable(bool isEnabled)
 
 	m_bIsEnabled = isEnabled;
 
-	if (GetGameObjectInternal().IsActive())
+	if (gameObject.IsActive())
 	{
 		if (m_bIsEnabled)
 		{
