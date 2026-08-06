@@ -15,6 +15,8 @@ public:
 	void SetZOrder(int zOrder) { m_RenderCommand.zOrder = zOrder; }
 	void SetOpacity(float opacity) { m_RenderCommand.bitmap.opacity = opacity; }
 	void SetColor(const D2D1::ColorF& color) { m_RenderCommand.color = color; }
+	void SetPivot(D2D1_POINT_2F pivot) { m_RenderCommand.pivot = pivot; }
+	void SetPivot(float x, float y) { m_RenderCommand.pivot = { x, y }; }
 
 	virtual std::string_view GetComponentType() const override { return EngineKey::Component::Render; }
 

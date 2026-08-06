@@ -7,6 +7,7 @@
 #include "Engine/Framework/GameObject.h"
 #include "Engine/Framework/Components/Core/TransformComponent.h"
 #include "Engine/Framework/Components/Network/NetworkIdentity.h"
+#include "Engine/Manager/DebugManager.h"
 #include "Game/Player/Player.h"
 
 static ComponentRegistrar<InGameManager> registrar(EngineKey::CustomComponent::InGameManager.data());
@@ -17,6 +18,12 @@ InGameManager::InGameManager(GameObject* owner, TransformComponent* transform) :
 
 void InGameManager::Start()
 {
+	Scene* pScene = gameObject.GetOwnerScene();
+	if (pScene)
+	{
+		DebugManager::GetInstance()->CreateDebugUIOverlay(pScene);
+	}
+
 	NetworkManager* net = NetworkManager::GetInstance();
 	uint32 myNetID = net->GetMyNetID();
 

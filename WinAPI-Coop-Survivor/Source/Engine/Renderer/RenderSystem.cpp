@@ -116,8 +116,20 @@ void RenderSystem::DrawTextString(ID2D1RenderTarget* pRT, const RenderCommand& c
 	);
 	if (SUCCEEDED(hr) && pTextFormat)
 	{
-		pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
-		pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+		if (cmd.pivot.x == 0.0f)
+			pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
+		else if (cmd.pivot.x == 1.0f)
+			pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
+		else
+			pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+
+		if (cmd.pivot.y == 0.0f)
+			pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
+		else if (cmd.pivot.y == 1.0f)
+			pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_FAR);
+		else
+			pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+
 		float width = (cmd.srcRect.right > cmd.srcRect.left) ? (cmd.srcRect.right - cmd.srcRect.left) : 300.0f;
 		float height = (cmd.srcRect.bottom > cmd.srcRect.top) ? (cmd.srcRect.bottom - cmd.srcRect.top) : 100.0f;
 		D2D1_MATRIX_3X2_F transformMatrix =
@@ -129,7 +141,11 @@ void RenderSystem::DrawTextString(ID2D1RenderTarget* pRT, const RenderCommand& c
 			transformMatrix = transformMatrix * CameraManager::GetInstance()->GetActiveViewMatrix();
 		}
 		pRT->SetTransform(transformMatrix);
-		D2D1_RECT_F layoutRect = D2D1::RectF(-width * 0.5f, -height * 0.5f, width * 0.5f, height * 0.5f);
+
+		float left = -width * cmd.pivot.x;
+		float top = -height * cmd.pivot.y;
+		D2D1_RECT_F layoutRect = D2D1::RectF(left, top, left + width, top + height);
+
 		pRT->DrawTextW(
 			cmd.text.pText.data(),
 			static_cast<UINT32>(cmd.text.pText.length()),

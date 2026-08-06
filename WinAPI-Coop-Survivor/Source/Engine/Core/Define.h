@@ -100,3 +100,19 @@ enum class DisplayMode
 	Borderless,
 	Fullscreen
 };
+
+namespace PhysicsLayer
+{
+	enum Category : uint32
+	{
+		None       = 0,
+		Default    = 1 << 0, // 0x0001
+		Player     = 1 << 1, // 0x0002
+		Monster    = 1 << 2, // 0x0004
+		Projectile = 1 << 3, // 0x0008
+		Wall       = 1 << 4, // 0x0010
+		Item       = 1 << 5, // 0x0020
+
+		All        = 0xFFFFFFFF
+	};
+}
