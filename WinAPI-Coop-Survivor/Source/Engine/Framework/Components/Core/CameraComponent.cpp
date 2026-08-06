@@ -128,6 +128,7 @@ void CameraComponent::SetTarget(GameObject* pTargetGameObject)
 	if (pTargetGameObject)
 	{
 		SetTarget(&pTargetGameObject->transform);
+		SetEnableFollow(true);
 	}
 	else
 	{

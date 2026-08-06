@@ -26,7 +26,7 @@
                     "Data": {
                         "IsEnabled": true,
                         "Zoom": 1.0,
-                        "Enable Follow": false,
+                        "Enable Follow": true,
                         "Smooth Follow": true,
                         "Follow Speed": 5.0,
                         "Use Map Bounds": false,
