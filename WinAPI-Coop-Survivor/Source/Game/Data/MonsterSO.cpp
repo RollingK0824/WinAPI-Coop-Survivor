@@ -8,7 +8,7 @@ MonsterSO::MonsterSO()
 	ExposeVariable("AttackDamage", &m_attackDamage);
 	ExposeVariable("ColliderRadius", &m_colliderRadius);
 	ExposeVariable("ExpAmount", &m_expAmount);
-	ExposeTexture("TextureKey", &m_textureKey);
+	ExposeTexture("SpriteKey", &m_spriteKey);
 }
 
 void MonsterSO::OnLoadFromJson(const json& j)
@@ -21,10 +21,15 @@ void MonsterSO::OnLoadFromJson(const json& j)
 	if (j.contains("ColliderRadius")) m_colliderRadius = j["ColliderRadius"].get<float>();
 	if (j.contains("ExpAmount")) m_expAmount = j["ExpAmount"].get<int32>();
 
-	if (j.contains("TextureKey"))
+	if (j.contains("SpriteKey"))
+	{
+		std::string keyStr = j["SpriteKey"].get<std::string>();
+		m_spriteKey = std::wstring(keyStr.begin(), keyStr.end());
+	}
+	else if (j.contains("TextureKey"))
 	{
 		std::string keyStr = j["TextureKey"].get<std::string>();
-		m_textureKey = std::wstring(keyStr.begin(), keyStr.end());
+		m_spriteKey = std::wstring(keyStr.begin(), keyStr.end());
 	}
 }
 
@@ -36,6 +41,6 @@ void MonsterSO::OnSaveToJson(json& j) const
 	j["ColliderRadius"] = m_colliderRadius;
 	j["ExpAmount"] = m_expAmount;
 
-	std::string keyStr(m_textureKey.begin(), m_textureKey.end());
-	j["TextureKey"] = keyStr;
+	std::string keyStr(m_spriteKey.begin(), m_spriteKey.end());
+	j["SpriteKey"] = keyStr;
 }

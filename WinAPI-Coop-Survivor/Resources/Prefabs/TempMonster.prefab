@@ -1,6 +1,6 @@
 {
-    "Name": "PlayerPrefab",
-    "InstanceID": 55,
+    "Name": "TempMonster",
+    "InstanceID": 48,
     "IsActive": true,
     "Components": [
         {
@@ -31,10 +31,10 @@
                     "b": 1.0,
                     "a": 1.0
                 },
-                "SpriteKey": "Imeldat/Imeldat.png",
+                "SpriteKey": "Characeter_Green/Character0.png",
                 "Size": {
-                    "x": 320.0,
-                    "y": 340.0
+                    "x": 16.0,
+                    "y": 16.0
                 },
                 "Pivot": {
                     "x": 0.5,
@@ -49,7 +49,21 @@
             }
         },
         {
-            "Type": "BoxColliderComponent",
+            "Type": "AnimatorComponent",
+            "Data": {
+                "IsEnabled": true,
+                "IsPlaying": true,
+                "CurrentFrameIdx": 0,
+                "AccumulatedTime": 0.0,
+                "ClipKeys": [
+                    "Green_Player_Run",
+                    "Green_Player_Die"
+                ],
+                "DefaultPlay": "Green_Player_Run"
+            }
+        },
+        {
+            "Type": "CircleColliderComponent",
             "Data": {
                 "IsEnabled": true,
                 "Offset": {
@@ -62,16 +76,20 @@
                 "FixedRotation": true,
                 "CategoryBits": 1,
                 "MaskBits": -1,
-                "Size": {
-                    "x": 0.0,
-                    "y": 0.0
-                }
+                "Radius": 0.0
             }
         },
         {
-            "Type": "Player",
+            "Type": "Monster",
             "Data": {
-                "IsEnabled": true
+                "IsEnabled": true,
+                "MonsterSO": 101,
+                "CurrentHP": 100.0,
+                "MaxHP": 100.0,
+                "MoveSpeed": 120.0,
+                "AttackDamage": 10.0,
+                "AttackRange": 40.0,
+                "AttackCooldown": 1.0
             }
         }
     ]

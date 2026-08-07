@@ -1,6 +1,6 @@
-﻿#pragma once
+#pragma once
 #include <d2d1.h>
-#include "Engine/Core/Types.h"
+#include "Engine/Renderer/Sprite.h"
 
 enum class RenderType : uint8
 {
@@ -15,10 +15,8 @@ enum class RenderType : uint8
 
 struct BitmapParams
 {
-	ID2D1Bitmap* pTexture = nullptr;
-	D2D1_POINT_2F offset = { 0, 0 };
-	float originalWidth = 0.0f;
-	float originalHeight = 0.0f;
+	Sprite sprite;
+	Vector2 size = { 0.0f, 0.0f };
 	float opacity = 1.0f;
 	bool flipX = false;
 	bool flipY = false;

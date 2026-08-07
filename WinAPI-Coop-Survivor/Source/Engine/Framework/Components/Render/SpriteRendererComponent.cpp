@@ -10,81 +10,112 @@ SpriteRendererComponent::SpriteRendererComponent(GameObject* owner, TransformCom
 {
 	m_RenderCommand.type = RenderType::BITMAP;
 
-	ExposeTexture("TextureKey", &m_textureKey);
+	ExposeTexture("SpriteKey", &m_spriteKey);
+	ExposeVariable("Size", &m_size);
+	ExposeVariable("Pivot", &m_RenderCommand.bitmap.sprite.pivot);
+	ExposeVariable("Offset", &m_RenderCommand.bitmap.sprite.offset);
 	ExposeVariable("FlipX", &m_RenderCommand.bitmap.flipX);
 	ExposeVariable("FlipY", &m_RenderCommand.bitmap.flipY);
-	ExposeVariable("SrcRect", &m_RenderCommand.srcRect);
 }
 
 void SpriteRendererComponent::Awake()
 {
 	RenderComponent::Awake();
 
-	if (!m_RenderCommand.bitmap.pTexture && !m_textureKey.empty())
+	if (!m_spriteKey.empty())
 	{
-		m_RenderCommand.bitmap.pTexture = ResourceManager::GetInstance()->GetTexture(m_textureKey);
+		SetSpriteKey(m_spriteKey);
 	}
 }
 
 void SpriteRendererComponent::SetAsSprite(const Sprite& sprite)
 {
 	m_RenderCommand.type = RenderType::BITMAP;
-	m_RenderCommand.bitmap.pTexture = sprite.pTexture;
-	m_RenderCommand.srcRect = sprite.srcRect;
-	m_RenderCommand.pivot = sprite.pivot;
+	m_RenderCommand.bitmap.sprite = sprite;
+
+	float srcW = sprite.srcRect.right - sprite.srcRect.left;
+	float srcH = sprite.srcRect.bottom - sprite.srcRect.top;
+
+	if (m_size.x <= 0.0f || m_size.y <= 0.0f)
+	{
+		m_size = { srcW, srcH };
+	}
+	m_RenderCommand.bitmap.size = m_size;
 }
 
-void SpriteRendererComponent::SetTextureKey(const std::wstring& textureKey)
+void SpriteRendererComponent::SetSize(Vector2 size)
 {
-	m_textureKey = textureKey;
-	m_RenderCommand.bitmap.pTexture = ResourceManager::GetInstance()->GetTexture(textureKey);
+	m_size = size;
+	m_RenderCommand.bitmap.size = m_size;
+}
+
+void SpriteRendererComponent::SetSpriteKey(const std::wstring& spriteKey)
+{
+	m_spriteKey = spriteKey;
+	const Sprite* pSprite = ResourceManager::GetInstance()->GetSprite(spriteKey);
+	if (pSprite != nullptr)
+	{
+		D2D1_POINT_2F oldPivot = m_RenderCommand.bitmap.sprite.pivot;
+		D2D1_POINT_2F oldOffset = m_RenderCommand.bitmap.sprite.offset;
+
+		SetAsSprite(*pSprite);
+
+		if (oldPivot.x != 0.0f || oldPivot.y != 0.0f)
+		{
+			m_RenderCommand.bitmap.sprite.pivot = oldPivot;
+		}
+		if (oldOffset.x != 0.0f || oldOffset.y != 0.0f)
+		{
+			m_RenderCommand.bitmap.sprite.offset = oldOffset;
+		}
+	}
 }
 
 void SpriteRendererComponent::SetAsBitmap(ID2D1Bitmap* pBitmap, D2D1_RECT_F srcRect)
 {
 	m_RenderCommand.type = RenderType::BITMAP;
-	m_RenderCommand.bitmap.pTexture = pBitmap;
-	m_RenderCommand.srcRect = srcRect;
-	m_textureKey = L"";
+	m_RenderCommand.bitmap.sprite.pTexture = pBitmap;
+	m_RenderCommand.bitmap.sprite.srcRect = srcRect;
+	m_RenderCommand.bitmap.sprite.pivot = D2D1::Point2F(0.5f, 0.5f);
+
+	float srcW = srcRect.right - srcRect.left;
+	float srcH = srcRect.bottom - srcRect.top;
+	if (m_size.x <= 0.0f || m_size.y <= 0.0f)
+	{
+		m_size = { srcW, srcH };
+	}
+	m_RenderCommand.bitmap.size = m_size;
 }
 
 void SpriteRendererComponent::SetAsBitmap(const std::wstring& textureKey, D2D1_RECT_F srcRect)
 {
 	m_RenderCommand.type = RenderType::BITMAP;
-	m_RenderCommand.srcRect = srcRect;
-	SetTextureKey(textureKey);
+	SetSpriteKey(textureKey);
+	m_RenderCommand.bitmap.sprite.srcRect = srcRect;
 }
 
 void SpriteRendererComponent::SetNativeSize()
 {
-	if (!m_RenderCommand.bitmap.pTexture && !m_textureKey.empty())
+	const Sprite* pSprite = ResourceManager::GetInstance()->GetSprite(m_spriteKey);
+	if (pSprite != nullptr)
 	{
-		m_RenderCommand.bitmap.pTexture = ResourceManager::GetInstance()->GetTexture(m_textureKey);
+		float srcW = pSprite->srcRect.right - pSprite->srcRect.left;
+		float srcH = pSprite->srcRect.bottom - pSprite->srcRect.top;
+		SetSize({ srcW, srcH });
+		SetAsSprite(*pSprite);
 	}
-	if (m_RenderCommand.bitmap.pTexture)
+	else if (m_RenderCommand.bitmap.sprite.pTexture)
 	{
-		D2D1_SIZE_F size = m_RenderCommand.bitmap.pTexture->GetSize();
-		m_RenderCommand.srcRect = D2D1::RectF(0.0f, 0.0f, size.width, size.height);
+		D2D1_SIZE_F size = m_RenderCommand.bitmap.sprite.pTexture->GetSize();
+		SetSize({ size.width, size.height });
+		m_RenderCommand.bitmap.sprite.srcRect = D2D1::RectF(0.0f, 0.0f, size.width, size.height);
 	}
 }
 
 Vector2 SpriteRendererComponent::GetSpriteSize() const
 {
-	float width = m_RenderCommand.srcRect.right - m_RenderCommand.srcRect.left;
-	float height = m_RenderCommand.srcRect.bottom - m_RenderCommand.srcRect.top;
-
-	ID2D1Bitmap* pTex = m_RenderCommand.bitmap.pTexture;
-	if (!pTex && !m_textureKey.empty())
-	{
-		pTex = ResourceManager::GetInstance()->GetTexture(m_textureKey);
-	}
-
-	if ((width <= 0.0f || height <= 0.0f) && pTex)
-	{
-		D2D1_SIZE_F size = pTex->GetSize();
-		width = size.width;
-		height = size.height;
-	}
+	float width = (m_size.x > 0.0f) ? m_size.x : (m_RenderCommand.bitmap.sprite.srcRect.right - m_RenderCommand.bitmap.sprite.srcRect.left);
+	float height = (m_size.y > 0.0f) ? m_size.y : (m_RenderCommand.bitmap.sprite.srcRect.bottom - m_RenderCommand.bitmap.sprite.srcRect.top);
 
 	return Vector2(width * m_RenderCommand.scaleX, height * m_RenderCommand.scaleY);
 }
@@ -94,8 +125,9 @@ void SpriteRendererComponent::PostDeserialize(Scene* pScene)
 	RenderComponent::PostDeserialize(pScene);
 
 	m_RenderCommand.type = RenderType::BITMAP;
-	if (!m_textureKey.empty())
+	if (!m_spriteKey.empty())
 	{
-		m_RenderCommand.bitmap.pTexture = ResourceManager::GetInstance()->GetTexture(m_textureKey);
+		SetSpriteKey(m_spriteKey);
 	}
+	m_RenderCommand.bitmap.size = m_size;
 }

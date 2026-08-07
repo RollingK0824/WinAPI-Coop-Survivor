@@ -4,6 +4,7 @@
 #include "Engine/Framework/GameObject.h"
 #include "Engine/Framework/Components/Core/TransformComponent.h"
 #include "Engine/Framework/Components/Physics/ColliderComponent.h"
+#include <algorithm>
 
 bool PhysicsManager::Initialize()
 {
@@ -101,22 +102,33 @@ void PhysicsManager::DestoryBody(b2BodyId bodyId)
 
 void PhysicsManager::RegisterCollider(ColliderComponent* pCollider)
 {
-	if (pCollider == nullptr)return;
+	if (pCollider == nullptr) return;
+
+	if (b2Body_IsValid(pCollider->GetBodyId())) return;
 
 	TransformComponent* pTransform = &pCollider->transform;
-	if (pTransform == nullptr)return;
+	if (pTransform == nullptr) return;
 
 	b2BodyDef bodyDef = b2DefaultBodyDef();
 	bodyDef.type = pCollider->GetBodyType();
 	bodyDef.fixedRotation = pCollider->IsFixedRotation();
 
-	bodyDef.position = b2Vec2{ PixelToMeter(pTransform->GetPosition().x),PixelToMeter(pTransform->GetPosition().y) };
+	bodyDef.position = b2Vec2{ PixelToMeter(pTransform->GetPosition().x), PixelToMeter(pTransform->GetPosition().y) };
 	bodyDef.rotation = b2MakeRot(pTransform->GetRotation().angle);
 
 	bodyDef.userData = pCollider;
 
+	// Set isEnabled on BodyDef directly to prevent 1-frame overlap impulse during body creation
+	bool shouldBeActive = pCollider->gameObject.IsActive() && pCollider->IsEnabled();
+	bodyDef.isEnabled = shouldBeActive;
+
 	b2BodyId bodyId = CreateBody(&bodyDef);
 	pCollider->SetBodyId(bodyId);
+
+	if (!shouldBeActive)
+	{
+		b2Body_Disable(bodyId);
+	}
 
 	pCollider->SetPhysicsVectorIndex(m_vColliders.size());
 	m_vColliders.push_back(pCollider);
@@ -124,14 +136,24 @@ void PhysicsManager::RegisterCollider(ColliderComponent* pCollider)
 
 void PhysicsManager::UnRegisterCollider(ColliderComponent* pCollider)
 {
-	if (pCollider == nullptr)return;
+	if (pCollider == nullptr) return;
 
 	if (b2Body_IsValid(pCollider->GetBodyId()))
 	{
 		b2DestroyBody(pCollider->GetBodyId());
+		pCollider->SetBodyId(b2_nullBodyId);
 	}
 
+	if (m_vColliders.empty()) return;
+
 	size_t deleteIdx = pCollider->GetPhysicsVectorIndex();
+	if (deleteIdx >= m_vColliders.size() || m_vColliders[deleteIdx] != pCollider)
+	{
+		auto it = std::find(m_vColliders.begin(), m_vColliders.end(), pCollider);
+		if (it == m_vColliders.end()) return;
+		deleteIdx = std::distance(m_vColliders.begin(), it);
+	}
+
 	size_t lastIdx = m_vColliders.size() - 1;
 
 	if (deleteIdx != lastIdx)
@@ -141,5 +163,5 @@ void PhysicsManager::UnRegisterCollider(ColliderComponent* pCollider)
 	}
 
 	m_vColliders.pop_back();
+	pCollider->SetPhysicsVectorIndex((size_t)-1);
 }
-

@@ -17,6 +17,17 @@ GameObject::GameObject(Scene* pOwnerScene)
 
 GameObject::~GameObject()
 {
+	m_bIsDead = true;
+
+	for (void** observerPtr : m_vObservers)
+	{
+		if (observerPtr)
+		{
+			*observerPtr = nullptr;
+		}
+	}
+	m_vObservers.clear();
+
 	if (EditorSystem::GetInstance()->GetSelectedObject() == this)
 	{
 		EditorSystem::GetInstance()->SetSelectedObject(nullptr);
@@ -221,16 +232,50 @@ void GameObject::SetActive(bool active)
 
 	for (auto* comp : m_vComponents)
 	{
-		if (comp && comp->IsEnabled())
+		if (!comp) continue;
+
+		if (m_bIsActive)
 		{
-			if (m_bIsActive)
+			if (!comp->HasAwoken())
+			{
+				comp->Awake();
+				comp->MarkAwoken();
+			}
+
+			if (comp->IsEnabled())
 			{
 				comp->OnEnable();
+
+				if (!comp->HasStarted())
+				{
+					comp->Start();
+					comp->MarkStarted();
+				}
 			}
-			else
+		}
+		else
+		{
+			if (comp->IsEnabled())
 			{
 				comp->OnDisable();
 			}
 		}
+	}
+}
+
+void GameObject::RegisterObserverPtr(void** pObserverPtr)
+{
+	if (pObserverPtr && std::find(m_vObservers.begin(), m_vObservers.end(), pObserverPtr) == m_vObservers.end())
+	{
+		m_vObservers.push_back(pObserverPtr);
+	}
+}
+
+void GameObject::UnregisterObserverPtr(void** pObserverPtr)
+{
+	auto it = std::find(m_vObservers.begin(), m_vObservers.end(), pObserverPtr);
+	if (it != m_vObservers.end())
+	{
+		m_vObservers.erase(it);
 	}
 }

@@ -222,6 +222,47 @@ void InspectorPanel::DrawScriptableObjectData()
 			}
 		}
 		break;
+
+		case PropType::Asset:
+		{
+			uint32* pAssetID = static_cast<uint32*>(prop.data);
+			uint32 currentID = (pAssetID != nullptr) ? *pAssetID : 0;
+
+			std::string previewName = "None (Select SO Asset)";
+			const auto& allAssets = DataManager::GetInstance()->GetAllAssets();
+			auto it = allAssets.find(currentID);
+			if (it != allAssets.end() && it->second != nullptr)
+			{
+				previewName = it->second->GetAssetName() + " (ID: " + std::to_string(currentID) + ")";
+			}
+
+			ImGui::SetNextItemWidth(-1.0f);
+			if (ImGui::BeginCombo(("##" + prop.name + "_SOCombo").c_str(), previewName.c_str()))
+			{
+				if (ImGui::Selectable("None (0)", currentID == 0))
+				{
+					if (pAssetID) *pAssetID = 0;
+				}
+
+				for (const auto& [id, pAsset] : allAssets)
+				{
+					if (!pAsset) continue;
+					std::string label = pAsset->GetAssetName() + " (ID: " + std::to_string(id) + ")";
+					bool isSelected = (currentID == id);
+					if (ImGui::Selectable(label.c_str(), isSelected))
+					{
+						if (pAssetID) *pAssetID = id;
+					}
+
+					if (isSelected)
+					{
+						ImGui::SetItemDefaultFocus();
+					}
+				}
+				ImGui::EndCombo();
+			}
+		}
+		break;
 		}
 
 		ImGui::NextColumn();
@@ -424,7 +465,7 @@ void InspectorPanel::DrawComponents(GameObject* pObj)
 		bool isEnabled = comp->IsEnabled();
 		if (ImGui::Checkbox("##IsEnabled", &isEnabled))
 		{
-			comp->SetEnabled(isEnabled);
+			comp->SetEnable(isEnabled);
 		}
 		ImGui::SameLine();
 
@@ -513,6 +554,22 @@ void InspectorPanel::DrawComponents(GameObject* pObj)
 				}
 				break;
 
+				case PropType::Point2F:
+				{
+					D2D1_POINT_2F* pt = static_cast<D2D1_POINT_2F*>(prop.data);
+					float itemW = (ImGui::GetContentRegionAvail().x - 30.0f) * 0.5f;
+					if (itemW < 35.0f) itemW = 35.0f;
+
+					ImGui::Text("X"); ImGui::SameLine();
+					ImGui::SetNextItemWidth(itemW);
+					LeftDragFloat(("##" + prop.name + "X").c_str(), &pt->x, 0.01f, "%.3f");
+					ImGui::SameLine();
+					ImGui::Text("Y"); ImGui::SameLine();
+					ImGui::SetNextItemWidth(itemW);
+					LeftDragFloat(("##" + prop.name + "Y").c_str(), &pt->y, 0.01f, "%.3f");
+				}
+				break;
+
 				case PropType::Color:
 				{
 					D2D1_COLOR_F* color = static_cast<D2D1_COLOR_F*>(prop.data);
@@ -557,9 +614,30 @@ void InspectorPanel::DrawComponents(GameObject* pObj)
 					std::wstring* wKey = static_cast<std::wstring*>(prop.data);
 					std::string keyStr(wKey->begin(), wKey->end());
 
-					ID3D11ShaderResourceView* pSRV = ResourceManager::GetInstance()->GetTextureSRV(*wKey);
-					if (pSRV) ImGui::Image((ImTextureID)pSRV, ImVec2(35.0f, 35.0f));
-					else ImGui::Button("No Image", ImVec2(35.0f, 35.0f));
+					const Sprite* pPreviewSprite = ResourceManager::GetInstance()->GetSprite(*wKey);
+					bool bRenderedPreview = false;
+
+					if (pPreviewSprite != nullptr && pPreviewSprite->pTexture != nullptr)
+					{
+						ID3D11ShaderResourceView* pSRV = ResourceManager::GetInstance()->GetTextureSRV(pPreviewSprite->pTexture);
+						if (pSRV != nullptr)
+						{
+							D2D1_SIZE_F texSz = pPreviewSprite->pTexture->GetSize();
+							if (texSz.width > 0.0f && texSz.height > 0.0f)
+							{
+								ImVec2 uv0(pPreviewSprite->srcRect.left / texSz.width, pPreviewSprite->srcRect.top / texSz.height);
+								ImVec2 uv1(pPreviewSprite->srcRect.right / texSz.width, pPreviewSprite->srcRect.bottom / texSz.height);
+
+								ImGui::Image((ImTextureID)pSRV, ImVec2(35.0f, 35.0f), uv0, uv1);
+								bRenderedPreview = true;
+							}
+						}
+					}
+
+					if (!bRenderedPreview)
+					{
+						ImGui::Button("No Image", ImVec2(35.0f, 35.0f));
+					}
 					ImGui::SameLine();
 
 					std::string btnLabel = keyStr.empty() ? "Select..." : keyStr;
@@ -581,15 +659,15 @@ void InspectorPanel::DrawComponents(GameObject* pObj)
 					}
 					if (ImGui::BeginPopup("TexturePickerPopup"))
 					{
-						auto loadedTextureKeys = ResourceManager::GetInstance()->GetLoadedTextureKeys();
-						for (const auto& keyName : loadedTextureKeys)
+						auto loadedSpriteKeys = ResourceManager::GetInstance()->GetLoadedSpriteKeys();
+						for (const auto& keyName : loadedSpriteKeys)
 						{
 							if (ImGui::Selectable(keyName.c_str()))
 							{
 								*wKey = std::wstring(keyName.begin(), keyName.end());
 								if (SpriteRendererComponent* spriteComp = dynamic_cast<SpriteRendererComponent*>(comp))
 								{
-									spriteComp->SetTextureKey(*wKey);
+									spriteComp->SetSpriteKey(*wKey);
 								}
 								else if (UIImageComponent* uiImg = dynamic_cast<UIImageComponent*>(comp))
 								{
@@ -652,6 +730,47 @@ void InspectorPanel::DrawComponents(GameObject* pObj)
 							}
 						}
 						ImGui::EndDragDropTarget();
+					}
+				}
+				break;
+
+				case PropType::Asset:
+				{
+					uint32* pAssetID = static_cast<uint32*>(prop.data);
+					uint32 currentID = (pAssetID != nullptr) ? *pAssetID : 0;
+
+					std::string previewName = "None (Select SO Asset)";
+					const auto& allAssets = DataManager::GetInstance()->GetAllAssets();
+					auto it = allAssets.find(currentID);
+					if (it != allAssets.end() && it->second != nullptr)
+					{
+						previewName = it->second->GetAssetName() + " (ID: " + std::to_string(currentID) + ")";
+					}
+
+					ImGui::SetNextItemWidth(-1.0f);
+					if (ImGui::BeginCombo(("##" + prop.name + "_Combo").c_str(), previewName.c_str()))
+					{
+						if (ImGui::Selectable("None (0)", currentID == 0))
+						{
+							if (pAssetID) *pAssetID = 0;
+						}
+
+						for (const auto& [id, pAsset] : allAssets)
+						{
+							if (!pAsset) continue;
+							std::string label = pAsset->GetAssetName() + " (ID: " + std::to_string(id) + ")";
+							bool isSelected = (currentID == id);
+							if (ImGui::Selectable(label.c_str(), isSelected))
+							{
+								if (pAssetID) *pAssetID = id;
+							}
+
+							if (isSelected)
+							{
+								ImGui::SetItemDefaultFocus();
+							}
+						}
+						ImGui::EndCombo();
 					}
 				}
 				break;

@@ -80,6 +80,8 @@ namespace EngineKey
 		constexpr std::string_view LocalController = "LocalController";
 		constexpr std::string_view Controller = "Controller";
 		constexpr std::string_view InGameManager = "InGameManager";
+		constexpr std::string_view Monster = "Monster";
+		constexpr std::string_view MonsterSpawner = "MonsterSpawner";
 	}
 }
 

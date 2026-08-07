@@ -8,6 +8,7 @@ namespace
 	const json* FindJsonField(const json& inJson, const std::string& name)
 	{
 		if (inJson.contains(name)) return &inJson[name];
+		if (name == "SpriteKey" && inJson.contains("TextureKey")) return &inJson["TextureKey"];
 
 		auto normalize = [](const std::string& s) {
 			std::string result;
@@ -33,6 +34,25 @@ namespace
 			}
 		}
 		return nullptr;
+	}
+}
+
+void Component::SetEnable(bool isEnabled)
+{
+	if (m_bIsEnabled == isEnabled) return;
+
+	m_bIsEnabled = isEnabled;
+
+	if (gameObject.IsActive())
+	{
+		if (m_bIsEnabled)
+		{
+			OnEnable();
+		}
+		else
+		{
+			OnDisable();
+		}
 	}
 }
 
@@ -70,6 +90,12 @@ void Component::Serialize(json& outJson) const
 			outJson[prop.name] = { {"x", vec->x}, {"y", vec->y} };
 		}
 		break;
+		case PropType::Point2F:
+		{
+			D2D1_POINT_2F* pt = static_cast<D2D1_POINT_2F*>(prop.data);
+			outJson[prop.name] = { {"x", pt->x}, {"y", pt->y} };
+		}
+		break;
 		case PropType::Color:
 		{
 			D2D1_COLOR_F* col = static_cast<D2D1_COLOR_F*>(prop.data);
@@ -97,6 +123,9 @@ void Component::Serialize(json& outJson) const
 			outJson[prop.name] = id;
 		}
 		break;
+		case PropType::Asset:
+			outJson[prop.name] = *static_cast<uint32*>(prop.data);
+			break;
 		}
 	}
 }
@@ -146,6 +175,16 @@ void Component::Deserialize(const json& inJson)
 			{
 				if (pVal->contains("x")) vec->x = (*pVal)["x"].get<float>();
 				if (pVal->contains("y")) vec->y = (*pVal)["y"].get<float>();
+			}
+		}
+		break;
+		case PropType::Point2F:
+		{
+			D2D1_POINT_2F* pt = static_cast<D2D1_POINT_2F*>(prop.data);
+			if (pVal->is_object())
+			{
+				if (pVal->contains("x")) pt->x = (*pVal)["x"].get<float>();
+				if (pVal->contains("y")) pt->y = (*pVal)["y"].get<float>();
 			}
 		}
 		break;
@@ -202,6 +241,9 @@ void Component::Deserialize(const json& inJson)
 			}
 		}
 		break;
+		case PropType::Asset:
+			if (pVal->is_number()) *static_cast<uint32*>(prop.data) = pVal->get<uint32>();
+			break;
 		}
 	}
 }

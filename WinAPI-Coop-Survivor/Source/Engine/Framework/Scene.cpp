@@ -113,8 +113,6 @@ bool Scene::Load(const std::string& filePath)
 GameObject* Scene::CreateGameObject()
 {
 	GameObject* newObj = new GameObject(this);
-	//newObj->SetSceneIndex(m_vGameObjects.size());
-	//m_vGameObjects.push_back(newObj);
 	m_vCreationQueue.push_back(newObj);
 	return newObj;
 }
@@ -122,9 +120,6 @@ GameObject* Scene::CreateGameObject()
 GameObject* Scene::CreateGameObject(const std::string& objName)
 {
 	GameObject* newObj = new GameObject(this);
-	/*newObj->SetSceneIndex(m_vGameObjects.size());
-	newObj->SetName(objName);
-	m_vGameObjects.push_back(newObj);*/
 	newObj->SetName(objName);
 	m_vCreationQueue.push_back(newObj);
 	return newObj;
@@ -249,9 +244,25 @@ void Scene::PostFrameCleanUp()
 
 				if (EngineKernel::GetInstance()->GetPlayState() == EnginePlayState::Play)
 				{
-					pComp->Awake();
-					pComp->Start();
-					pComp->OnEnable();
+					if (pComp->gameObject.IsActive())
+					{
+						if (!pComp->HasAwoken())
+						{
+							pComp->Awake();
+							pComp->MarkAwoken();
+						}
+
+						if (pComp->IsEnabled())
+						{
+							pComp->OnEnable();
+
+							if (!pComp->HasStarted())
+							{
+								pComp->Start();
+								pComp->MarkStarted();
+							}
+						}
+					}
 				}
 
 				if (auto* updatable = dynamic_cast<ScriptComponent*>(pComp))

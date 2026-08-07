@@ -1,35 +1,35 @@
 {
   "frames": [
     {
-      "filename": "tilemap_packed.png",
+      "filename": "introBG.png",
       "frame": {
-        "x": 128,
-        "y": 194,
-        "w": 95,
-        "h": 27
+        "x": 0,
+        "y": 0,
+        "w": 400,
+        "h": 300
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 95,
-        "h": 27
+        "w": 400,
+        "h": 300
       },
       "sourceSize": {
-        "w": 95,
-        "h": 27
+        "w": 400,
+        "h": 300
       }
     }
   ],
   "meta": {
     "app": "https://www.codeandweb.com/texturepacker",
     "version": "1.0",
-    "image": "tilemap_packed.png",
+    "image": "introBG.png",
     "format": "RGBA8888",
     "size": {
-      "w": 416,
-      "h": 224
+      "w": 400,
+      "h": 300
     },
     "scale": "1",
     "smartupdate": "$TexturePacker:SmartUpdate:a532618d6b2507120412d830bbd1f14e:4173d6b156ff96d0b21feef16a5f583d:75039bb9e0e1cc545fdf6fbea126be44$"

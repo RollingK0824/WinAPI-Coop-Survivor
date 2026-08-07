@@ -78,20 +78,12 @@ public:
 	virtual void OnEnable() {};
 	virtual void OnDisable() {};
 
-	void SetEnable(bool isEnabled)
-	{
-		if (m_bIsEnabled == isEnabled) return;
-		m_bIsEnabled = isEnabled;
-		if (m_bIsEnabled)
-		{
-			OnEnable();
-		}
-		else
-		{
-			OnDisable();
-		}
-	}
-	void SetEnabled(bool isEnabled) { SetEnable(isEnabled); }
+	bool HasAwoken() const { return m_bHasAwoken; }
+	bool HasStarted() const { return m_bHasStarted; }
+	void MarkAwoken() { m_bHasAwoken = true; }
+	void MarkStarted() { m_bHasStarted = true; }
+
+	void SetEnable(bool isEnabled);
 
 	bool IsEnabled() const { return m_bIsEnabled; }
 
@@ -114,6 +106,7 @@ public:
 	void ExposeVariable(const std::string& name, std::string* var) { m_vProperties.push_back({ name, PropType::String, var }); }
 	void ExposeVariable(const std::string& name, std::wstring* var) { m_vProperties.push_back({ name, PropType::WString, var }); }
 	void ExposeVariable(const std::string& name, Vector2* var) { m_vProperties.push_back({ name, PropType::Vector2, var }); }
+	void ExposeVariable(const std::string& name, D2D1_POINT_2F* var) { m_vProperties.push_back({ name, PropType::Point2F, var }); }
 	void ExposeVariable(const std::string& name, D2D1_COLOR_F* var) { m_vProperties.push_back({ name, PropType::Color, var }); }
 	void ExposeVariable(const std::string& name, D2D1_RECT_F* var) { m_vProperties.push_back({ name, PropType::Rect, var }); }
 	void ExposeVariable(const std::string& name, std::vector<std::string>* var) { m_vProperties.push_back({ name, PropType::StringVector, var }); }
@@ -122,6 +115,16 @@ public:
 
 	template<typename T>
 	void ExposeComponent(const std::string& name, T** componentPtr);
+
+	template<typename T>
+	void ExposeAsset(const std::string& name, uint32* assetID)
+	{
+		ExposedProperty prop;
+		prop.name = name;
+		prop.type = PropType::Asset;
+		prop.data = reinterpret_cast<void*>(assetID);
+		m_vProperties.push_back(prop);
+	}
 
 	void ExposeGameObject(const std::string& name, GameObject** gameObjectPtr);
 
@@ -140,6 +143,8 @@ public:
 	}
 
 protected:
+	bool m_bHasAwoken = false;
+	bool m_bHasStarted = false;
 	bool m_bIsEnabled = true;
 	std::unordered_map<std::string, uint64> m_pendingObjectRefs;
 	std::vector<ExposedProperty> m_vProperties;

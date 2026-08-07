@@ -13,11 +13,13 @@ enum class PropType
 	String,
 	WString,
 	Vector2,
+	Point2F,
 	Color,
 	Rect,
 	StringVector,
 	Texture,
-	ObjectRef
+	ObjectRef,
+	Asset
 };
 
 struct ExposedProperty

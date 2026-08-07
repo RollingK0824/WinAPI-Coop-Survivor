@@ -11,7 +11,10 @@ public:
 	virtual ~UIImageComponent() override = default;
 
 	void SetAsSprite(const Sprite& sprite);
-	void SetTextureKey(const std::wstring& textureKey);
+	void SetSpriteKey(const std::wstring& spriteKey);
+	const std::wstring& GetSpriteKey() const { return m_spriteKey; }
+
+	void SetTextureKey(const std::wstring& textureKey) { SetSpriteKey(textureKey); }
 	void SetAsBitmap(ID2D1Bitmap* pBitmap, D2D1_RECT_F srcRect);
 	void SetAsBitmap(const std::wstring& textureKey, D2D1_RECT_F srcRect);
 
@@ -24,7 +27,13 @@ public:
 
 	Vector2 GetSize() const { return m_size; }
 	float GetFillAmount() const { return m_fillAmount; }
-	const std::wstring& GetTextureKey() const { return m_textureKey; }
+	const std::wstring& GetTextureKey() const { return m_spriteKey; }
+
+	virtual const RenderCommand& GetRenderCommand() override
+	{
+		m_RenderCommand.bitmap.size = m_size;
+		return m_RenderCommand;
+	}
 
 	virtual void PostDeserialize(Scene* pScene) override;
 
@@ -34,7 +43,7 @@ public:
 	}
 
 protected:
-	std::wstring m_textureKey = L"";
+	std::wstring m_spriteKey = L"";
 	Vector2 m_size = { 100.0f, 30.0f };
 	float m_fillAmount = 1.0f;
 };

@@ -14,8 +14,8 @@ public:
 
 	void SetSize(float width, float height)
 	{
-		m_HalfWidth = width * 0.5f;
-		m_HalfHeight = height * 0.5f;
+		m_size.x = width;
+		m_size.y = height;
 
 		RebuildShape();
 	}
@@ -30,13 +30,17 @@ public:
 protected:
 	virtual b2ShapeId CreateShape(b2BodyId bodyId, const b2ShapeDef* shapeDef) override
 	{
-		if (m_HalfWidth <= 0.0f || m_HalfHeight <= 0.0f) return b2_nullShapeId;
+		if (m_size.x <= 0.0f || m_size.y <= 0.0f) return b2_nullShapeId;
 
-		b2Polygon box = b2MakeBox(PixelToMeter(m_HalfWidth), PixelToMeter(m_HalfHeight));
+		b2Polygon box = b2MakeOffsetBox(
+			PixelToMeter(m_size.x * 0.5f),
+			PixelToMeter(m_size.y * 0.5f),
+			b2Vec2{ PixelToMeter(m_offset.x), PixelToMeter(m_offset.y) },
+			b2Rot_identity
+		);
 		return b2CreatePolygonShape(bodyId, shapeDef, &box);
 	}
 
 private:
-	float m_HalfWidth = 0.0f;
-	float m_HalfHeight = 0.0f;
+	Vector2 m_size;
 };

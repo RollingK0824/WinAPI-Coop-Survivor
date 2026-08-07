@@ -1,4 +1,4 @@
-﻿#include "Engine/Core/pch.h"
+#include "Engine/Core/pch.h"
 #include "ResourceManager.h"
 #include "Engine/Core/Define.h"
 #include "Engine/Renderer/GraphicManager.h"
@@ -80,6 +80,16 @@ ID2D1Bitmap* ResourceManager::LoadTexture(const std::wstring& key, const std::ws
 	if (pBitmap)
 	{
 		m_texturePool[key] = pBitmap;
+
+		D2D1_SIZE_F sz = pBitmap->GetSize();
+		Sprite sp;
+		sp.pTexture = pBitmap;
+		sp.srcRect = D2D1::RectF(0.0f, 0.0f, sz.width, sz.height);
+		sp.pivot = D2D1::Point2F(0.5f, 0.5f);
+		sp.originalWidth = sz.width;
+		sp.originalHeight = sz.height;
+		m_spritePool[key] = sp;
+
 		return pBitmap;
 	}
 	return nullptr;
@@ -92,6 +102,36 @@ ID2D1Bitmap* ResourceManager::GetTexture(const std::wstring& key) const
 	{
 		return iter->second;
 	}
+	return nullptr;
+}
+
+const Sprite* ResourceManager::GetSprite(const std::wstring& spriteKey) const
+{
+	if (spriteKey.empty()) return nullptr;
+
+	auto iter = m_spritePool.find(spriteKey);
+	if (iter != m_spritePool.end())
+	{
+		return &(iter->second);
+	}
+
+	auto texIter = m_texturePool.find(spriteKey);
+	if (texIter != m_texturePool.end() && texIter->second != nullptr)
+	{
+		ID2D1Bitmap* pBitmap = texIter->second;
+		D2D1_SIZE_F sz = pBitmap->GetSize();
+
+		Sprite sp;
+		sp.pTexture = pBitmap;
+		sp.srcRect = D2D1::RectF(0.0f, 0.0f, sz.width, sz.height);
+		sp.pivot = D2D1::Point2F(0.5f, 0.5f);
+		sp.originalWidth = sz.width;
+		sp.originalHeight = sz.height;
+
+		const_cast<ResourceManager*>(this)->m_spritePool[spriteKey] = sp;
+		return &(const_cast<ResourceManager*>(this)->m_spritePool[spriteKey]);
+	}
+
 	return nullptr;
 }
 
@@ -173,6 +213,16 @@ bool ResourceManager::LoadSpriteAtlas(const std::string& jsonPath, const std::ws
 		sp.pivot = D2D1::Point2F(0.5f, 0.5f);
 
 		tempSprites[filename] = sp;
+
+		std::wstring wSpriteKey(filename.begin(), filename.end());
+		std::wstring texKeyNoExt = wTextureKey;
+		size_t dotPos = texKeyNoExt.find_last_of(L'.');
+		if (dotPos != std::wstring::npos) texKeyNoExt = texKeyNoExt.substr(0, dotPos);
+
+		// 네임스페이스 키 (AtlasName/FrameName) 등록
+		m_spritePool[texKeyNoExt + L"/" + wSpriteKey] = sp;
+		// 폴백 조회를 위한 단일 키 등록
+		m_spritePool[wSpriteKey] = sp;
 	}
 
 	if (atlasJson["meta"].contains("custom_clips"))
@@ -201,6 +251,42 @@ bool ResourceManager::LoadSpriteAtlas(const std::string& jsonPath, const std::ws
 	return true;
 }
 
+bool ResourceManager::LoadGridSpriteAtlas(const std::wstring& key, const std::wstring& filePath, float frameWidth, float frameHeight)
+{
+	ID2D1Bitmap* pBitmap = LoadTexture(key, filePath);
+	if (!pBitmap || frameWidth <= 0.0f || frameHeight <= 0.0f) return false;
+
+	D2D1_SIZE_F sz = pBitmap->GetSize();
+	int cols = static_cast<int>(sz.width / frameWidth);
+	int rows = static_cast<int>(sz.height / frameHeight);
+
+	std::wstring texKeyNoExt = key;
+	size_t dotPos = texKeyNoExt.find_last_of(L'.');
+	if (dotPos != std::wstring::npos) texKeyNoExt = texKeyNoExt.substr(0, dotPos);
+
+	int index = 0;
+	for (int r = 0; r < rows; ++r)
+	{
+		for (int c = 0; c < cols; ++c)
+		{
+			Sprite sp;
+			sp.pTexture = pBitmap;
+			float x = c * frameWidth;
+			float y = r * frameHeight;
+			sp.srcRect = D2D1::RectF(x, y, x + frameWidth, y + frameHeight);
+			sp.pivot = D2D1::Point2F(0.5f, 0.5f);
+			sp.originalWidth = frameWidth;
+			sp.originalHeight = frameHeight;
+
+			std::wstring frameName = std::to_wstring(index);
+			m_spritePool[texKeyNoExt + L"/" + frameName] = sp;
+			m_spritePool[frameName] = sp;
+			index++;
+		}
+	}
+	return true;
+}
+
 const AnimationClip* ResourceManager::GetAnimationClip(const std::wstring& clipKey) const
 {
 	auto it = m_MapClips.find(clipKey);
@@ -218,15 +304,80 @@ ID3D11ShaderResourceView* ResourceManager::GetTextureSRV(const std::wstring& key
 	return nullptr;
 }
 
+ID3D11ShaderResourceView* ResourceManager::GetTextureSRV(ID2D1Bitmap* pBitmap) const
+{
+	if (!pBitmap) return nullptr;
+	for (const auto& pair : m_texturePool)
+	{
+		if (pair.second == pBitmap)
+		{
+			auto srvIter = m_srvPool.find(pair.first);
+			if (srvIter != m_srvPool.end())
+			{
+				return srvIter->second;
+			}
+		}
+	}
+	return nullptr;
+}
+
 std::vector<std::string> ResourceManager::GetLoadedTextureKeys() const
 {
 	std::vector<std::string> keys;
 	keys.reserve(m_texturePool.size());
 	for (const auto& pair : m_texturePool)
 	{
-		// std::wstring -> std::string 변환하여 벡터에 담기
 		std::string keyStr(pair.first.begin(), pair.first.end());
 		keys.push_back(keyStr);
+	}
+	return keys;
+}
+
+std::vector<std::string> ResourceManager::GetLoadedSpriteKeys() const
+{
+	std::vector<std::string> keys;
+	std::set<std::string> atlasPrefixes;
+
+	// 1차 패스: 서브 스프라이트를 가지는 아틀라스 접두사 추출 (예: "Characeter_Green", "tilemap_packed")
+	for (const auto& pair : m_spritePool)
+	{
+		std::string keyStr(pair.first.begin(), pair.first.end());
+		size_t slashPos = keyStr.find('/');
+		if (slashPos != std::string::npos)
+		{
+			atlasPrefixes.insert(keyStr.substr(0, slashPos));
+		}
+	}
+
+	std::set<std::string> uniqueKeys;
+
+	// 2차 패스: 슬라이스된 서브 스프라이트 키 수집 (AtlasName/FrameName)
+	for (const auto& pair : m_spritePool)
+	{
+		std::string keyStr(pair.first.begin(), pair.first.end());
+		if (keyStr.find('/') != std::string::npos)
+		{
+			uniqueKeys.insert(keyStr);
+		}
+	}
+
+	// 3차 패스: 아틀라스가 아닌 단일 정적 텍스처 수집 (introBG.png 등)
+	for (const auto& pair : m_texturePool)
+	{
+		std::string keyStr(pair.first.begin(), pair.first.end());
+		std::string stem = keyStr;
+		size_t dotPos = stem.find_last_of('.');
+		if (dotPos != std::string::npos) stem = stem.substr(0, dotPos);
+
+		if (atlasPrefixes.find(keyStr) == atlasPrefixes.end() && atlasPrefixes.find(stem) == atlasPrefixes.end())
+		{
+			uniqueKeys.insert(keyStr);
+		}
+	}
+
+	for (const auto& k : uniqueKeys)
+	{
+		keys.push_back(k);
 	}
 	return keys;
 }

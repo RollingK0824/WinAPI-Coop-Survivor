@@ -1,35 +1,35 @@
 {
   "frames": [
     {
-      "filename": "tilemap_packed.png",
+      "filename": "Imeldat.png",
       "frame": {
-        "x": 128,
-        "y": 194,
-        "w": 95,
-        "h": 27
+        "x": 0,
+        "y": 0,
+        "w": 320,
+        "h": 340
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 95,
-        "h": 27
+        "w": 320,
+        "h": 340
       },
       "sourceSize": {
-        "w": 95,
-        "h": 27
+        "w": 320,
+        "h": 340
       }
     }
   ],
   "meta": {
     "app": "https://www.codeandweb.com/texturepacker",
     "version": "1.0",
-    "image": "tilemap_packed.png",
+    "image": "Imeldat.png",
     "format": "RGBA8888",
     "size": {
-      "w": 416,
-      "h": 224
+      "w": 320,
+      "h": 340
     },
     "scale": "1",
     "smartupdate": "$TexturePacker:SmartUpdate:a532618d6b2507120412d830bbd1f14e:4173d6b156ff96d0b21feef16a5f583d:75039bb9e0e1cc545fdf6fbea126be44$"
