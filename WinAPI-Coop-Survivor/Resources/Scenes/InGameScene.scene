@@ -74,15 +74,21 @@
                             "b": 1.0,
                             "a": 1.0
                         },
-                        "TextureKey": "TempBackground.jpg",
+                        "SpriteKey": "TempBackground.jpg",
+                        "Size": {
+                            "x": 1920.0,
+                            "y": 1080.0
+                        },
+                        "Pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "Offset": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
                         "FlipX": false,
-                        "FlipY": false,
-                        "SrcRect": {
-                            "left": 0.0,
-                            "top": 0.0,
-                            "right": 1920.0,
-                            "bottom": 1080.0
-                        }
+                        "FlipY": false
                     }
                 }
             ]
@@ -111,6 +117,171 @@
                     "Type": "InGameManager",
                     "Data": {
                         "IsEnabled": true
+                    }
+                },
+                {
+                    "Type": "InGameSceneController",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Action Button": 66,
+                        "Action Button Text": 66,
+                        "Status Text": 67,
+                        "Countdown Text": 68
+                    }
+                }
+            ]
+        },
+        {
+            "Name": "Action_Btn",
+            "InstanceID": 66,
+            "IsActive": true,
+            "Components": [
+                {
+                    "Type": "TransformComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Position": {
+                            "x": 500.0,
+                            "y": 100.0
+                        },
+                        "Rotation": 0.0,
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        }
+                    }
+                },
+                {
+                    "Type": "UIImageComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "RenderType": 256,
+                        "ZOrder": 9999,
+                        "Opacity": 1.0,
+                        "Color": {
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 1.0,
+                            "a": 1.0
+                        },
+                        "SpriteKey": "tilemap_packed/tilemap_packed.png",
+                        "Size": {
+                            "x": 95.0,
+                            "y": 27.0
+                        },
+                        "Pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "Offset": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "FillAmount": 1.0,
+                        "FlipX": false,
+                        "FlipY": false
+                    }
+                },
+                {
+                    "Type": "UIButtonComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "IsHovered": false
+                    }
+                },
+                {
+                    "Type": "UITextComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "RenderType": 257,
+                        "ZOrder": 9999,
+                        "Opacity": 1.0,
+                        "Color": {
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 0.0,
+                            "a": 1.0
+                        },
+                        "Text": "New Text",
+                        "FontSize": 14.0
+                    }
+                }
+            ]
+        },
+        {
+            "Name": "Status_Text",
+            "InstanceID": 67,
+            "IsActive": true,
+            "Components": [
+                {
+                    "Type": "TransformComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Position": {
+                            "x": 500.0,
+                            "y": 140.0
+                        },
+                        "Rotation": 0.0,
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        }
+                    }
+                },
+                {
+                    "Type": "UITextComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "RenderType": 257,
+                        "ZOrder": 9999,
+                        "Opacity": 1.0,
+                        "Color": {
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 0.0,
+                            "a": 1.0
+                        },
+                        "Text": "New Text",
+                        "FontSize": 14.0
+                    }
+                }
+            ]
+        },
+        {
+            "Name": "Countdown_Text",
+            "InstanceID": 68,
+            "IsActive": true,
+            "Components": [
+                {
+                    "Type": "TransformComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Position": {
+                            "x": 500.0,
+                            "y": 50.0
+                        },
+                        "Rotation": 0.0,
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        }
+                    }
+                },
+                {
+                    "Type": "UITextComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "RenderType": 257,
+                        "ZOrder": 9999,
+                        "Opacity": 1.0,
+                        "Color": {
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 0.0,
+                            "a": 1.0
+                        },
+                        "Text": "New Text",
+                        "FontSize": 14.0
                     }
                 }
             ]

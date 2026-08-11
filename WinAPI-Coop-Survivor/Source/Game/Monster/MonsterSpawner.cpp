@@ -13,6 +13,7 @@
 #include "Game/Monster/Monster.h"
 #include "Game/Data/MonsterSO.h"
 #include "Game/Player/Player.h"
+#include "Game/Manager/InGameManager.h"
 
 static ComponentRegistrar<MonsterSpawner> registrar(EngineKey::CustomComponent::MonsterSpawner.data());
 
@@ -80,26 +81,29 @@ void MonsterSpawner::FixedUpdate(float fixedDt)
 		for (int i = 0; i < m_spawnCountPerWave; ++i)
 		{
 			Vector2 spawnPos = CalculateDeterministicSpawnPos();
+			spawnPos = { 0.0f,500.0f};
 			SpawnMonster(m_pDefaultMonsterSO.Get(), spawnPos);
 		}
 	}
 }
 
+void MonsterSpawner::StartSpawning()
+{
+	m_spawnTimer = 0.0f;
+	m_isSpawningEnabled = true;
+}
+
+void MonsterSpawner::StopSpawning()
+{
+	m_isSpawningEnabled = false;
+}
+
 Vector2 MonsterSpawner::CalculateDeterministicSpawnPos()
 {
-	Scene* pScene = gameObject.GetOwnerScene();
-	if (!pScene) return { 0.0f, 0.0f };
+	InGameManager* inGameMgr = InGameManager::GetInstance();
+	if (!inGameMgr) return { 0.0f, 0.0f };
 
-	std::vector<GameObject*> players;
-	const auto& sceneObjects = pScene->GetGameObjects();
-	for (const auto& pObj : sceneObjects)
-	{
-		if (pObj && pObj->IsActive() && pObj->GetComponent<Player>())
-		{
-			players.push_back(pObj);
-		}
-	}
-
+	const auto& players = inGameMgr->GetPlayers();
 	Vector2 centerPos = { 0.0f, 0.0f };
 	if (!players.empty())
 	{

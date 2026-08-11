@@ -37,9 +37,7 @@ void EngineKernel::Release()
 void EngineKernel::ProcessFrame()
 {
 	TimeManager* pTime = TimeManager::GetInstance();
-
-	pTime->Update(0.0f);
-
+	
 	float dt = pTime->GetDeltaTime();
 	float fixedDt = pTime->GetFixedDeltaTime();
 
