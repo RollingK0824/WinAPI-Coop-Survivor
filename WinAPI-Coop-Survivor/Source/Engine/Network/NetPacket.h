@@ -8,7 +8,9 @@ enum class PacketType : uint8 {
 	PLAYER_INPUT,     // Client -> Host player input
 	ENTITY_STATE_SYNC,// Host -> Client state sync
 	GAME_STATE_SYNC,  // Room/Game State Sync
-	CLIENT_DISCONN    // Disconnect
+	CLIENT_DISCONN,    // Disconnect
+	CLIENT_READY_REQ,
+	GAME_START_SIGNAL
 };
 
 #pragma pack(push, 1)
@@ -76,5 +78,19 @@ struct ClientDisconnPacket
 {
 	PacketHeader header;
 	uint32 disconnectedNetID;
+};
+
+struct ClientReadyReqPacket
+{
+	PacketHeader header;
+	uint32 netId;
+	bool isReady;
+};
+
+struct GameStartSignalPacket
+{
+	PacketHeader header;
+	uint32 randomSeed;
+	float countdown;
 };
 #pragma pack(pop)

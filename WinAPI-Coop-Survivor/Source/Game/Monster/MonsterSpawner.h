@@ -22,6 +22,9 @@ public:
 	virtual void Start() override;
 	virtual void FixedUpdate(float fixedDt) override;
 
+	void StartSpawning();
+	void StopSpawning();
+
 	void InitPool(size_t defaultCapacity = 300, size_t maxSize = 1000);
 	Monster* SpawnMonster(MonsterSO* monsterData, const Vector2& spawnPos);
 	void DespawnMonster(GameObject* pMonsterObj);
@@ -39,7 +42,7 @@ private:
 
 private:
 	uint32 m_nextSpawnSeqID = 0;
-	bool m_isSpawningEnabled = true;
+	bool m_isSpawningEnabled = false;
 
 	std::string m_prefabKey = "TempMonster";
 	float m_spawnInterval = 1.0f;
