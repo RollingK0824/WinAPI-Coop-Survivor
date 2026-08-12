@@ -38,7 +38,7 @@ public:
 
 	float GetTimeScale() const { return m_timeScale; }
 	bool IsPaused() const { return m_bIsPaused; }
-	unsigned int GetFPS() const { return m_fps; }
+	uint32 GetFPS() const { return m_fps; }
 
 	void SetTimeScale(float scale) { m_timeScale = (scale < 0.0f) ? 0.0f : scale; }
 	void SetPaused(bool pause) { m_bIsPaused = pause; }
@@ -67,8 +67,8 @@ private:
 	float m_accumulator = 0.0f;
 
 	// FPS 계산용 변수
-	unsigned int m_fps = 0;
-	unsigned int m_frameCount = 0;
+	uint32 m_fps = 0;
+	uint32 m_frameCount = 0;
 	float m_fpsFrameTime = 0.0f;
 
 };

@@ -16,7 +16,7 @@ enum class NetRole {
 struct NetClientInfo {
     sockaddr_in address{};
     float lastHeartbeatTime = 0.0f;
-    unsigned int assignedNetID = 0;
+    uint32 assignedNetID = 0;
 };
 
 struct RawPacketData {
@@ -58,7 +58,7 @@ public:
     void UnregisterPacketHandler(PacketType type) { m_packetHandlers.erase(type); }
 
     NetRole GetRole() const { return m_Role; }
-    unsigned int GetMyNetID() const { return m_MyNetID; }
+    uint32 GetMyNetID() const { return m_MyNetID; }
     bool IsConnected() const { return m_bConnected; }
     const std::unordered_map<uint32, NetClientInfo>& GetConnectedClients() const { return m_ConnectedClients; }
 

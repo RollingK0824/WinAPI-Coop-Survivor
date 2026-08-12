@@ -8,7 +8,7 @@ class NetworkController : public Controller {
 public:
     CLONEABLE_COMPONENT(NetworkController)
 
-    NetworkController(GameObject* owner, TransformComponent* transform, unsigned int netID);
+    NetworkController(GameObject* owner, TransformComponent* transform, uint32 netID);
     virtual ~NetworkController() override = default;
 
     virtual std::string_view GetComponentType() const override {
@@ -21,5 +21,5 @@ public:
 private:
     ObserverPtr<Player> m_pPlayer;
     ObserverPtr<ColliderComponent> m_pCollider;
-    unsigned int m_NetID = 0;
+    uint32 m_NetID = 0;
 };

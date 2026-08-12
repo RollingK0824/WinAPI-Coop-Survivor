@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Engine/Framework/Base/ScriptableObject.h"
 
 class MonsterSO : public ScriptableObject
@@ -9,6 +9,7 @@ public:
 
 	virtual void OnLoadFromJson(const json& j) override;
 	virtual void OnSaveToJson(json& j) const override;
+	virtual std::string GetSOTypeName() const override { return "MonsterSO"; }
 
 	float GetMaxHP() const { return m_maxHP; }
 	float GetMoveSpeed() const { return m_moveSpeed; }

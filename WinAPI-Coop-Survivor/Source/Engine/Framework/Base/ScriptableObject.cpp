@@ -1,4 +1,4 @@
-﻿#include "Engine/Core/pch.h"
+#include "Engine/Core/pch.h"
 #include "ScriptableObject.h"
 
 ScriptableObject::ScriptableObject()
@@ -23,6 +23,7 @@ void ScriptableObject::OnLoadFromJson(const json& j)
 json ScriptableObject::SaveToJson() const
 {
 	json j;
+	j["Type"] = GetSOTypeName();
 	j["AssetID"] = m_assetID;
 	j["AssetName"] = m_assetName;
 

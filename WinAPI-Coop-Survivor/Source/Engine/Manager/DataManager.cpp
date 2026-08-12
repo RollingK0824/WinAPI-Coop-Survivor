@@ -13,6 +13,12 @@ bool DataManager::Initialize()
 void DataManager::Release()
 {
 	m_assetTable.clear();
+	GetSOFactories().clear();
+}
+
+void DataManager::RegisterSOFactory(const std::string& typeName, SOFactory factory)
+{
+	GetSOFactories()[typeName] = factory;
 }
 
 bool DataManager::LoadAllAssets(const std::string& directoryPath)
@@ -35,13 +41,11 @@ bool DataManager::LoadAssetFile(const std::string& filePath)
 		std::string typeStr = j.contains("Type") ? j["Type"].get<std::string>() : "MonsterSO";
 
 		std::shared_ptr<ScriptableObject> pSO = nullptr;
-		if (typeStr == "SkillSO")
+		auto& factories = GetSOFactories();
+		auto it = factories.find(typeStr);
+		if (it != factories.end())
 		{
-			pSO = std::make_shared<SkillSO>();
-		}
-		else
-		{
-			pSO = std::make_shared<MonsterSO>();
+			pSO = it->second();
 		}
 
 		if (pSO)
@@ -72,8 +76,6 @@ bool DataManager::SaveAssetFile(ScriptableObject* pSO)
 	}
 
 	json j = pSO->SaveToJson();
-	j["Type"] = dynamic_cast<SkillSO*>(pSO) ? "SkillSO" : "MonsterSO";
-
 	return FileSystem::WriteJson(path, j);
 }
 
@@ -82,7 +84,6 @@ bool DataManager::LoadMonsterTable(const std::string& filePath)
 	json dataJson;
 	if (!FileSystem::ReadJson(filePath, dataJson))
 	{
-		std::cout << "[DataManager] Failed to open file: " << filePath << std::endl;
 		return false;
 	}
 
@@ -98,15 +99,12 @@ bool DataManager::LoadMonsterTable(const std::string& filePath)
 				if (monsterSO->GetAssetID() != 0)
 				{
 					m_assetTable[monsterSO->GetAssetID()] = monsterSO;
-					std::cout << "[DataManager] Loaded MonsterSO: ID=" << monsterSO->GetAssetID()
-						<< ", Name=" << monsterSO->GetAssetName() << std::endl;
 				}
 			}
 		}
 	}
-	catch (const std::exception& e)
+	catch (...)
 	{
-		std::cout << "[DataManager] JSON Parsing Exception: " << e.what() << std::endl;
 		return false;
 	}
 
@@ -120,22 +118,14 @@ bool DataManager::SaveMonsterTable(const std::string& filePath)
 
 	for (const auto& [id, pAsset] : m_assetTable)
 	{
-		if (auto monsterSO = std::dynamic_pointer_cast<MonsterSO>(pAsset))
+		if (pAsset && pAsset->GetSOTypeName() == "MonsterSO")
 		{
-			monstersArray.push_back(monsterSO->SaveToJson());
+			monstersArray.push_back(pAsset->SaveToJson());
 		}
 	}
 
 	rootJson["Monsters"] = monstersArray;
-
-	if (!FileSystem::WriteJson(filePath, rootJson))
-	{
-		std::cout << "[DataManager] Failed to open file for saving: " << filePath << std::endl;
-		return false;
-	}
-
-	std::cout << "[DataManager] Successfully saved MonsterTable to: " << filePath << std::endl;
-	return true;
+	return FileSystem::WriteJson(filePath, rootJson);
 }
 
 std::shared_ptr<const MonsterSO> DataManager::GetMonsterSO(uint32 assetID) const
@@ -156,50 +146,6 @@ std::shared_ptr<const SkillSO> DataManager::GetSkillSO(uint32 assetID) const
 std::shared_ptr<SkillSO> DataManager::GetMutableSkillSO(uint32 assetID)
 {
 	return GetMutableAsset<SkillSO>(assetID);
-}
-
-std::shared_ptr<MonsterSO> DataManager::CreateMonsterSO(const std::string& name, const std::string& folderPath)
-{
-	uint32 newID = 101;
-	while (m_assetTable.find(newID) != m_assetTable.end())
-	{
-		newID++;
-	}
-
-	const std::string dirPath = folderPath.empty() ? "Resources/Data" : folderPath;
-	FileSystem::CreateDirectoryPath(dirPath);
-
-	auto monsterSO = std::make_shared<MonsterSO>();
-	monsterSO->SetAssetID(newID);
-	std::string assetName = name.empty() ? "NewMonster_" + std::to_string(newID) : name;
-	monsterSO->SetAssetName(assetName);
-	monsterSO->SetFilePath(dirPath + "/" + assetName + ".asset");
-
-	m_assetTable[newID] = monsterSO;
-	SaveAssetFile(monsterSO.get());
-	return monsterSO;
-}
-
-std::shared_ptr<SkillSO> DataManager::CreateSkillSO(const std::string& name, const std::string& folderPath)
-{
-	uint32 newID = 301;
-	while (m_assetTable.find(newID) != m_assetTable.end())
-	{
-		newID++;
-	}
-
-	const std::string dirPath = folderPath.empty() ? "Resources/Data" : folderPath;
-	FileSystem::CreateDirectoryPath(dirPath);
-
-	auto skillSO = std::make_shared<SkillSO>();
-	skillSO->SetAssetID(newID);
-	std::string assetName = name.empty() ? "NewSkill_" + std::to_string(newID) : name;
-	skillSO->SetAssetName(assetName);
-	skillSO->SetFilePath(dirPath + "/" + assetName + ".asset");
-
-	m_assetTable[newID] = skillSO;
-	SaveAssetFile(skillSO.get());
-	return skillSO;
 }
 
 bool DataManager::RemoveSO(uint32 assetID)

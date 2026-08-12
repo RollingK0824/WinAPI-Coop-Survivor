@@ -6,7 +6,7 @@
 #include "Engine/Framework/Components/Physics/BoxCollider.h"
 #include "Game/Player/Player.h"
 
-NetworkController::NetworkController(GameObject* owner, TransformComponent* transform, unsigned int netID)
+NetworkController::NetworkController(GameObject* owner, TransformComponent* transform, uint32 netID)
     : Controller(owner, transform), m_NetID(netID) {}
 
 void NetworkController::Start()

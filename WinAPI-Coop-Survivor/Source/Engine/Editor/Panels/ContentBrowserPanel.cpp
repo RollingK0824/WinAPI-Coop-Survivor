@@ -1,4 +1,4 @@
-﻿#include "Engine/Core/pch.h"
+#include "Engine/Core/pch.h"
 #include "ContentBrowserPanel.h"
 #include "Engine/Manager/SceneManager.h"
 #include "Engine/Manager/JsonSerializer.h"
@@ -6,6 +6,7 @@
 #include "Engine/Manager/DataManager.h"
 #include "Engine/Framework/Base/ScriptableObject.h"
 #include "Game/Data/MonsterSO.h"
+#include "Game/Skill/SkillSO.h"
 #include "Engine/Editor/EditorSystem.h"
 #include "Engine/Framework/Scene.h"
 #include "Engine/Framework/GameObject.h"
@@ -212,7 +213,15 @@ void ContentBrowserPanel::HandleWindowContextMenu()
         {
             if (ImGui::MenuItem("Monster ScriptableObject"))
             {
-                auto newSO = DataManager::GetInstance()->CreateMonsterSO("NewMonster", m_CurrentDirectory.string());
+                auto newSO = DataManager::GetInstance()->CreateAsset<MonsterSO>("NewMonster", m_CurrentDirectory.string(), 101);
+                if (newSO)
+                {
+                    EditorSystem::GetInstance()->SetSelectedScriptableObject(newSO.get());
+                }
+            }
+            if (ImGui::MenuItem("Skill ScriptableObject"))
+            {
+                auto newSO = DataManager::GetInstance()->CreateAsset<SkillSO>("NewSkill", m_CurrentDirectory.string(), 301);
                 if (newSO)
                 {
                     EditorSystem::GetInstance()->SetSelectedScriptableObject(newSO.get());

@@ -14,9 +14,9 @@ namespace
 			std::string result;
 			for (char c : s)
 			{
-				if (isalnum(static_cast<unsigned char>(c)))
+				if (isalnum(static_cast<uint8>(c)))
 				{
-					result += static_cast<char>(tolower(static_cast<unsigned char>(c)));
+					result += static_cast<char>(tolower(static_cast<uint8>(c)));
 				}
 			}
 			return result;

@@ -16,7 +16,7 @@ NetworkIdentity::~NetworkIdentity()
 	}
 }
 
-void NetworkIdentity::SetNetID(unsigned int netID)
+void NetworkIdentity::SetNetID(uint32 netID)
 {
 	if (m_netID != 0)
 	{

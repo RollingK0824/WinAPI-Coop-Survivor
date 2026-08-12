@@ -11,8 +11,8 @@ public:
 
 	virtual void Start() override;
 
-	void SetNetID(unsigned int netID);
-	unsigned int GetNetID() const { return m_netID; }
+	void SetNetID(uint32 netID);
+	uint32 GetNetID() const { return m_netID; }
 
 	void SetLocalPlayer(bool isLocal) { m_bIsLocalPlayer = isLocal; }
 	bool IsLocalPlayer() const { return m_bIsLocalPlayer; }
@@ -23,6 +23,6 @@ public:
 		return EngineKey::Component::NetworkIdentity.data();
 	}
 private:
-	unsigned int m_netID = 0;
+	uint32 m_netID = 0;
 	bool m_bIsLocalPlayer = false;
 };

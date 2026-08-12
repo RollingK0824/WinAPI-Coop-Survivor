@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Engine/Core/ExposedProperty.h"
 
 class ScriptableObject : public std::enable_shared_from_this<ScriptableObject>
@@ -6,6 +6,8 @@ class ScriptableObject : public std::enable_shared_from_this<ScriptableObject>
 public:
 	ScriptableObject();
 	virtual ~ScriptableObject() = default;
+
+	virtual std::string GetSOTypeName() const { return "ScriptableObject"; }
 
 	uint32 GetAssetID() const { return m_assetID; }
 	void SetAssetID(uint32 id) { m_assetID = id; }

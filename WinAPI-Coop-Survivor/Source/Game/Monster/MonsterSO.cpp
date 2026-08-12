@@ -1,5 +1,9 @@
-﻿#include "Engine/Core/pch.h"
+#include "Engine/Core/pch.h"
 #include "MonsterSO.h"
+#include "Engine/Core/Define.h"
+#include "Engine/Core/ScriptableObjectRegister.h"
+
+static SORegistrar<MonsterSO> soRegistrar(EngineKey::ScriptableObject::MonsterSO.data());
 
 MonsterSO::MonsterSO()
 {
