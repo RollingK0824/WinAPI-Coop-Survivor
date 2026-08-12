@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 enum class PacketType : uint8 {
 	NONE = 0,
@@ -12,7 +12,8 @@ enum class PacketType : uint8 {
 	CLIENT_READY_REQ,
 	GAME_START_SIGNAL,
 	MONSTER_SNAPSHOT,
-	MONSTER_KILL
+	MONSTER_KILL,
+	SKILL_FIRE
 };
 
 #pragma pack(push, 1)
@@ -31,19 +32,15 @@ struct WelcomePacket {
 struct PlayerInputPacket {
 	PacketHeader header;
 	uint8 netID;
-	float posX;
-	float posY;
-	float velX;
-	float velY;
+	Vector2 pos;
+	Vector2 vel;
 	float angle;
 };
 
 struct EntitySyncData {
 	uint8 netID;
-	float posX;
-	float posY;
-	float velX;
-	float velY;
+	Vector2 pos;
+	Vector2 vel;
 	float angle;
 };
 
@@ -92,8 +89,7 @@ struct GameStartSignalPacket
 struct MonsterSnapshotData
 {
 	uint16 monsterNetID;
-	float posX;
-	float posY;
+	Vector2 pos;
 };
 
 struct MonsterSnapshotPacket
@@ -108,7 +104,15 @@ struct MonsterKillPacket
 {
 	PacketHeader header;
 	uint16 monsterNetID;
-	float dropItemPosX;
-	float dropItemPosY;
+	Vector2 dropItemPos;
+};
+
+struct SkillFirePacket
+{
+	PacketHeader header;
+	uint8 playerNetID;
+	uint32 skillID;
+	Vector2 spawnPos;
+	Vector2 dir;
 };
 #pragma pack(pop)

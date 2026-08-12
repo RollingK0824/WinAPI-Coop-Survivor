@@ -291,8 +291,7 @@ void Monster::OnDie()
 		killPacket.header.type = PacketType::MONSTER_KILL;
 		killPacket.header.size = sizeof(MonsterKillPacket);
 		killPacket.monsterNetID = m_netID;
-		killPacket.dropItemPosX = transform.GetPosition().x;
-		killPacket.dropItemPosY = transform.GetPosition().y;
+		killPacket.dropItemPos = transform.GetPosition();
 
 		NetworkManager::GetInstance()->SendReliablePacket(&killPacket, sizeof(MonsterKillPacket));
 	}

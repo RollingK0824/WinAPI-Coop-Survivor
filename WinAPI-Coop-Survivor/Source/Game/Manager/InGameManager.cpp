@@ -95,11 +95,11 @@ void InGameManager::Start()
 
 				if (clientNetID != 0 && !NetworkManager::GetInstance()->GetNetworkObject(clientNetID))
 				{
-					this->SpawnPlayer(clientNetID, false, { inputPkt->posX, inputPkt->posY });
+					this->SpawnPlayer(clientNetID, false, inputPkt->pos);
 				}
 
 				NetworkManager::GetInstance()->UpdateInterpolationTarget(
-					clientNetID, inputPkt->posX, inputPkt->posY, inputPkt->angle);
+					clientNetID, inputPkt->pos.x, inputPkt->pos.y, inputPkt->angle);
 			});
 	}
 
@@ -134,7 +134,7 @@ void InGameManager::Start()
 				if (!NetworkManager::GetInstance()->GetNetworkObject(entity.netID))
 				{
 					bool isLocal = (entity.netID == myID);
-					this->SpawnPlayer(entity.netID, isLocal, { entity.posX, entity.posY });
+					this->SpawnPlayer(entity.netID, isLocal, entity.pos);
 				}
 			}
 		});

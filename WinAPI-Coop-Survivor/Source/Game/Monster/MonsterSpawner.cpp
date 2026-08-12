@@ -125,7 +125,7 @@ void MonsterSpawner::FixedUpdate(float fixedDt)
 					// 화면 외곽(1920x1080 반경) 950px Culling
 					if (distSq <= 950.0f * 950.0f)
 					{
-						culledMonsters.push_back({ netID, monsterPos.x, monsterPos.y });
+						culledMonsters.push_back({ netID, monsterPos });
 					}
 				}
 

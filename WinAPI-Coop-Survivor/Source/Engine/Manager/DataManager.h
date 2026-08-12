@@ -1,12 +1,10 @@
-﻿#pragma once
+#pragma once
 #include "Engine/Core/Singleton.h"
 #include "Engine/Framework/Base/ISystem.h"
 #include "Engine/Framework/Base/ScriptableObject.h"
-#include <unordered_map>
-#include <memory>
-#include <string>
 
 class MonsterSO;
+class SkillSO;
 
 class DataManager : public Singleton<DataManager>, public ISystem
 {
@@ -48,7 +46,11 @@ public:
 	std::shared_ptr<const MonsterSO> GetMonsterSO(uint32 assetID) const;
 	std::shared_ptr<MonsterSO> GetMutableMonsterSO(uint32 assetID);
 
+	std::shared_ptr<const SkillSO> GetSkillSO(uint32 assetID) const;
+	std::shared_ptr<SkillSO> GetMutableSkillSO(uint32 assetID);
+
 	std::shared_ptr<MonsterSO> CreateMonsterSO(const std::string& name = "NewMonster", const std::string& folderPath = "Resources/Data");
+	std::shared_ptr<SkillSO> CreateSkillSO(const std::string& name = "NewSkill", const std::string& folderPath = "Resources/Data");
 	bool RemoveSO(uint32 assetID);
 
 	const std::unordered_map<uint32, std::shared_ptr<ScriptableObject>>& GetAllAssets() const { return m_assetTable; }

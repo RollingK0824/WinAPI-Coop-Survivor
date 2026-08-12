@@ -1,8 +1,7 @@
-﻿#include "Engine/Core/pch.h"
+#include "Engine/Core/pch.h"
 #include "DataManager.h"
 #include "Game/Data/MonsterSO.h"
-#include <fstream>
-#include <iostream>
+#include "Game/Skill/SkillSO.h"
 
 bool DataManager::Initialize()
 {
@@ -41,9 +40,9 @@ bool DataManager::LoadAssetFile(const std::string& filePath)
 		std::string typeStr = j.contains("Type") ? j["Type"].get<std::string>() : "MonsterSO";
 
 		std::shared_ptr<ScriptableObject> pSO = nullptr;
-		if (typeStr == "MonsterSO")
+		if (typeStr == "SkillSO")
 		{
-			pSO = std::make_shared<MonsterSO>();
+			pSO = std::make_shared<SkillSO>();
 		}
 		else
 		{
@@ -82,7 +81,14 @@ bool DataManager::SaveAssetFile(ScriptableObject* pSO)
 	if (!file.is_open()) return false;
 
 	json j = pSO->SaveToJson();
-	j["Type"] = "MonsterSO";
+	if (std::dynamic_pointer_cast<SkillSO>(std::shared_ptr<ScriptableObject>(pSO, [](ScriptableObject*) {})) || dynamic_cast<SkillSO*>(pSO))
+	{
+		j["Type"] = "SkillSO";
+	}
+	else
+	{
+		j["Type"] = "MonsterSO";
+	}
 
 	file << j.dump(4);
 	return true;
@@ -164,6 +170,16 @@ std::shared_ptr<MonsterSO> DataManager::GetMutableMonsterSO(uint32 assetID)
 	return GetMutableAsset<MonsterSO>(assetID);
 }
 
+std::shared_ptr<const SkillSO> DataManager::GetSkillSO(uint32 assetID) const
+{
+	return GetAsset<SkillSO>(assetID);
+}
+
+std::shared_ptr<SkillSO> DataManager::GetMutableSkillSO(uint32 assetID)
+{
+	return GetMutableAsset<SkillSO>(assetID);
+}
+
 std::shared_ptr<MonsterSO> DataManager::CreateMonsterSO(const std::string& name, const std::string& folderPath)
 {
 	uint32 newID = 101;
@@ -186,6 +202,30 @@ std::shared_ptr<MonsterSO> DataManager::CreateMonsterSO(const std::string& name,
 	m_assetTable[newID] = monsterSO;
 	SaveAssetFile(monsterSO.get());
 	return monsterSO;
+}
+
+std::shared_ptr<SkillSO> DataManager::CreateSkillSO(const std::string& name, const std::string& folderPath)
+{
+	uint32 newID = 301;
+	while (m_assetTable.find(newID) != m_assetTable.end())
+	{
+		newID++;
+	}
+
+	std::filesystem::path dirPath = folderPath.empty() ? "Resources/Data" : folderPath;
+	std::filesystem::create_directories(dirPath);
+
+	auto skillSO = std::make_shared<SkillSO>();
+	skillSO->SetAssetID(newID);
+	std::string assetName = name.empty() ? "NewSkill_" + std::to_string(newID) : name;
+	skillSO->SetAssetName(assetName);
+
+	std::string fullPath = (dirPath / (assetName + ".asset")).string();
+	skillSO->SetFilePath(fullPath);
+
+	m_assetTable[newID] = skillSO;
+	SaveAssetFile(skillSO.get());
+	return skillSO;
 }
 
 bool DataManager::RemoveSO(uint32 assetID)
