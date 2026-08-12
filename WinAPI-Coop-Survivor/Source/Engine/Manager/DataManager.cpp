@@ -1,7 +1,7 @@
 #include "Engine/Core/pch.h"
 #include "DataManager.h"
 #include "FileSystem.h"
-#include "Game/Data/MonsterSO.h"
+#include "Game/Monster/MonsterSO.h"
 #include "Game/Skill/SkillSO.h"
 
 bool DataManager::Initialize()

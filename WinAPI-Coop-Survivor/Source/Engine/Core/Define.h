@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <string_view>
 
 namespace EngineKey
@@ -83,12 +83,18 @@ namespace EngineKey
 		constexpr std::string_view InGameManager = "InGameManager";
 		constexpr std::string_view Monster = "Monster";
 		constexpr std::string_view MonsterSpawner = "MonsterSpawner";
+		constexpr std::string_view ProjectileComponent = "ProjectileComponent";
+		constexpr std::string_view SkillComponent = "SkillComponent";
+		constexpr std::string_view AuraComponent = "AuraComponent";
+		constexpr std::string_view AoEComponent = "AoEComponent";
+	}
+
+	namespace ScriptableObject
+	{
+		constexpr std::string_view MonsterSO = "MonsterSO";
+		constexpr std::string_view SkillSO = "SkillSO";
 	}
 }
-
-#define INTRO_SCENE "IntroScene"
-#define MOVE_LEFT "MoveLeft"
-#define MOVE_RIGHT "MoveRight"
 
 struct EngineTime
 {

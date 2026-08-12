@@ -7,7 +7,7 @@
 #include "Engine/Framework/Components/Physics/CircleCollider.h"
 #include "Engine/Core/ComponentRegister.h"
 #include "Engine/Manager/DataManager.h"
-#include "Game/Data/MonsterSO.h"
+#include "Game/Monster/MonsterSO.h"
 #include "Game/Player/Player.h"
 #include "Game/Monster/MonsterSpawner.h"
 #include "Engine/Network/NetworkManager.h"

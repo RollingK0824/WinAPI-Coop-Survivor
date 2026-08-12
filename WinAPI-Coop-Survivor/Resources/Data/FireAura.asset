@@ -1,0 +1,71 @@
+{
+  "Type": "SkillSO",
+  "SkillID": 302,
+  "SkillName": "FireAura",
+  "Category": 1,
+  "Cooldown": 0.5,
+  "Damage": 12.0,
+  "Speed": 0.0,
+  "Range": 160.0,
+  "Duration": 0.0,
+  "PenetrationCount": 999,
+  "ProjectileCount": 1,
+  "PrefabKey": "FireAuraPrefab",
+  "Levels": [
+    {
+      "Level": 1,
+      "Description": "주변 적들에게 주기적으로 화염 피해를 주는 오라를 생성합니다.",
+      "Damage": 12.0,
+      "Cooldown": 0.5,
+      "Speed": 0.0,
+      "Range": 160.0,
+      "Duration": 0.0,
+      "PenetrationCount": 999,
+      "ProjectileCount": 1
+    },
+    {
+      "Level": 2,
+      "Description": "오라 범위가 20% 증가합니다.",
+      "Damage": 16.0,
+      "Cooldown": 0.5,
+      "Speed": 0.0,
+      "Range": 200.0,
+      "Duration": 0.0,
+      "PenetrationCount": 999,
+      "ProjectileCount": 1
+    },
+    {
+      "Level": 3,
+      "Description": "오라 데미지가 증가하고 피해 주기가 빨라집니다.",
+      "Damage": 22.0,
+      "Cooldown": 0.4,
+      "Speed": 0.0,
+      "Range": 220.0,
+      "Duration": 0.0,
+      "PenetrationCount": 999,
+      "ProjectileCount": 1
+    },
+    {
+      "Level": 4,
+      "Description": "오라 범위 및 피해량이 추가로 증가합니다.",
+      "Damage": 30.0,
+      "Cooldown": 0.35,
+      "Speed": 0.0,
+      "Range": 260.0,
+      "Duration": 0.0,
+      "PenetrationCount": 999,
+      "ProjectileCount": 1
+    },
+    {
+      "Level": 5,
+      "Description": "대형 화염 폭풍으로 진화합니다.",
+      "Damage": 45.0,
+      "Cooldown": 0.25,
+      "Speed": 0.0,
+      "Range": 320.0,
+      "Duration": 0.0,
+      "PenetrationCount": 999,
+      "ProjectileCount": 1
+    }
+  ]
+}

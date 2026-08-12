@@ -13,6 +13,7 @@
 #include "Engine/Manager/DebugManager.h"
 #include "Game/Player/Player.h"
 #include "Game/Monster/MonsterSpawner.h"
+#include "Game/Skill/SkillComponent.h"
 
 InGameManager* InGameManager::s_instance = nullptr;
 
@@ -258,6 +259,13 @@ GameObject* InGameManager::SpawnPlayer(uint32 netId, bool isLocal, Vector2 spawn
 	}
 	netIdentity->SetNetID(netId);
 	netIdentity->SetLocalPlayer(isLocal);
+
+	// SkillComponent 가져오기 (없으면 추가)
+	SkillComponent* pSkillComp = pPlayerObj->GetComponent<SkillComponent>();
+	if (!pSkillComp)
+	{
+		pSkillComp = pPlayerObj->AddComponent<SkillComponent>();
+	}
 
 	m_playerObjects[netId] = pPlayerObj;
 
