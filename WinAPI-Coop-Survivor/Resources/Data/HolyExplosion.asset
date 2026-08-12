@@ -1,5 +1,7 @@
 {
   "Type": "SkillSO",
+  "AssetID": 303,
+  "AssetName": "HolyExplosion",
   "SkillID": 303,
   "SkillName": "HolyExplosion",
   "Category": 2,
@@ -10,7 +12,7 @@
   "Duration": 0.5,
   "PenetrationCount": 999,
   "ProjectileCount": 1,
-  "PrefabKey": "HolyExplosionPrefab",
+  "PrefabKey": "GenericAoEPrefab",
   "Levels": [
     {
       "Level": 1,

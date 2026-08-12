@@ -1,6 +1,7 @@
 #pragma once
 #include "Engine/Framework/Components/Core/ScriptComponent.h"
 #include "Engine/Core/ObserverPtr.h"
+#include "Game/Skill/SkillSO.h"
 #include <unordered_set>
 
 class GameObject;
@@ -22,10 +23,13 @@ public:
 	virtual void FixedUpdate(float fixedDt) override;
 	virtual void OnCollision(ColliderComponent* pOtherCollider) override;
 
-	void Init(const Vector2& dir, float speed, float damage, int32 penetration, float range, GameObject* attacker = nullptr, const std::string& poolKey = "ProjectilePool");
+	void Init(const Vector2& dir, const SkillLevelData& data, const SkillSO* pSO, GameObject* attacker = nullptr, const std::string& poolKey = "GenericProjectilePrefab");
 
 	void SetPoolKey(const std::string& key) { m_poolKey = key; }
 	const std::string& GetPoolKey() const { return m_poolKey; }
+
+	void SetPenetrationCount(int32 count) { m_penetrationCount = count; }
+	int32 GetPenetrationCount() const { return m_penetrationCount; }
 
 private:
 	Vector2 m_direction = { 1.0f, 0.0f };
@@ -35,7 +39,8 @@ private:
 	float m_traveledDistance = 0.0f;
 	int32 m_penetrationCount = 1;
 
-	std::string m_poolKey = "ProjectilePool";
+	std::string m_poolKey = "GenericProjectilePrefab";
+	std::string m_effectKey = "";
 	ObserverPtr<GameObject> m_pAttacker;
-	std::unordered_set<uint32> m_hitMonsterIDs;
+	std::unordered_set<uint64> m_hitInstanceIDs;
 };

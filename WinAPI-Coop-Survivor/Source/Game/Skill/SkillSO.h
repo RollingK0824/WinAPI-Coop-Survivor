@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Engine/Framework/Base/ScriptableObject.h"
 
 enum class ESkillCategory : uint8
@@ -32,26 +32,41 @@ public:
 	virtual std::string GetSOTypeName() const override { return "SkillSO"; }
 
 	uint32 GetSkillID() const { return m_skillID; }
+	void SetSkillID(uint32 id) { m_skillID = id; m_assetID = id; }
 	const std::string& GetSkillName() const { return m_skillName; }
+	void SetSkillName(const std::string& name) { m_skillName = name; m_assetName = name; }
 	ESkillCategory GetCategory() const { return m_category; }
+	void SetCategory(ESkillCategory cat) { m_category = cat; }
 	const std::string& GetPrefabKey() const { return m_prefabKey; }
+	void SetPrefabKey(const std::string& key) { m_prefabKey = key; }
+
+	const std::wstring& GetSpriteKey() const { return m_spriteKey; }
+	void SetSpriteKey(const std::wstring& key) { m_spriteKey = key; }
+
+	const std::string& GetEffectKey() const { return m_effectKey; }
+	void SetEffectKey(const std::string& key) { m_effectKey = key; }
+
+	std::vector<SkillLevelData>& GetMutableLevelTable() { return m_levelTable; }
+	const std::vector<SkillLevelData>& GetLevelTable() const { return m_levelTable; }
 
 	const SkillLevelData& GetLevelData(int32 level) const;
 	int32 GetMaxLevel() const { return m_levelTable.empty() ? 1 : static_cast<int32>(m_levelTable.size()); }
 
-	float GetCooldown() const { return m_levelTable.empty() ? m_cooldown : m_levelTable[0].cooldown; }
-	float GetDamage() const { return m_levelTable.empty() ? m_damage : m_levelTable[0].damage; }
-	float GetSpeed() const { return m_levelTable.empty() ? m_speed : m_levelTable[0].speed; }
-	float GetRange() const { return m_levelTable.empty() ? m_range : m_levelTable[0].range; }
-	float GetDuration() const { return m_levelTable.empty() ? m_duration : m_levelTable[0].duration; }
-	int32 GetPenetrationCount() const { return m_levelTable.empty() ? m_penetrationCount : m_levelTable[0].penetrationCount; }
-	int32 GetProjectileCount() const { return m_levelTable.empty() ? m_projectileCount : m_levelTable[0].projectileCount; }
+	float GetCooldown() const { return GetLevelData(1).cooldown; }
+	float GetDamage() const { return GetLevelData(1).damage; }
+	float GetSpeed() const { return GetLevelData(1).speed; }
+	float GetRange() const { return GetLevelData(1).range; }
+	float GetDuration() const { return GetLevelData(1).duration; }
+	int32 GetPenetrationCount() const { return GetLevelData(1).penetrationCount; }
+	int32 GetProjectileCount() const { return GetLevelData(1).projectileCount; }
 
 private:
 	uint32 m_skillID = 1;
 	std::string m_skillName = "DefaultSkill";
 	ESkillCategory m_category = ESkillCategory::Projectile;
 	std::string m_prefabKey = "DefaultProjectile";
+	std::wstring m_spriteKey = L"";
+	std::string m_effectKey = "";
 
 	float m_cooldown = 1.0f;
 	float m_damage = 20.0f;

@@ -30,6 +30,10 @@ Monster::Monster(GameObject* owner, TransformComponent* transform)
 void Monster::Start()
 {
 	m_pCollider = gameObject.GetComponent<CircleCollider>();
+	if (m_pCollider.IsValid())
+	{
+		m_pCollider->SetFilter(PhysicsLayer::Monster, PhysicsLayer::All);
+	}
 }
 
 void Monster::OnEnable()
@@ -42,6 +46,10 @@ void Monster::OnEnable()
 	if (!m_pCollider.IsValid())
 	{
 		m_pCollider = gameObject.GetComponent<CircleCollider>();
+	}
+	if (m_pCollider.IsValid())
+	{
+		m_pCollider->SetFilter(PhysicsLayer::Monster, PhysicsLayer::All);
 	}
 
 	if (m_pCollider.IsValid() && b2Body_IsValid(m_pCollider->GetBodyId()))

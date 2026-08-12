@@ -1,6 +1,7 @@
 #pragma once
 #include "Engine/Framework/Components/Core/ScriptComponent.h"
 #include "Engine/Core/ObserverPtr.h"
+#include "Game/Skill/SkillSO.h"
 
 class GameObject;
 
@@ -19,7 +20,10 @@ public:
 
 	virtual void FixedUpdate(float fixedDt) override;
 
-	void Init(float damage, float range, float duration, const Vector2& spawnPos, GameObject* pAttacker = nullptr);
+	void Init(const SkillLevelData& data, const SkillSO* pSO, GameObject* attacker = nullptr, const std::string& poolKey = "GenericAoEPrefab");
+
+	void SetPoolKey(const std::string& key) { m_poolKey = key; }
+	const std::string& GetPoolKey() const { return m_poolKey; }
 
 private:
 	void ApplyExplosionDamage();
@@ -31,5 +35,6 @@ private:
 	float m_lifeTimer = 0.0f;
 	bool m_hasAppliedDamage = false;
 
+	std::string m_poolKey = "GenericAoEPrefab";
 	ObserverPtr<GameObject> m_pAttacker;
 };

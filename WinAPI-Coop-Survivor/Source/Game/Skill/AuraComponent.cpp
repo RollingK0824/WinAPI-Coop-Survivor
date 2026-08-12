@@ -1,11 +1,14 @@
 #include "Engine/Core/pch.h"
 #include "AuraComponent.h"
 #include "Engine/Core/ComponentRegister.h"
-#include "Engine/Manager/SceneManager.h"
-#include "Engine/Framework/Scene.h"
-#include "Engine/Framework/GameObject.h"
+#include "Engine/Core/ObjectPool.h"
+#include "Engine/Physics/PhysicsManager.h"
+#include "Engine/Framework/Components/Physics/ColliderComponent.h"
 #include "Engine/Framework/Components/Core/TransformComponent.h"
-#include "Game/Monster/Monster.h"
+#include "Engine/Framework/Components/Render/SpriteRendererComponent.h"
+#include "Engine/Framework/GameObject.h"
+#include "Game/Interface/IDamageable.h"
+#include "SkillSO.h"
 
 static ComponentRegistrar<AuraComponent> registrar(EngineKey::CustomComponent::AuraComponent.data());
 
@@ -14,24 +17,33 @@ AuraComponent::AuraComponent(GameObject* owner, TransformComponent* transform)
 {
 }
 
-void AuraComponent::Init(float damage, float range, float duration, GameObject* pCaster)
+void AuraComponent::Init(const SkillLevelData& data, const SkillSO* pSO, GameObject* pCaster, const std::string& poolKey)
 {
-	m_damage = damage;
-	m_range = range;
-	m_duration = duration;
-	m_pCaster = pCaster;
+	m_damage = data.damage;
+	m_range = data.range;
+	m_duration = data.duration;
+	m_tickInterval = (data.cooldown > 0.0f) ? data.cooldown : 0.5f;
+	m_tickTimer = m_tickInterval; // 즉시 첫 틱 발동
 	m_lifeTimer = 0.0f;
-	m_tickTimer = 0.0f;
+	m_pCaster = pCaster;
+	m_poolKey = poolKey;
+
+	if (auto renderer = gameObject.GetComponent<SpriteRendererComponent>())
+	{
+		if (pSO && !pSO->GetSpriteKey().empty())
+		{
+			renderer->SetSpriteKey(pSO->GetSpriteKey());
+		}
+	}
 }
 
 void AuraComponent::FixedUpdate(float fixedDt)
 {
 	if (!gameObject.IsActive()) return;
 
-	if (m_pCaster.IsValid() && m_pCaster->IsActive())
+	if (m_pCaster.IsValid())
 	{
-		Vector2 casterPos = m_pCaster->transform.GetPosition();
-		transform.SetPosition(casterPos.x, casterPos.y);
+		transform.SetPosition(m_pCaster->transform.GetPosition().x, m_pCaster->transform.GetPosition().y);
 	}
 
 	m_tickTimer += fixedDt;
@@ -46,31 +58,28 @@ void AuraComponent::FixedUpdate(float fixedDt)
 		m_lifeTimer += fixedDt;
 		if (m_lifeTimer >= m_duration)
 		{
-			gameObject.SetActive(false);
+			PoolManager::GetInstance()->Despawn<GameObject>(m_poolKey, &gameObject);
 		}
 	}
 }
 
 void AuraComponent::ApplyAreaDamage()
 {
-	Scene* pScene = SceneManager::GetInstance()->GetActiveScene();
-	if (!pScene) return;
-
 	Vector2 myPos = transform.GetPosition();
-	const auto& objects = pScene->GetGameObjects();
+	auto colliders = PhysicsManager::GetInstance()->OverlapAABB(myPos, m_range, PhysicsLayer::Monster);
 
-	for (GameObject* pObj : objects)
+	for (ColliderComponent* pCol : colliders)
 	{
-		if (!pObj || !pObj->IsActive() || pObj->IsDead()) continue;
+		if (!pCol || !pCol->IsEnabled() || !pCol->gameObject.IsActive()) continue;
 
-		Monster* pMonster = pObj->GetComponent<Monster>();
-		if (pMonster && !pMonster->IsDead())
+		IDamageable* pDamageable = pCol->gameObject.GetComponent<IDamageable>();
+		if (pDamageable && !pDamageable->IsDead())
 		{
-			Vector2 monsterPos = pObj->transform.GetPosition();
+			Vector2 monsterPos = pCol->transform.GetPosition();
 			float distSq = (monsterPos - myPos).LengthSquared();
 			if (distSq <= (m_range * m_range))
 			{
-				pMonster->TakeDamage(m_damage, m_pCaster.Get());
+				pDamageable->TakeDamage(m_damage, m_pCaster.Get());
 			}
 		}
 	}

@@ -1,71 +1,75 @@
 {
-  "Type": "SkillSO",
-  "SkillID": 301,
-  "SkillName": "MagicMissile",
-  "Category": 0,
-  "Cooldown": 0.8,
-  "Damage": 25.0,
-  "Speed": 600.0,
-  "Range": 800.0,
-  "Duration": 0.0,
-  "PenetrationCount": 1,
-  "ProjectileCount": 1,
-  "PrefabKey": "MagicMissilePrefab",
-  "Levels": [
-    {
-      "Level": 1,
-      "Description": "가장 가까운 적에게 단발 매직 미사일을 발사합니다.",
-      "Damage": 25.0,
-      "Cooldown": 0.8,
-      "Speed": 600.0,
-      "Range": 800.0,
-      "Duration": 0.0,
-      "PenetrationCount": 1,
-      "ProjectileCount": 1
-    },
-    {
-      "Level": 2,
-      "Description": "미사일 피해량이 15 증가합니다.",
-      "Damage": 40.0,
-      "Cooldown": 0.8,
-      "Speed": 650.0,
-      "Range": 850.0,
-      "Duration": 0.0,
-      "PenetrationCount": 1,
-      "ProjectileCount": 1
-    },
-    {
-      "Level": 3,
-      "Description": "발사되는 미사일 개수가 +1 증가합니다.",
-      "Damage": 40.0,
-      "Cooldown": 0.7,
-      "Speed": 650.0,
-      "Range": 850.0,
-      "Duration": 0.0,
-      "PenetrationCount": 1,
-      "ProjectileCount": 2
-    },
-    {
-      "Level": 4,
-      "Description": "미사일 관통 횟수가 +1 증가합니다.",
-      "Damage": 45.0,
-      "Cooldown": 0.7,
-      "Speed": 700.0,
-      "Range": 900.0,
-      "Duration": 0.0,
-      "PenetrationCount": 2,
-      "ProjectileCount": 2
-    },
-    {
-      "Level": 5,
-      "Description": "발사되는 미사일 개수 +1 및 쿨타임이 대폭 감소합니다.",
-      "Damage": 60.0,
-      "Cooldown": 0.5,
-      "Speed": 750.0,
-      "Range": 950.0,
-      "Duration": 0.0,
-      "PenetrationCount": 2,
-      "ProjectileCount": 3
-    }
-  ]
+    "Type": "SkillSO",
+    "AssetID": 301,
+    "AssetName": "MagicMissile",
+    "SkillID": 301,
+    "SkillName": "MagicMissile",
+    "Category": 0,
+    "Cooldown": 0.800000011920929,
+    "Damage": 25.0,
+    "Speed": 600.0,
+    "Range": 800.0,
+    "Duration": 0.0,
+    "PenetrationCount": 1,
+    "ProjectileCount": 1,
+    "PrefabKey": "GenericProjectilePrefab",
+    "SpriteKey": "Effect1.png",
+    "EffectKey": "",
+    "Levels": [
+        {
+            "Level": 1,
+            "Description": "가장 가까운 적에게 단발 매직 미사일을 발사합니다.",
+            "Damage": 25.0,
+            "Cooldown": 0.800000011920929,
+            "Speed": 600.0,
+            "Range": 800.0,
+            "Duration": 0.0,
+            "PenetrationCount": 1,
+            "ProjectileCount": 1
+        },
+        {
+            "Level": 2,
+            "Description": "미사일 피해량이 15 증가합니다.",
+            "Damage": 40.0,
+            "Cooldown": 0.800000011920929,
+            "Speed": 650.0,
+            "Range": 850.0,
+            "Duration": 0.0,
+            "PenetrationCount": 1,
+            "ProjectileCount": 1
+        },
+        {
+            "Level": 3,
+            "Description": "발사되는 미사일 개수가 +1 증가합니다.",
+            "Damage": 40.0,
+            "Cooldown": 0.699999988079071,
+            "Speed": 650.0,
+            "Range": 850.0,
+            "Duration": 0.0,
+            "PenetrationCount": 1,
+            "ProjectileCount": 2
+        },
+        {
+            "Level": 4,
+            "Description": "미사일 관통 횟수가 +1 증가합니다.",
+            "Damage": 45.0,
+            "Cooldown": 0.699999988079071,
+            "Speed": 700.0,
+            "Range": 900.0,
+            "Duration": 0.0,
+            "PenetrationCount": 2,
+            "ProjectileCount": 2
+        },
+        {
+            "Level": 5,
+            "Description": "발사되는 미사일 개수 +1 및 쿨타임이 대폭 감소합니다.",
+            "Damage": 60.0,
+            "Cooldown": 0.5,
+            "Speed": 750.0,
+            "Range": 950.0,
+            "Duration": 0.0,
+            "PenetrationCount": 2,
+            "ProjectileCount": 3
+        }
+    ]
 }

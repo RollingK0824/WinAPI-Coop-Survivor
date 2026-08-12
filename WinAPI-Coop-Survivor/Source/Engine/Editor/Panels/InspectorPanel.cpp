@@ -1,10 +1,11 @@
-﻿#include "Engine/Core/pch.h"
+#include "Engine/Core/pch.h"
 #include "InspectorPanel.h"
 #include "Engine/Editor/EditorSystem.h"
 #include "Engine/Manager/JsonSerializer.h"
 #include "Engine/Manager/ResourceManager.h"
 #include "Engine/Manager/DataManager.h"
 #include "Engine/Framework/Base/ScriptableObject.h"
+#include "Game/Skill/SkillSO.h"
 #include "Engine/Framework/GameObject.h"
 #include "Engine/Framework/Base/Component.h"
 #include "Engine/Framework/Components/Core/TransformComponent.h"
@@ -73,20 +74,28 @@ void InspectorPanel::DrawScriptableObjectData()
 	char nameBuf[256];
 	strcpy_s(nameBuf, nameStr.c_str());
 
-	ImGui::Text("Asset ID: %u", assetID);
-	ImGui::SetNextItemWidth(-1.0f);
-	if (ImGui::InputText("Asset Name", nameBuf, sizeof(nameBuf)))
-	{
-		pAsset->SetAssetName(nameBuf);
-	}
-	ImGui::Spacing();
-	ImGui::Separator();
-	ImGui::Spacing();
-
 	ImGui::Columns(2, "SOPropCols", false);
 	float totalWidth = ImGui::GetContentRegionAvail().x;
 	float col0Width = (std::max)(105.0f, totalWidth * 0.35f);
 	ImGui::SetColumnWidth(0, col0Width);
+
+	// Asset ID
+	ImGui::AlignTextToFramePadding();
+	ImGui::Text("Asset ID");
+	ImGui::NextColumn();
+	ImGui::Text("%u", assetID);
+	ImGui::NextColumn();
+
+	// Asset Name
+	ImGui::AlignTextToFramePadding();
+	ImGui::Text("Asset Name");
+	ImGui::NextColumn();
+	ImGui::SetNextItemWidth(-1.0f);
+	if (ImGui::InputText("##AssetNameInput", nameBuf, sizeof(nameBuf)))
+	{
+		pAsset->SetAssetName(nameBuf);
+	}
+	ImGui::NextColumn();
 
 	for (const auto& prop : pAsset->GetProperties())
 	{
@@ -273,6 +282,86 @@ void InspectorPanel::DrawScriptableObjectData()
 	ImGui::Spacing();
 	ImGui::Separator();
 	ImGui::Spacing();
+
+	if (SkillSO* pSkillSO = dynamic_cast<SkillSO*>(pAsset))
+	{
+		ImGui::TextColored(ImVec4(0.9f, 0.7f, 0.2f, 1.0f), "[ Skill Data Configuration ]");
+		ImGui::Spacing();
+
+		ESkillCategory cat = pSkillSO->GetCategory();
+		const char* categories[] = { "Projectile", "Aura", "GroundArea" };
+		int currentCat = static_cast<int>(cat);
+		if (ImGui::Combo("Skill Category", &currentCat, categories, 3))
+		{
+			pSkillSO->SetCategory(static_cast<ESkillCategory>(currentCat));
+		}
+		ImGui::Spacing();
+
+		auto& levelTable = pSkillSO->GetMutableLevelTable();
+		std::string headerLabel = "Levels Container (" + std::to_string(levelTable.size()) + " Levels)";
+		if (ImGui::TreeNode(headerLabel.c_str()))
+		{
+			int removeIdx = -1;
+			for (size_t i = 0; i < levelTable.size(); ++i)
+			{
+				SkillLevelData& data = levelTable[i];
+				std::string treeLabel = "Level " + std::to_string(data.level) + " (" + data.description + ")";
+				ImGui::PushID(static_cast<int>(i));
+
+				if (ImGui::TreeNode(treeLabel.c_str()))
+				{
+					char descBuf[256];
+					strcpy_s(descBuf, data.description.c_str());
+					if (ImGui::InputText("Description", descBuf, sizeof(descBuf)))
+					{
+						data.description = descBuf;
+					}
+
+					ImGui::DragFloat("Damage", &data.damage, 1.0f, 0.0f, 10000.0f, "%.1f");
+					ImGui::DragFloat("Cooldown", &data.cooldown, 0.05f, 0.05f, 60.0f, "%.2f s");
+					ImGui::DragFloat("Speed", &data.speed, 10.0f, 0.0f, 5000.0f, "%.0f");
+					ImGui::DragFloat("Range", &data.range, 10.0f, 10.0f, 5000.0f, "%.0f px");
+					ImGui::DragFloat("Duration", &data.duration, 0.05f, 0.0f, 60.0f, "%.2f s");
+					ImGui::DragInt("Penetration Count", &data.penetrationCount, 1, 1, 999);
+					ImGui::DragInt("Projectile Count", &data.projectileCount, 1, 1, 50);
+
+					if (ImGui::Button("Delete Level"))
+					{
+						removeIdx = static_cast<int>(i);
+					}
+					ImGui::TreePop();
+				}
+				ImGui::PopID();
+			}
+
+			if (removeIdx != -1 && levelTable.size() > 1)
+			{
+				levelTable.erase(levelTable.begin() + removeIdx);
+				for (size_t i = 0; i < levelTable.size(); ++i)
+				{
+					levelTable[i].level = static_cast<int32>(i + 1);
+				}
+			}
+
+			if (ImGui::Button("+ Add Level"))
+			{
+				SkillLevelData newLvl;
+				newLvl.level = static_cast<int32>(levelTable.size() + 1);
+				if (!levelTable.empty())
+				{
+					newLvl = levelTable.back();
+					newLvl.level = static_cast<int32>(levelTable.size() + 1);
+					newLvl.damage += 10.0f;
+				}
+				levelTable.push_back(newLvl);
+			}
+			ImGui::TreePop();
+		}
+
+		ImGui::Spacing();
+		ImGui::Separator();
+		ImGui::Spacing();
+	}
 
 	if (ImGui::Button("Save Asset (.asset)", ImVec2(-1.0f, 30.0f)))
 	{

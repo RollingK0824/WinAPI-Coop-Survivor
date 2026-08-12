@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Engine/Core/pch.h"
 #include "Engine/Core/Singleton.h"
 #include "Engine/Framework/Base/ISystem.h"
@@ -143,6 +143,11 @@ public:
 		if (it == m_pools.end()) return;
 		auto* container = static_cast<PoolContainer<T>*>(it->second.get());
 		container->GetPool()->Release(obj);
+	}
+
+	bool HasPool(const std::string& key) const
+	{
+		return m_pools.find(key) != m_pools.end();
 	}
 
 	void ClearAll()

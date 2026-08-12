@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Engine/Framework/Components/Core/ScriptComponent.h"
 #include "Game/Skill/SkillSO.h"
 
@@ -45,7 +45,7 @@ public:
 	GameObject* FindClosestMonster(float maxRange) const;
 
 private:
-	void CastSkill(SkillInstance& instance, GameObject* pTargetMonster);
+	void CastSkill(SkillInstance& instance);
 	void CastProjectileSkill(const SkillInstance& instance, const SkillLevelData& data, GameObject* pTargetMonster);
 	void CastAuraSkill(const SkillInstance& instance, const SkillLevelData& data);
 	void CastGroundAreaSkill(const SkillInstance& instance, const SkillLevelData& data, GameObject* pTargetMonster);

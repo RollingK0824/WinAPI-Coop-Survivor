@@ -1,6 +1,6 @@
 {
-    "Name": "TempMonster",
-    "InstanceID": 48,
+    "Name": "GenericProjectilePrefab",
+    "InstanceID": 63,
     "IsActive": true,
     "Components": [
         {
@@ -31,14 +31,14 @@
                     "b": 1.0,
                     "a": 1.0
                 },
-                "SpriteKey": "Characeter_Green/Character0.png",
+                "SpriteKey": "",
                 "Size": {
-                    "x": 16.0,
-                    "y": 16.0
+                    "x": 0.0,
+                    "y": 0.0
                 },
                 "Pivot": {
-                    "x": 0.5,
-                    "y": 0.5
+                    "x": 0.0,
+                    "y": 0.0
                 },
                 "Offset": {
                     "x": 0.0,
@@ -46,20 +46,6 @@
                 },
                 "FlipX": false,
                 "FlipY": false
-            }
-        },
-        {
-            "Type": "AnimatorComponent",
-            "Data": {
-                "IsEnabled": true,
-                "IsPlaying": true,
-                "CurrentFrameIdx": 0,
-                "AccumulatedTime": 0.0,
-                "ClipKeys": [
-                    "Green_Player_Run",
-                    "Green_Player_Die"
-                ],
-                "DefaultPlay": "Green_Player_Run"
             }
         },
         {
@@ -71,25 +57,18 @@
                     "y": 0.0
                 },
                 "Density": 1.0,
-                "IsSensor": false,
+                "IsSensor": true,
                 "BodyType": 2,
                 "FixedRotation": true,
-                "CategoryBits": 4,
-                "MaskBits": -1,
-                "Radius": 0.0
+                "CategoryBits": 8,
+                "MaskBits": 4,
+                "Radius": 10.0
             }
         },
         {
-            "Type": "Monster",
+            "Type": "ProjectileComponent",
             "Data": {
-                "IsEnabled": true,
-                "MonsterSO": 101,
-                "CurrentHP": 100.0,
-                "MaxHP": 100.0,
-                "MoveSpeed": 120.0,
-                "AttackDamage": 10.0,
-                "AttackRange": 40.0,
-                "AttackCooldown": 1.0
+                "IsEnabled": true
             }
         }
     ]

@@ -1,5 +1,7 @@
 {
   "Type": "SkillSO",
+  "AssetID": 302,
+  "AssetName": "FireAura",
   "SkillID": 302,
   "SkillName": "FireAura",
   "Category": 1,
@@ -10,7 +12,7 @@
   "Duration": 0.0,
   "PenetrationCount": 999,
   "ProjectileCount": 1,
-  "PrefabKey": "FireAuraPrefab",
+  "PrefabKey": "GenericAuraPrefab",
   "Levels": [
     {
       "Level": 1,

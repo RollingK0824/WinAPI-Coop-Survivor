@@ -1,11 +1,14 @@
 #include "Engine/Core/pch.h"
 #include "AoEComponent.h"
 #include "Engine/Core/ComponentRegister.h"
-#include "Engine/Manager/SceneManager.h"
-#include "Engine/Framework/Scene.h"
-#include "Engine/Framework/GameObject.h"
+#include "Engine/Core/ObjectPool.h"
+#include "Engine/Physics/PhysicsManager.h"
+#include "Engine/Framework/Components/Physics/ColliderComponent.h"
 #include "Engine/Framework/Components/Core/TransformComponent.h"
-#include "Game/Monster/Monster.h"
+#include "Engine/Framework/Components/Render/SpriteRendererComponent.h"
+#include "Engine/Framework/GameObject.h"
+#include "Game/Interface/IDamageable.h"
+#include "SkillSO.h"
 
 static ComponentRegistrar<AoEComponent> registrar(EngineKey::CustomComponent::AoEComponent.data());
 
@@ -14,15 +17,23 @@ AoEComponent::AoEComponent(GameObject* owner, TransformComponent* transform)
 {
 }
 
-void AoEComponent::Init(float damage, float range, float duration, const Vector2& spawnPos, GameObject* pAttacker)
+void AoEComponent::Init(const SkillLevelData& data, const SkillSO* pSO, GameObject* attacker, const std::string& poolKey)
 {
-	m_damage = damage;
-	m_range = range;
-	m_duration = (std::max)(0.1f, duration);
+	m_damage = data.damage;
+	m_range = data.range;
+	m_duration = (data.duration > 0.0f) ? data.duration : 0.5f;
 	m_lifeTimer = 0.0f;
 	m_hasAppliedDamage = false;
-	m_pAttacker = pAttacker;
-	transform.SetPosition(spawnPos.x, spawnPos.y);
+	m_pAttacker = attacker;
+	m_poolKey = poolKey;
+
+	if (auto renderer = gameObject.GetComponent<SpriteRendererComponent>())
+	{
+		if (pSO && !pSO->GetSpriteKey().empty())
+		{
+			renderer->SetSpriteKey(pSO->GetSpriteKey());
+		}
+	}
 }
 
 void AoEComponent::FixedUpdate(float fixedDt)
@@ -38,30 +49,27 @@ void AoEComponent::FixedUpdate(float fixedDt)
 	m_lifeTimer += fixedDt;
 	if (m_lifeTimer >= m_duration)
 	{
-		gameObject.SetActive(false);
+		PoolManager::GetInstance()->Despawn<GameObject>(m_poolKey, &gameObject);
 	}
 }
 
 void AoEComponent::ApplyExplosionDamage()
 {
-	Scene* pScene = SceneManager::GetInstance()->GetActiveScene();
-	if (!pScene) return;
-
 	Vector2 centerPos = transform.GetPosition();
-	const auto& objects = pScene->GetGameObjects();
+	auto colliders = PhysicsManager::GetInstance()->OverlapAABB(centerPos, m_range, PhysicsLayer::Monster);
 
-	for (GameObject* pObj : objects)
+	for (ColliderComponent* pCol : colliders)
 	{
-		if (!pObj || !pObj->IsActive() || pObj->IsDead()) continue;
+		if (!pCol || !pCol->IsEnabled() || !pCol->gameObject.IsActive()) continue;
 
-		Monster* pMonster = pObj->GetComponent<Monster>();
-		if (pMonster && !pMonster->IsDead())
+		IDamageable* pDamageable = pCol->gameObject.GetComponent<IDamageable>();
+		if (pDamageable && !pDamageable->IsDead())
 		{
-			Vector2 monsterPos = pObj->transform.GetPosition();
-			float distSq = (monsterPos - centerPos).LengthSquared();
+			Vector2 targetPos = pCol->transform.GetPosition();
+			float distSq = (targetPos - centerPos).LengthSquared();
 			if (distSq <= (m_range * m_range))
 			{
-				pMonster->TakeDamage(m_damage, m_pAttacker.Get());
+				pDamageable->TakeDamage(m_damage, m_pAttacker.Get());
 			}
 		}
 	}

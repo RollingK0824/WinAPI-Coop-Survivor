@@ -1,6 +1,7 @@
 #pragma once
 #include "Engine/Framework/Components/Core/ScriptComponent.h"
 #include "Engine/Core/ObserverPtr.h"
+#include "Game/Skill/SkillSO.h"
 
 class GameObject;
 
@@ -19,7 +20,10 @@ public:
 
 	virtual void FixedUpdate(float fixedDt) override;
 
-	void Init(float damage, float range, float duration, GameObject* pCaster = nullptr);
+	void Init(const SkillLevelData& data, const SkillSO* pSO, GameObject* pCaster = nullptr, const std::string& poolKey = "GenericAuraPrefab");
+
+	void SetPoolKey(const std::string& key) { m_poolKey = key; }
+	const std::string& GetPoolKey() const { return m_poolKey; }
 
 private:
 	void ApplyAreaDamage();
@@ -33,5 +37,6 @@ private:
 	float m_tickInterval = 0.5f;
 	float m_tickTimer = 0.0f;
 
+	std::string m_poolKey = "GenericAuraPrefab";
 	ObserverPtr<GameObject> m_pCaster;
 };
