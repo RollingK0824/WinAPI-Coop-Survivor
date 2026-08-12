@@ -32,7 +32,7 @@ protected:
 		prop.name = name;
 		prop.data = ptr;
 
-		if constexpr (std::is_same_v<T, int32> || std::is_same_v<T, int>) prop.type = PropType::Int;
+		if constexpr (std::is_same_v<T, int32> || std::is_same_v<T, int> || std::is_same_v<T, uint32> || std::is_same_v<T, uint16> || std::is_same_v<T, uint32>) prop.type = PropType::Int;
 		else if constexpr (std::is_same_v<T, float>) prop.type = PropType::Float;
 		else if constexpr (std::is_same_v<T, bool>) prop.type = PropType::Bool;
 		else if constexpr (std::is_same_v<T, std::string>) prop.type = PropType::String;

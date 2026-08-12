@@ -73,6 +73,12 @@
             "Data": {
                 "IsEnabled": true
             }
+        },
+        {
+            "Type": "SkillComponent",
+            "Data": {
+                "IsEnabled": true
+            }
         }
     ]
 }

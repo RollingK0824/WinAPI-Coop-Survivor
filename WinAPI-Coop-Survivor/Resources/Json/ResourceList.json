@@ -24,6 +24,11 @@
       "Key": "Characeter_Green.png",
       "Path": "Resources/Texture/Characeter_Green.png",
       "AtlasPath": "Resources/Texture/Characeter_Green.json"
+    },
+    {
+      "Key": "Effect.png",
+      "Path": "Resources/Texture/Effect.png",
+      "AtlasPath": "Resources/Texture/Effect.json"
     }
   ]
 }

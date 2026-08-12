@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Engine/Framework/Components/Core/ScriptComponent.h"
 
 class GameObject;
@@ -33,6 +33,8 @@ public:
 
 	bool IsCountingDown() const { return m_bIsCountDown; }
 	float GetCountdownTimer() const { return m_countdownTimer; }
+	bool IsGameStarted() const { return m_bIsGameStarted; }
+	void SetGameStarted(bool started) { m_bIsGameStarted = started; }
 
 	void SetOnCountdownTickCallback(std::function<void(float)> cb) { m_onCountdownTick = cb; }
 	void SetOnGameStartedCallback(std::function<void()> cb) { m_onGameStarted = cb; }
@@ -47,6 +49,7 @@ private:
 	bool m_bIsMyReady = false;
 
 	bool m_bIsCountDown = false;
+	bool m_bIsGameStarted = false;
 	float m_countdownTimer = 0.0f;
 
 	std::function<void(float)> m_onCountdownTick;

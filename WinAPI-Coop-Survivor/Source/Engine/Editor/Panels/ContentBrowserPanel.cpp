@@ -5,7 +5,7 @@
 #include "Engine/Manager/PrefabManager.h"
 #include "Engine/Manager/DataManager.h"
 #include "Engine/Framework/Base/ScriptableObject.h"
-#include "Game/Data/MonsterSO.h"
+#include "Game/Monster/MonsterSO.h"
 #include "Game/Skill/SkillSO.h"
 #include "Engine/Editor/EditorSystem.h"
 #include "Engine/Framework/Scene.h"

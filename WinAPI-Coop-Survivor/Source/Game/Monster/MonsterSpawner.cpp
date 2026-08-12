@@ -15,7 +15,7 @@
 #include "Engine/Framework/Components/Render/SpriteRendererComponent.h"
 #include "Engine/Framework/Components/Network/NetworkIdentity.h"
 #include "Game/Monster/Monster.h"
-#include "Game/Data/MonsterSO.h"
+#include "Game/Monster/MonsterSO.h"
 #include "Game/Player/Player.h"
 #include "Game/Manager/InGameManager.h"
 

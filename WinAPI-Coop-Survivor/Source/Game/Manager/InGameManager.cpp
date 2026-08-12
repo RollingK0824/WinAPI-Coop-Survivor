@@ -4,6 +4,7 @@
 #include "Engine/Manager/TimeManager.h"
 #include "Engine/Manager/RandomManager.h"
 #include "Engine/Manager/PrefabManager.h"
+#include "Engine/Core/ObjectPool.h"
 #include "Engine/Network/NetworkManager.h"
 #include "Engine/Framework/Scene.h"
 #include "Engine/Framework/GameObject.h"
@@ -13,6 +14,7 @@
 #include "Engine/Manager/DebugManager.h"
 #include "Game/Player/Player.h"
 #include "Game/Monster/MonsterSpawner.h"
+#include "Game/Skill/SkillComponent.h"
 
 InGameManager* InGameManager::s_instance = nullptr;
 
@@ -39,11 +41,27 @@ void InGameManager::Start()
 	TimeManager::GetInstance()->SetPaused(false);
 	m_countdownTimer = 3.0f;
 	m_bIsCountDown = false;
+	m_bIsGameStarted = (NetworkManager::GetInstance()->GetRole() == NetRole::NONE);
 
 	Scene* pScene = gameObject.GetOwnerScene();
 	if (pScene)
 	{
 		DebugManager::GetInstance()->CreateDebugUIOverlay(pScene);
+
+		auto initSkillPool = [pScene](const std::string& key, size_t cap) {
+			PoolManager::GetInstance()->CreatePool<GameObject>(
+				key,
+				[key, pScene]() { return PrefabManager::GetInstance()->Instantiate(key, pScene); },
+				[](GameObject* obj) { if (obj) obj->SetActive(true); },
+				[](GameObject* obj) { if (obj) obj->SetActive(false); },
+				nullptr,
+				cap, 300
+			);
+		};
+
+		initSkillPool("GenericProjectilePrefab", 300);
+		initSkillPool("GenericAuraPrefab", 20);
+		initSkillPool("GenericAoEPrefab", 50);
 	}
 
 	if (!gameObject.GetComponent<MonsterSpawner>())
@@ -173,6 +191,7 @@ void InGameManager::Update(float dt)
 		{
 			m_countdownTimer = 0.0f;
 			m_bIsCountDown = false;
+			m_bIsGameStarted = true;
 
 			this->SortedPlayerCache();
 
@@ -258,6 +277,13 @@ GameObject* InGameManager::SpawnPlayer(uint32 netId, bool isLocal, Vector2 spawn
 	}
 	netIdentity->SetNetID(netId);
 	netIdentity->SetLocalPlayer(isLocal);
+
+	// SkillComponent 가져오기 (없으면 추가)
+	SkillComponent* pSkillComp = pPlayerObj->GetComponent<SkillComponent>();
+	if (!pSkillComp)
+	{
+		pSkillComp = pPlayerObj->AddComponent<SkillComponent>();
+	}
 
 	m_playerObjects[netId] = pPlayerObj;
 

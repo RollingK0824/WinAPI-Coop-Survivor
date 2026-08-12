@@ -84,6 +84,11 @@ void JsonSerializer::ApplyJsonToGameObject(GameObject* pObj, const json& objJson
 	{
 		for (const auto& compJson : objJson[EngineKey::Property::Components.data()])
 		{
+			if (!compJson.contains(EngineKey::Property::Type.data()) || !compJson.contains(EngineKey::Property::Data.data()))
+			{
+				continue;
+			}
+
 			std::string type = compJson[EngineKey::Property::Type.data()].get<std::string>();
 			json data = compJson[EngineKey::Property::Data.data()];
 

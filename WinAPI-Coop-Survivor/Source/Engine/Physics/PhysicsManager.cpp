@@ -1,10 +1,9 @@
-﻿#include "Engine/Core/pch.h"
+#include "Engine/Core/pch.h"
 #include "PhysicsManager.h"
 #include "Engine/Manager/ActionManager.h"
 #include "Engine/Framework/GameObject.h"
 #include "Engine/Framework/Components/Core/TransformComponent.h"
 #include "Engine/Framework/Components/Physics/ColliderComponent.h"
-#include <algorithm>
 
 bool PhysicsManager::Initialize()
 {
@@ -67,7 +66,6 @@ void PhysicsManager::Update(float dt)
 void PhysicsManager::ProcessContanctEvents()
 {
 	b2ContactEvents contactEvents = b2World_GetContactEvents(m_worldId);
-
 	for (int i = 0; i < contactEvents.beginCount; ++i)
 	{
 		b2ContactBeginTouchEvent event = contactEvents.beginEvents[i];
@@ -82,8 +80,28 @@ void PhysicsManager::ProcessContanctEvents()
 			&& colA->IsEnabled() && colB->IsEnabled()
 			&& colA->gameObject.IsActive() && colB->gameObject.IsActive())
 		{
-			colA->OnCollision(colB);
-			colB->OnCollision(colA);
+			colA->gameObject.OnCollision(colB);
+			colB->gameObject.OnCollision(colA);
+		}
+	}
+
+	b2SensorEvents sensorEvents = b2World_GetSensorEvents(m_worldId);
+	for (int i = 0; i < sensorEvents.beginCount; ++i)
+	{
+		b2SensorBeginTouchEvent event = sensorEvents.beginEvents[i];
+
+		b2BodyId bodyVisitor = b2Shape_GetBody(event.visitorShapeId);
+		b2BodyId bodySensor = b2Shape_GetBody(event.sensorShapeId);
+
+		ColliderComponent* colVisitor = reinterpret_cast<ColliderComponent*>(b2Body_GetUserData(bodyVisitor));
+		ColliderComponent* colSensor = reinterpret_cast<ColliderComponent*>(b2Body_GetUserData(bodySensor));
+
+		if (colVisitor && colSensor 
+			&& colVisitor->IsEnabled() && colSensor->IsEnabled()
+			&& colVisitor->gameObject.IsActive() && colSensor->gameObject.IsActive())
+		{
+			colVisitor->gameObject.OnCollision(colSensor);
+			colSensor->gameObject.OnCollision(colVisitor);
 		}
 	}
 }
@@ -164,4 +182,52 @@ void PhysicsManager::UnRegisterCollider(ColliderComponent* pCollider)
 
 	m_vColliders.pop_back();
 	pCollider->SetPhysicsVectorIndex((size_t)-1);
+}
+
+struct OverlapContext
+{
+	std::vector<ColliderComponent*>* results = nullptr;
+	uint32 maskBits = PhysicsLayer::All;
+};
+
+static bool OverlapCallback(b2ShapeId shapeId, void* context)
+{
+	b2BodyId bodyId = b2Shape_GetBody(shapeId);
+	ColliderComponent* col = reinterpret_cast<ColliderComponent*>(b2Body_GetUserData(bodyId));
+	if (col && col->IsEnabled() && col->gameObject.IsActive())
+	{
+		OverlapContext* ctx = static_cast<OverlapContext*>(context);
+		if (ctx && ctx->results)
+		{
+			if (ctx->maskBits == PhysicsLayer::All || (col->GetCategoryBits() & ctx->maskBits) != 0 || col->GetCategoryBits() == PhysicsLayer::Default)
+			{
+				ctx->results->push_back(col);
+			}
+		}
+	}
+	return true;
+}
+
+std::vector<ColliderComponent*> PhysicsManager::OverlapAABB(const Vector2& center, float radius, uint32 maskBits)
+{
+	std::vector<ColliderComponent*> results;
+	if (!b2World_IsValid(m_worldId)) return results;
+
+	OverlapContext ctx;
+	ctx.results = &results;
+	ctx.maskBits = maskBits;
+
+	b2Vec2 centerMeter = { PixelToMeter(center.x), PixelToMeter(center.y) };
+	float radiusMeter = PixelToMeter(radius);
+
+	b2AABB aabb;
+	aabb.lowerBound = { centerMeter.x - radiusMeter, centerMeter.y - radiusMeter };
+	aabb.upperBound = { centerMeter.x + radiusMeter, centerMeter.y + radiusMeter };
+
+	b2QueryFilter filter = b2DefaultQueryFilter();
+	filter.categoryBits = PhysicsLayer::All;
+	filter.maskBits = PhysicsLayer::All;
+
+	b2World_OverlapAABB(m_worldId, aabb, filter, OverlapCallback, &ctx);
+	return results;
 }

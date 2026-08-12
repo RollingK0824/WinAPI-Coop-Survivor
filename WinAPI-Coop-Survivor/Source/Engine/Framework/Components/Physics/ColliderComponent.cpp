@@ -1,4 +1,4 @@
-﻿#include "Engine/Core/pch.h"
+#include "Engine/Core/pch.h"
 #include "ColliderComponent.h"
 #include "Engine/Physics/PhysicsManager.h"
 #include "Engine/Framework/GameObject.h"
@@ -103,6 +103,8 @@ void ColliderComponent::RebuildShape()
 	b2ShapeDef shapeDef = b2DefaultShapeDef();
 	shapeDef.density = m_density;
 	shapeDef.isSensor = m_bIsSensor;
+	shapeDef.enableContactEvents = true;
+	shapeDef.enableSensorEvents = true;
 	shapeDef.filter = GetFilter();
 
 	m_ShapeId = CreateShape(m_BodyId, &shapeDef);
