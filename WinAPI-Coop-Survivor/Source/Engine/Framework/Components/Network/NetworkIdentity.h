@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Engine/Framework/Components/Core/ScriptComponent.h"
 
 class NetworkIdentity : public ScriptComponent
@@ -11,7 +11,7 @@ public:
 
 	virtual void Start() override;
 
-	void SetNetID(unsigned int netID) { m_netID = netID; }
+	void SetNetID(unsigned int netID);
 	unsigned int GetNetID() const { return m_netID; }
 
 	void SetLocalPlayer(bool isLocal) { m_bIsLocalPlayer = isLocal; }

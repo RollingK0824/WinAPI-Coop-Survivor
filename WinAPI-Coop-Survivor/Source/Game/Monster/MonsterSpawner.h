@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Engine/Framework/Components/Core/ScriptComponent.h"
 #include "Engine/Core/ObserverPtr.h"
 
@@ -25,9 +25,12 @@ public:
 	void StartSpawning();
 	void StopSpawning();
 
-	void InitPool(size_t defaultCapacity = 300, size_t maxSize = 1000);
+	void InitPool(size_t defaultCapacity = 500, size_t maxSize = 1500);
 	Monster* SpawnMonster(MonsterSO* monsterData, const Vector2& spawnPos);
+	Monster* SpawnMonsterClient(uint16 netID, const Vector2& spawnPos);
 	void DespawnMonster(GameObject* pMonsterObj);
+	Monster* GetMonsterByNetID(uint16 netID);
+	void DespawnMonsterByNetID(uint16 netID);
 
 	void SetSpawningEnabled(bool enable) { m_isSpawningEnabled = enable; }
 	void SetSpawnInterval(float interval) { m_spawnInterval = interval; }
@@ -42,7 +45,12 @@ private:
 
 private:
 	uint32 m_nextSpawnSeqID = 0;
+	uint16 m_nextMonsterNetID = 2000; // Player NetID(1~999)와 충돌 방지
 	bool m_isSpawningEnabled = false;
+
+	std::unordered_map<uint16, Monster*> m_activeMonsterMap;
+	float m_snapshotTimer = 0.0f;
+	const float m_snapshotInterval = 0.066f; // 15Hz
 
 	std::string m_prefabKey = "TempMonster";
 	float m_spawnInterval = 1.0f;

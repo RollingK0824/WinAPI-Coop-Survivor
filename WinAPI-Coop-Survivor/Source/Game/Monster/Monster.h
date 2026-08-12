@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Engine/Framework/Components/Core/ScriptComponent.h"
 #include "Game/Interface/IDamageable.h"
 #include "Engine/Core/ObserverPtr.h"
@@ -42,6 +42,8 @@ public:
 	virtual bool IsDead() const override { return m_state == EMonsterState::Dead; }
 
 	uint32 GetSpawnSeqID() const { return m_spawnSeqID; }
+	uint16 GetNetID() const { return m_netID; }
+	void SetNetID(uint16 netID) { m_netID = netID; }
 	float GetCurrentHP() const { return m_currentHP; }
 	float GetMaxHP() const { return m_maxHP; }
 	EMonsterState GetState() const { return m_state; }
@@ -61,6 +63,7 @@ private:
 	ObserverPtr<MonsterSO> m_pMonsterSO;
 
 	uint32 m_spawnSeqID = 0;
+	uint16 m_netID = 0;
 	EMonsterState m_state = EMonsterState::Spawn;
 
 	float m_currentHP = 100.0f;

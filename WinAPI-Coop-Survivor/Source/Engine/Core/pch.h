@@ -10,6 +10,9 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <atomic>
+#include <thread>
+#include <mutex>
 #include <set>
 #include <map>
 #include <unordered_map>

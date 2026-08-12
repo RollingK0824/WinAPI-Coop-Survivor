@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Engine/Core/Singleton.h"
 #include "Engine/Network/NetPacket.h"
 #include "Engine/Framework/Base/ISystem.h"
@@ -19,15 +19,17 @@ struct NetClientInfo {
     unsigned int assignedNetID = 0;
 };
 
+struct RawPacketData {
+    sockaddr_in senderAddr{};
+    int size = 0;
+    std::vector<char> buffer;
+};
+
 struct InterpolationData {
-    float startX = 0.0f;
-    float startY = 0.0f;
-    float targetX = 0.0f;
-    float targetY = 0.0f;
-    float startAngle = 0.0f;
-    float targetAngle = 0.0f;
+    Vector2 startPos{ 0.0f,0.0f };
+    Vector2 targetPos{ 0.0f,0.0f };
     float elapsed = 0.0f;
-    float duration = 0.0166f;
+	float duration = 0.0166f;   // Default(Player 60Hz : 1/60(0.0166f), Monster 15Hz : 1/15(0.066f))
 };
 
 using PacketHandler = std::function<void(const PacketHeader* packet, const sockaddr_in& sender)>;
@@ -60,8 +62,11 @@ public:
     bool IsConnected() const { return m_bConnected; }
     const std::unordered_map<uint32, NetClientInfo>& GetConnectedClients() const { return m_ConnectedClients; }
 
-    bool GetInterpolatedPosition(unsigned int netID, float& outX, float& outY, float& outAngle);
-    void UpdateInterpolationTarget(unsigned int netID, float targetX, float targetY, float targetAngle);
+    bool GetInterpolatedPosition(uint32 netID, Vector2& outPos);
+    bool GetInterpolatedPosition(uint32 netID, float& outX, float& outY, float& outAngle);
+    void UpdateInterpolationTarget(uint32 netID, const Vector2& targetPos, float duration = 0.0166f);
+    void UpdateInterpolationTarget(uint32 netID, float targetX, float targetY, float targetAngle, float duration = 0.0166f);
+    void RemoveInterpolation(uint32 netID);
 
     float GetPing() const { return m_PingMs; }
 
@@ -71,11 +76,17 @@ private:
 
     void ProcessIncomingPackets();
     void HandlePacket(const char* buffer, int size, const sockaddr_in& senderAddr);
+    void NetworkThreadLoop();
 
 private:
     NetRole m_Role = NetRole::NONE;
     SOCKET m_Socket = INVALID_SOCKET;
     sockaddr_in m_HostAddr{};
+
+    std::thread m_networkThread;
+    std::mutex m_queueMutex;
+    std::atomic<bool> m_bNetworkThreadRunning = false;
+    std::vector<RawPacketData> m_incomingPacketQueue;
 
     std::unordered_map<uint32, GameObject*> m_networkObjects;
     std::unordered_map<uint32, NetClientInfo> m_ConnectedClients; 

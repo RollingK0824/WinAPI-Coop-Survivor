@@ -1,4 +1,4 @@
-﻿﻿#include "Engine/Core/pch.h"
+#include "Engine/Core/pch.h"
 #include "NetworkManager.h"
 #include "Engine/Manager/TimeManager.h"
 #include "Engine/Manager/SceneManager.h"
@@ -8,6 +8,7 @@
 #include "Engine/Framework/Components/Core/TransformComponent.h"
 #include "Engine/Framework/Components/Physics/BoxCollider.h"
 #include "Engine/Framework/Components/Network/NetworkIdentity.h"
+#include "Game/Monster/MonsterSpawner.h"
 
 NetworkManager::~NetworkManager() {
 	Release();
@@ -28,6 +29,8 @@ bool NetworkManager::Initialize() {
 void NetworkManager::Release() {
 	GUISystem::GetInstance()->UnRegisterPanel(this);
 
+	m_bNetworkThreadRunning = false;
+
 	if (m_Socket != INVALID_SOCKET) {
 		// 클라이언트인 경우 종료 알림 전송
 		if (m_Role == NetRole::CLIENT && m_bConnected) {
@@ -41,12 +44,22 @@ void NetworkManager::Release() {
 		closesocket(m_Socket);
 		m_Socket = INVALID_SOCKET;
 	}
+
+	if (m_networkThread.joinable()) {
+		m_networkThread.join();
+	}
+
 	WSACleanup();
 	m_Role = NetRole::NONE;
 	m_bConnected = false;
 	m_networkObjects.clear();
 	m_ConnectedClients.clear();
 	m_InterpolationMap.clear();
+	
+	{
+		std::lock_guard<std::mutex> lock(m_queueMutex);
+		m_incomingPacketQueue.clear();
+	}
 }
 
 bool NetworkManager::StartHost(int port) {
@@ -98,6 +111,13 @@ bool NetworkManager::StartHost(int port) {
 	}
 
 	std::cout << "Host started on port " << port << std::endl;
+
+	m_bNetworkThreadRunning = true;
+	if (m_networkThread.joinable()) {
+		m_networkThread.join();
+	}
+	m_networkThread = std::thread(&NetworkManager::NetworkThreadLoop, this);
+
 	return true;
 }
 
@@ -144,6 +164,13 @@ bool NetworkManager::ConnectToHost(const std::string& ip, int port) {
 	SendPacket(&connPacket, sizeof(PacketHeader));
 
 	std::cout << "Sent connection request to Host " << ip << ":" << port << std::endl;
+
+	m_bNetworkThreadRunning = true;
+	if (m_networkThread.joinable()) {
+		m_networkThread.join();
+	}
+	m_networkThread = std::thread(&NetworkManager::NetworkThreadLoop, this);
+
 	return true;
 }
 
@@ -189,10 +216,10 @@ void NetworkManager::Update(float dt) {
 			SendPacket(&hb, sizeof(PacketHeader));
 		}
 		else if (m_Role == NetRole::HOST) {
-			// 접속이 오래 끊긴 클라이언트 타임아웃 검사 (5초 간 무반응 시 제거)
+			// 접속이 오래 끊긴 클라이언트 타임아웃 검사 (비활성화 창 대기 감안 30초 간 무반응 시 제거)
 			float currentTime = TimeManager::GetInstance()->GetRealTime();
 			for (auto it = m_ConnectedClients.begin(); it != m_ConnectedClients.end();) {
-				if (currentTime - it->second.lastHeartbeatTime > 5.0f) {
+				if (currentTime - it->second.lastHeartbeatTime > 30.0f) {
 					uint32 deadNetID = it->first;
 					std::cout << "Client (NetID: " << deadNetID << ") timed out." << std::endl;
 
@@ -235,7 +262,8 @@ void NetworkManager::Update(float dt) {
 				for (auto* obj : scene->GetGameObjects()) {
 					if (obj && obj->IsActive()) {
 						NetworkIdentity* netIdComp = obj->GetComponent<NetworkIdentity>();
-						if (netIdComp && netIdComp->GetNetID() > 0) {
+						// 몬스터 제외, 플레이어 객체만 ENTITY_STATE_SYNC로 60Hz 동기화 (NetID < 1000)
+						if (netIdComp && netIdComp->GetNetID() > 0 && netIdComp->GetNetID() < 1000) {
 							int idx = syncPacket.entityCount;
 							if (idx >= 32) break; // 최대 32개 제한
 
@@ -368,24 +396,46 @@ GameObject* NetworkManager::GetNetworkObject(uint32 netID)
 	return nullptr;
 }
 
-void NetworkManager::ProcessIncomingPackets() {
+void NetworkManager::NetworkThreadLoop() {
 	char buffer[2048];
 	sockaddr_in senderAddr;
 	int senderAddrLen = sizeof(senderAddr);
 
-	while (true) {
+	while (m_bNetworkThreadRunning) {
+		if (m_Socket == INVALID_SOCKET) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
+			continue;
+		}
+
 		int bytesReceived = recvfrom(m_Socket, buffer, sizeof(buffer), 0, (sockaddr*)&senderAddr, &senderAddrLen);
-		if (bytesReceived == SOCKET_ERROR) {
-			int errorCode = WSAGetLastError();
-			if (errorCode != WSAEWOULDBLOCK) {
-				std::cerr << "recvfrom failed with error: " << errorCode << std::endl;
-			}
-			break; // 더 이상 읽을 데이터가 없음 (또는 에러)
+		if (bytesReceived <= 0 || bytesReceived == SOCKET_ERROR) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
+			continue;
 		}
 
 		if (bytesReceived >= sizeof(PacketHeader)) {
-			HandlePacket(buffer, bytesReceived, senderAddr);
+			RawPacketData rawPacket;
+			rawPacket.senderAddr = senderAddr;
+			rawPacket.size = bytesReceived;
+			rawPacket.buffer.assign(buffer, buffer + bytesReceived);
+
+			{
+				std::lock_guard<std::mutex> lock(m_queueMutex);
+				m_incomingPacketQueue.push_back(std::move(rawPacket));
+			}
 		}
+	}
+}
+
+void NetworkManager::ProcessIncomingPackets() {
+	std::vector<RawPacketData> localQueue;
+	{
+		std::lock_guard<std::mutex> lock(m_queueMutex);
+		localQueue.swap(m_incomingPacketQueue);
+	}
+
+	for (const auto& rawPkt : localQueue) {
+		HandlePacket(rawPkt.buffer.data(), rawPkt.size, rawPkt.senderAddr);
 	}
 }
 
@@ -544,6 +594,77 @@ void NetworkManager::HandlePacket(const char* buffer, int size, const sockaddr_i
 		}
 		break;
 	}
+	case PacketType::MONSTER_SNAPSHOT:
+	{
+		if (m_Role != NetRole::CLIENT) break;
+		if (size < sizeof(MonsterSnapshotPacket)) break;
+
+		const MonsterSnapshotPacket* snapshot = reinterpret_cast<const MonsterSnapshotPacket*>(buffer);
+		size_t expectedSize = sizeof(MonsterSnapshotPacket);
+		if (snapshot->monsterCount > 1) {
+			expectedSize += (snapshot->monsterCount - 1) * sizeof(MonsterSnapshotData);
+		}
+
+		if (size < static_cast<int>(expectedSize)) break;
+
+		MonsterSpawner* spawner = nullptr;
+		Scene* pScene = SceneManager::GetInstance()->GetActiveScene();
+		if (pScene)
+		{
+			for (auto* obj : pScene->GetGameObjects())
+			{
+				if (obj && obj->IsActive())
+				{
+					spawner = obj->GetComponent<MonsterSpawner>();
+					if (spawner) break;
+				}
+			}
+		}
+
+		for (uint16 i = 0; i < snapshot->monsterCount; ++i) {
+			uint16 monsterNetID = snapshot->monsters[i].monsterNetID;
+			Vector2 targetPos{ snapshot->monsters[i].posX, snapshot->monsters[i].posY };
+
+			if (spawner)
+			{
+				Monster* pMonster = spawner->GetMonsterByNetID(monsterNetID);
+				if (!pMonster)
+				{
+					pMonster = spawner->SpawnMonsterClient(monsterNetID, targetPos);
+				}
+			}
+
+			UpdateInterpolationTarget(monsterNetID, targetPos, 0.066f); // 15Hz duration
+		}
+		break;
+	}
+	case PacketType::MONSTER_KILL:
+	{
+		if (m_Role != NetRole::CLIENT) break;
+		if (size < sizeof(MonsterKillPacket)) break;
+
+		const MonsterKillPacket* killPkt = reinterpret_cast<const MonsterKillPacket*>(buffer);
+		uint16 netID = killPkt->monsterNetID;
+
+		Scene* pScene = SceneManager::GetInstance()->GetActiveScene();
+		if (pScene)
+		{
+			for (auto* obj : pScene->GetGameObjects())
+			{
+				if (obj && obj->IsActive())
+				{
+					auto* spawner = obj->GetComponent<MonsterSpawner>();
+					if (spawner)
+					{
+						spawner->DespawnMonsterByNetID(netID);
+						break;
+					}
+				}
+			}
+		}
+		RemoveInterpolation(netID);
+		break;
+	}
 	case PacketType::GAME_STATE_SYNC:
 	{
 		if (m_Role != NetRole::CLIENT) break;
@@ -559,48 +680,46 @@ void NetworkManager::HandlePacket(const char* buffer, int size, const sockaddr_i
 	}
 }
 
-void NetworkManager::UpdateInterpolationTarget(unsigned int netID, float targetX, float targetY, float targetAngle) {
-	auto& data = m_InterpolationMap[netID];
-
-	float currentX = data.targetX;
-	float currentY = data.targetY;
-	float currentAngle = data.targetAngle;
-
-	if (data.elapsed > 0.0f && data.elapsed < data.duration) {
-		float t = data.elapsed / data.duration;
-		currentX = data.startX + (data.targetX - data.startX) * t;
-		currentY = data.startY + (data.targetY - data.startY) * t;
-		currentAngle = data.startAngle + (data.targetAngle - data.startAngle) * t;
-	}
-	else if (data.elapsed == 0.0f && data.startX == 0.0f && data.startY == 0.0f) {
-		currentX = targetX;
-		currentY = targetY;
-		currentAngle = targetAngle;
-	}
-
-	data.startX = currentX;
-	data.startY = currentY;
-	data.startAngle = currentAngle;
-	data.targetX = targetX;
-	data.targetY = targetY;
-	data.targetAngle = targetAngle;
-	data.elapsed = 0.0f;
-	data.duration = m_SendInterval;
-}
-
-bool NetworkManager::GetInterpolatedPosition(unsigned int netID, float& outX, float& outY, float& outAngle) {
+bool NetworkManager::GetInterpolatedPosition(uint32 netID, Vector2& outPos) {
 	auto it = m_InterpolationMap.find(netID);
 	if (it == m_InterpolationMap.end()) {
 		return false;
 	}
 
 	const auto& data = it->second;
-	float t = data.elapsed / data.duration;
-	if (t > 1.0f) t = 1.0f;
-	if (t < 0.0f) t = 0.0f;
-
-	outX = data.startX + (data.targetX - data.startX) * t;
-	outY = data.startY + (data.targetY - data.startY) * t;
-	outAngle = data.startAngle + (data.targetAngle - data.startAngle) * t;
+	float t = (data.duration > 0.0f) ? std::clamp(data.elapsed / data.duration, 0.0f, 1.0f) : 1.0f;
+	outPos = Vector2::Lerp(data.startPos, data.targetPos, t);
 	return true;
+}
+
+bool NetworkManager::GetInterpolatedPosition(uint32 netID, float& outX, float& outY, float& outAngle) {
+	Vector2 pos;
+	if (!GetInterpolatedPosition(netID, pos)) return false;
+	outX = pos.x;
+	outY = pos.y;
+	outAngle = 0.0f;
+	return true;
+}
+
+void NetworkManager::UpdateInterpolationTarget(uint32 netID, const Vector2& targetPos, float duration) {
+	auto& data = m_InterpolationMap[netID];
+
+	Vector2 currentPos = targetPos;
+	if (data.duration > 0.0f && (data.startPos.x != 0.0f || data.startPos.y != 0.0f || data.targetPos.x != 0.0f || data.targetPos.y != 0.0f)) {
+		float t = std::clamp(data.elapsed / data.duration, 0.0f, 1.0f);
+		currentPos = Vector2::Lerp(data.startPos, data.targetPos, t);
+	}
+
+	data.startPos = currentPos;
+	data.targetPos = targetPos;
+	data.elapsed = 0.0f;
+	data.duration = duration;
+}
+
+void NetworkManager::UpdateInterpolationTarget(uint32 netID, float targetX, float targetY, float targetAngle, float duration) {
+	UpdateInterpolationTarget(netID, Vector2{ targetX, targetY }, duration);
+}
+
+void NetworkManager::RemoveInterpolation(uint32 netID) {
+	m_InterpolationMap.erase(netID);
 }
