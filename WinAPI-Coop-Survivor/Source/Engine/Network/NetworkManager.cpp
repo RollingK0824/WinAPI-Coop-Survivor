@@ -275,18 +275,14 @@ void NetworkManager::Update(float dt) {
 								b2Vec2 vel = b2Body_GetLinearVelocity(pCollider->GetBodyId());
 								float angle = b2Rot_GetAngle(b2Body_GetRotation(pCollider->GetBodyId()));
 
-								syncPacket.entities[idx].posX = MeterToPixel(pos.x);
-								syncPacket.entities[idx].posY = MeterToPixel(pos.y);
-								syncPacket.entities[idx].velX = MeterToPixel(vel.x);
-								syncPacket.entities[idx].velY = MeterToPixel(vel.y);
+								syncPacket.entities[idx].pos = Vector2(MeterToPixel(pos.x), MeterToPixel(pos.y));
+								syncPacket.entities[idx].vel = Vector2(MeterToPixel(vel.x), MeterToPixel(vel.y));
 								syncPacket.entities[idx].angle = angle;
 							}
 							else {
 								TransformComponent* transform = &obj->transform;
-								syncPacket.entities[idx].posX = transform->GetPosition().x;
-								syncPacket.entities[idx].posY = transform->GetPosition().y;
-								syncPacket.entities[idx].velX = 0;
-								syncPacket.entities[idx].velY = 0;
+								syncPacket.entities[idx].pos = transform->GetPosition();
+								syncPacket.entities[idx].vel = Vector2(0.0f, 0.0f);
 								syncPacket.entities[idx].angle = transform->GetRotation().angle;
 							}
 							syncPacket.entityCount++;
@@ -589,7 +585,7 @@ void NetworkManager::HandlePacket(const char* buffer, int size, const sockaddr_i
 			const EntitySyncData& data = syncPacket->entities[i];
 			if (data.netID != m_MyNetID)
 			{
-				UpdateInterpolationTarget(data.netID, data.posX, data.posY, data.angle);
+				UpdateInterpolationTarget(data.netID, data.pos.x, data.pos.y, data.angle);
 			}
 		}
 		break;
@@ -623,7 +619,7 @@ void NetworkManager::HandlePacket(const char* buffer, int size, const sockaddr_i
 
 		for (uint16 i = 0; i < snapshot->monsterCount; ++i) {
 			uint16 monsterNetID = snapshot->monsters[i].monsterNetID;
-			Vector2 targetPos{ snapshot->monsters[i].posX, snapshot->monsters[i].posY };
+			Vector2 targetPos = snapshot->monsters[i].pos;
 
 			if (spawner)
 			{

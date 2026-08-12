@@ -1,4 +1,4 @@
-﻿#include "Engine/Core/pch.h"
+#include "Engine/Core/pch.h"
 #include "LocalController.h"
 #include "Engine/Manager/CameraManager.h"
 #include "Engine/Manager/ActionManager.h"
@@ -52,10 +52,8 @@ void LocalController::Update(float dt) {
                 packet.header.type = PacketType::PLAYER_INPUT;
                 packet.header.size = sizeof(PlayerInputPacket);
                 packet.netID = net->GetMyNetID();
-                packet.posX = MeterToPixel(pos.x);
-                packet.posY = MeterToPixel(pos.y);
-                packet.velX = MeterToPixel(vel.x);
-                packet.velY = MeterToPixel(vel.y);
+                packet.pos = Vector2(MeterToPixel(pos.x), MeterToPixel(pos.y));
+                packet.vel = Vector2(MeterToPixel(vel.x), MeterToPixel(vel.y));
                 packet.angle = angle;
 
                 net->SendPacket(&packet, sizeof(PlayerInputPacket));
