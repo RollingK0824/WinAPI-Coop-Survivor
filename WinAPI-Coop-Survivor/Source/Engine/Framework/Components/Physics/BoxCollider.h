@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Engine/Framework/Components/Physics/ColliderComponent.h"
 
 class BoxCollider : public ColliderComponent

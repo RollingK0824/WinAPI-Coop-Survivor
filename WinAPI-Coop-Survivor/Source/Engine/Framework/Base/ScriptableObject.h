@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Engine/Core/ExposedProperty.h"
 
 class ScriptableObject : public std::enable_shared_from_this<ScriptableObject>

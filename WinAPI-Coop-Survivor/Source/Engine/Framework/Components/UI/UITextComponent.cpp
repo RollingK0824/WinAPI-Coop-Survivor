@@ -1,4 +1,4 @@
-// Source/Engine/Framework/Components/UI/UITextComponent.cpp
+﻿// Source/Engine/Framework/Components/UI/UITextComponent.cpp
 #include "Engine/Core/pch.h"
 #include "UITextComponent.h"
 #include "Engine/Core/ComponentRegister.h"

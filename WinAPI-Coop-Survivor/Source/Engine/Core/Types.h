@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <cmath>
 
 #define SMALL_NUMBER            (1.e-8f)

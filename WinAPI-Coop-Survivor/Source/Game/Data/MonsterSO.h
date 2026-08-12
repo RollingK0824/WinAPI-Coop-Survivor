@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Engine/Framework/Base/ScriptableObject.h"
 
 class MonsterSO : public ScriptableObject

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Engine/Framework/Components/Core/ScriptComponent.h"
 #include "Game/Interface/IDamageable.h"
 #include "Engine/Core/ObserverPtr.h"

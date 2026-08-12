@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Engine/Framework/Base/Component.h"
 #include "Engine/Renderer/RenderCommand.h"
 #include "Engine/Renderer/Sprite.h"

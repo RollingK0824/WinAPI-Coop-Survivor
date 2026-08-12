@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Engine/Core/Singleton.h"	
 #include "Engine/Framework/Base/ISystem.h"
 #include "Engine/Framework/Base/IRenderable.h"

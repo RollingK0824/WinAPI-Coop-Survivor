@@ -1,4 +1,4 @@
-﻿#pragma once
+﻿﻿#pragma once
 #include "Engine/Framework/Base/Component.h"
 #include "Engine/Framework/Base/IUpdatable.h"
 #include "Engine/Core/Define.h"

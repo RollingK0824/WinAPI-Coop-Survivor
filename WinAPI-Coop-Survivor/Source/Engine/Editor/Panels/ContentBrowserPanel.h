@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Engine/Manager/GUISystem.h"
 
 class ContentBrowserPanel : public IGUIPanel

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Engine/Framework/Base/Component.h"
 
 class TransformComponent : public Component

@@ -1,4 +1,4 @@
-﻿#pragma once
+﻿﻿#pragma once
 #include <string>
 #include <vector>
 #include <d2d1.h>

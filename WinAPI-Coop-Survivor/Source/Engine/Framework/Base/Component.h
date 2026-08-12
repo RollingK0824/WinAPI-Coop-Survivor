@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Engine/Core/Define.h"
 #include "Engine/Core/ExposedProperty.h"
 

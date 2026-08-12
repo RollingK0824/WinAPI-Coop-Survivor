@@ -1,10 +1,10 @@
-#pragma once
+ï»¿#pragma once
 
 enum class PacketType : uint8 {
 	NONE = 0,
 	CLIENT_CONN_REQ,  // Client -> Host connection request
 	HOST_WELCOME,     // Host -> Client welcome
-	HEARTBEAT,        // ÇÎ/¿¬°á À¯Áö
+	HEARTBEAT,        // í•‘/ì—°ê²° ìœ ì§€
 	PLAYER_INPUT,     // Client -> Host player input
 	ENTITY_STATE_SYNC,// Host -> Client state sync
 	GAME_STATE_SYNC,  // Room/Game State Sync
@@ -49,7 +49,7 @@ struct EntitySyncData {
 	float angle;
 };
 
-// Heartbeat & Ping °â¿ë Packet
+// Heartbeat & Ping ê²¸ìš© Packet
 struct HeartbeatPacket
 {
 	PacketHeader header;

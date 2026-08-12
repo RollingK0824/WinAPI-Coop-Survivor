@@ -1,4 +1,4 @@
-// Source/Engine/Framework/Components/UI/UITextComponent.h
+﻿// Source/Engine/Framework/Components/UI/UITextComponent.h
 #pragma once
 #include "Engine/Framework/Components/Core/RenderComponent.h"
 
