@@ -1,5 +1,6 @@
 #include "Engine/Core/pch.h"
 #include "DataManager.h"
+#include "FileSystem.h"
 #include "Game/Data/MonsterSO.h"
 #include "Game/Skill/SkillSO.h"
 
@@ -16,27 +17,21 @@ void DataManager::Release()
 
 bool DataManager::LoadAllAssets(const std::string& directoryPath)
 {
-	if (!std::filesystem::exists(directoryPath)) return false;
-
-	for (const auto& entry : std::filesystem::recursive_directory_iterator(directoryPath))
+	const auto files = FileSystem::GetFilesInDirectory(directoryPath, ".asset", true);
+	for (const auto& filePath : files)
 	{
-		if (entry.is_regular_file() && entry.path().extension() == ".asset")
-		{
-			LoadAssetFile(entry.path().string());
-		}
+		LoadAssetFile(filePath);
 	}
 	return true;
 }
 
 bool DataManager::LoadAssetFile(const std::string& filePath)
 {
-	std::ifstream file(filePath);
-	if (!file.is_open()) return false;
+	json j;
+	if (!FileSystem::ReadJson(filePath, j)) return false;
 
 	try
 	{
-		json j;
-		file >> j;
 		std::string typeStr = j.contains("Type") ? j["Type"].get<std::string>() : "MonsterSO";
 
 		std::shared_ptr<ScriptableObject> pSO = nullptr;
@@ -72,32 +67,20 @@ bool DataManager::SaveAssetFile(ScriptableObject* pSO)
 	std::string path = pSO->GetFilePath();
 	if (path.empty())
 	{
-		std::filesystem::create_directories("Resources/Data");
 		path = "Resources/Data/" + pSO->GetAssetName() + ".asset";
 		pSO->SetFilePath(path);
 	}
 
-	std::ofstream file(path);
-	if (!file.is_open()) return false;
-
 	json j = pSO->SaveToJson();
-	if (std::dynamic_pointer_cast<SkillSO>(std::shared_ptr<ScriptableObject>(pSO, [](ScriptableObject*) {})) || dynamic_cast<SkillSO*>(pSO))
-	{
-		j["Type"] = "SkillSO";
-	}
-	else
-	{
-		j["Type"] = "MonsterSO";
-	}
+	j["Type"] = dynamic_cast<SkillSO*>(pSO) ? "SkillSO" : "MonsterSO";
 
-	file << j.dump(4);
-	return true;
+	return FileSystem::WriteJson(path, j);
 }
 
 bool DataManager::LoadMonsterTable(const std::string& filePath)
 {
-	std::ifstream file(filePath);
-	if (!file.is_open())
+	json dataJson;
+	if (!FileSystem::ReadJson(filePath, dataJson))
 	{
 		std::cout << "[DataManager] Failed to open file: " << filePath << std::endl;
 		return false;
@@ -105,9 +88,6 @@ bool DataManager::LoadMonsterTable(const std::string& filePath)
 
 	try
 	{
-		json dataJson;
-		file >> dataJson;
-
 		if (dataJson.contains("Monsters") && dataJson["Monsters"].is_array())
 		{
 			for (const auto& itemJson : dataJson["Monsters"])
@@ -135,13 +115,6 @@ bool DataManager::LoadMonsterTable(const std::string& filePath)
 
 bool DataManager::SaveMonsterTable(const std::string& filePath)
 {
-	std::ofstream file(filePath);
-	if (!file.is_open())
-	{
-		std::cout << "[DataManager] Failed to open file for saving: " << filePath << std::endl;
-		return false;
-	}
-
 	json rootJson;
 	json monstersArray = json::array();
 
@@ -155,7 +128,12 @@ bool DataManager::SaveMonsterTable(const std::string& filePath)
 
 	rootJson["Monsters"] = monstersArray;
 
-	file << rootJson.dump(4);
+	if (!FileSystem::WriteJson(filePath, rootJson))
+	{
+		std::cout << "[DataManager] Failed to open file for saving: " << filePath << std::endl;
+		return false;
+	}
+
 	std::cout << "[DataManager] Successfully saved MonsterTable to: " << filePath << std::endl;
 	return true;
 }
@@ -188,16 +166,14 @@ std::shared_ptr<MonsterSO> DataManager::CreateMonsterSO(const std::string& name,
 		newID++;
 	}
 
-	std::filesystem::path dirPath = folderPath.empty() ? "Resources/Data" : folderPath;
-	std::filesystem::create_directories(dirPath);
+	const std::string dirPath = folderPath.empty() ? "Resources/Data" : folderPath;
+	FileSystem::CreateDirectoryPath(dirPath);
 
 	auto monsterSO = std::make_shared<MonsterSO>();
 	monsterSO->SetAssetID(newID);
 	std::string assetName = name.empty() ? "NewMonster_" + std::to_string(newID) : name;
 	monsterSO->SetAssetName(assetName);
-
-	std::string fullPath = (dirPath / (assetName + ".asset")).string();
-	monsterSO->SetFilePath(fullPath);
+	monsterSO->SetFilePath(dirPath + "/" + assetName + ".asset");
 
 	m_assetTable[newID] = monsterSO;
 	SaveAssetFile(monsterSO.get());
@@ -212,16 +188,14 @@ std::shared_ptr<SkillSO> DataManager::CreateSkillSO(const std::string& name, con
 		newID++;
 	}
 
-	std::filesystem::path dirPath = folderPath.empty() ? "Resources/Data" : folderPath;
-	std::filesystem::create_directories(dirPath);
+	const std::string dirPath = folderPath.empty() ? "Resources/Data" : folderPath;
+	FileSystem::CreateDirectoryPath(dirPath);
 
 	auto skillSO = std::make_shared<SkillSO>();
 	skillSO->SetAssetID(newID);
 	std::string assetName = name.empty() ? "NewSkill_" + std::to_string(newID) : name;
 	skillSO->SetAssetName(assetName);
-
-	std::string fullPath = (dirPath / (assetName + ".asset")).string();
-	skillSO->SetFilePath(fullPath);
+	skillSO->SetFilePath(dirPath + "/" + assetName + ".asset");
 
 	m_assetTable[newID] = skillSO;
 	SaveAssetFile(skillSO.get());
@@ -233,11 +207,7 @@ bool DataManager::RemoveSO(uint32 assetID)
 	auto it = m_assetTable.find(assetID);
 	if (it != m_assetTable.end())
 	{
-		std::string filePath = it->second->GetFilePath();
-		if (!filePath.empty() && std::filesystem::exists(filePath))
-		{
-			std::filesystem::remove(filePath);
-		}
+		FileSystem::RemoveFile(it->second->GetFilePath());
 		m_assetTable.erase(it);
 		return true;
 	}
