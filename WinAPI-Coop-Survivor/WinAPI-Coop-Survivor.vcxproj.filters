@@ -302,6 +302,9 @@
     <ClCompile Include="Source\Engine\Manager\JsonSerializer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Engine\Manager\FileSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Engine\Framework\Components\Render\AnimatorComponent.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

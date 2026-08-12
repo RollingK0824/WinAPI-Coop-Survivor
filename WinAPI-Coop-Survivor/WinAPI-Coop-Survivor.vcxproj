@@ -291,6 +291,7 @@
     <ClCompile Include="Source\Game\Monster\Monster.cpp" />
     <ClCompile Include="Source\Game\Monster\MonsterSpawner.cpp" />
     <ClCompile Include="Source\Engine\Manager\DataManager.cpp" />
+    <ClCompile Include="Source\Engine\Manager\FileSystem.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="imgui.ini" />

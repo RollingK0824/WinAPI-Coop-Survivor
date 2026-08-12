@@ -1,5 +1,6 @@
-﻿#include "Engine/Core/pch.h"
+#include "Engine/Core/pch.h"
 #include "JsonSerializer.h"
+#include "FileSystem.h"
 #include "Engine/Framework/Scene.h"
 #include "Engine/Framework/GameObject.h"
 #include "Engine/Framework/Base/Component.h"
@@ -7,13 +8,7 @@
 
 bool JsonSerializer::SaveScene(Scene* pScene, const std::string& filePath)
 {
-	if (pScene == nullptr)return false;
-
-	std::filesystem::path path(filePath);
-	if (path.has_parent_path())
-	{
-		std::filesystem::create_directories(path.parent_path());
-	}
+	if (pScene == nullptr) return false;
 
 	json sceneJson;
 	sceneJson[EngineKey::Document::SceneName.data()] = pScene->GetSceneName();
@@ -22,22 +17,13 @@ bool JsonSerializer::SaveScene(Scene* pScene, const std::string& filePath)
 	const auto& gameObjects = pScene->GetGameObjects();
 	for (auto* obj : gameObjects)
 	{
-		if (obj == nullptr || obj->IsDead())continue;
-
+		if (obj == nullptr || obj->IsDead()) continue;
 		sceneJson[EngineKey::Document::GameObjects.data()].push_back(SerializeGameObject(obj));
 	}
 
-	std::ofstream file(filePath);
-	if (!file.is_open())
-	{
-		std::cout << "파일을 저장할 수 없습니다. ->" << filePath << std::endl;
-		return false;
-	}
-
-	file << sceneJson.dump(4);
-	file.close();
-	return true;
+	return FileSystem::WriteJson(filePath, sceneJson);
 }
+
 
 bool JsonSerializer::LoadScene(Scene* pScene, json& sceneJson)
 {
@@ -62,18 +48,7 @@ bool JsonSerializer::LoadScene(Scene* pScene, json& sceneJson)
 bool JsonSerializer::SavePrefab(GameObject* pObj, const std::string& filePath)
 {
 	if (pObj == nullptr) return false;
-	// SaveScene과 100% 동일한 경로 및 디렉터리 생성 로직
-	std::filesystem::path finalPath(filePath);
-	if (finalPath.has_parent_path())
-	{
-		std::filesystem::create_directories(finalPath.parent_path());
-	}
-	json prefabJson = SerializeGameObject(pObj);
-	std::ofstream file(finalPath);
-	if (!file.is_open()) return false;
-	file << prefabJson.dump(4);
-	file.close();
-	return true;
+	return FileSystem::WriteJson(filePath, SerializeGameObject(pObj));
 }
 
 GameObject* JsonSerializer::InstantiateFromPrefabData(Scene* pScene, const json& prefabJson)

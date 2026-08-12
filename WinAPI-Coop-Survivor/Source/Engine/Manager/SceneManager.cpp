@@ -1,5 +1,6 @@
-﻿#include "Engine/Core/pch.h"
+#include "Engine/Core/pch.h"
 #include "SceneManager.h"
+#include "FileSystem.h"
 #include "Engine/Core/EngineKernel.h"
 #include "Engine/Manager/JsonSerializer.h"
 #include "Engine/Editor/EditorSystem.h"
@@ -178,11 +179,8 @@ bool SceneManager::LoadSceneFromFile(const std::string& jsonFilePath)
 		SaveActiveScene();
 	}
 
-	std::ifstream file(jsonFilePath);
-	if (!file.is_open()) return false;
 	json sceneJson;
-	file >> sceneJson;
-	file.close();
+	if (!FileSystem::ReadJson(jsonFilePath, sceneJson)) return false;
 
 	std::filesystem::path p(jsonFilePath);
 	std::string sceneName = p.stem().string();

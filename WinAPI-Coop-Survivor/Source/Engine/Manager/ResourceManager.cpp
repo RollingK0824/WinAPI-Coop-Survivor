@@ -1,5 +1,6 @@
-﻿#include "Engine/Core/pch.h"
+#include "Engine/Core/pch.h"
 #include "ResourceManager.h"
+#include "FileSystem.h"
 #include "Engine/Core/Define.h"
 #include "Engine/Renderer/GraphicManager.h"
 
@@ -137,12 +138,8 @@ const Sprite* ResourceManager::GetSprite(const std::wstring& spriteKey) const
 
 bool ResourceManager::LoadResourcesFromJson(const std::string& filePath)
 {
-	std::ifstream file(filePath);
-	if (!file.is_open()) return false;
-
 	json rootJson;
-	file >> rootJson;
-	file.close();
+	if (!FileSystem::ReadJson(filePath, rootJson)) return false;
 
 	if (rootJson.contains(EngineKey::Document::Textures.data()))
 	{
@@ -155,7 +152,6 @@ bool ResourceManager::LoadResourcesFromJson(const std::string& filePath)
 			if (texData.contains("AtlasPath"))
 			{
 				std::string atlasPath = texData["AtlasPath"].get<std::string>();
-
 				this->LoadSpriteAtlas(atlasPath, wKey);
 			}
 			// 일반 텍스처인 경우 단일 이미지 로드
@@ -163,7 +159,6 @@ bool ResourceManager::LoadResourcesFromJson(const std::string& filePath)
 			{
 				std::string strPath = texData["Path"].get<std::string>();
 				std::wstring wPath(strPath.begin(), strPath.end());
-
 				this->LoadTexture(wKey, wPath);
 			}
 		}
@@ -173,12 +168,8 @@ bool ResourceManager::LoadResourcesFromJson(const std::string& filePath)
 
 bool ResourceManager::LoadSpriteAtlas(const std::string& jsonPath, const std::wstring& textureKey)
 {
-	std::ifstream file(jsonPath);
-	if (!file.is_open())return false;
-
 	json atlasJson;
-	file >> atlasJson;
-	file.close();
+	if (!FileSystem::ReadJson(jsonPath, atlasJson)) return false;
 
 	std::string textureName = atlasJson["meta"]["image"].get<std::string>();
 	std::wstring wTextureKey(textureName.begin(), textureName.end());
