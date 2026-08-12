@@ -1,4 +1,4 @@
-﻿#include "Engine/Core/pch.h"
+#include "Engine/Core/pch.h"
 #include "NetworkIdentity.h"
 #include "Engine/Core/ComponentRegister.h"
 #include "Engine/Network/NetworkManager.h"
@@ -13,6 +13,19 @@ NetworkIdentity::~NetworkIdentity()
 	if (m_netID != 0)
 	{
 		NetworkManager::GetInstance()->UnRegisterNetworkObject(m_netID);
+	}
+}
+
+void NetworkIdentity::SetNetID(unsigned int netID)
+{
+	if (m_netID != 0)
+	{
+		NetworkManager::GetInstance()->UnRegisterNetworkObject(m_netID);
+	}
+	m_netID = netID;
+	if (m_netID != 0)
+	{
+		NetworkManager::GetInstance()->RegisterNetworkObject(m_netID, &gameObject);
 	}
 }
 

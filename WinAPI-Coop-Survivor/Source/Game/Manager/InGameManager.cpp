@@ -1,4 +1,4 @@
-﻿#include "Engine/Core/pch.h"
+#include "Engine/Core/pch.h"
 #include "InGameManager.h"
 #include "Engine/Core/ComponentRegister.h"
 #include "Engine/Manager/TimeManager.h"
@@ -9,6 +9,7 @@
 #include "Engine/Framework/GameObject.h"
 #include "Engine/Framework/Components/Core/TransformComponent.h"
 #include "Engine/Framework/Components/Network/NetworkIdentity.h"
+#include "Engine/Framework/Components/Physics/ColliderComponent.h"
 #include "Engine/Manager/DebugManager.h"
 #include "Game/Player/Player.h"
 #include "Game/Monster/MonsterSpawner.h"
@@ -35,7 +36,7 @@ void InGameManager::OnDestroy()
 
 void InGameManager::Start()
 {
-	TimeManager::GetInstance()->SetPaused(true);
+	TimeManager::GetInstance()->SetPaused(false);
 	m_countdownTimer = 3.0f;
 	m_bIsCountDown = false;
 
@@ -55,14 +56,16 @@ void InGameManager::Start()
 
 	if (myNetID != 0)
 	{
-		SpawnPlayer(myNetID, true, { 0.0f, 0.0f });
+		float startX = (static_cast<float>(myNetID) - 1.0f) * 120.0f;
+		SpawnPlayer(myNetID, true, { startX, 0.0f });
 	}
 	else if (net->GetRole() == NetRole::CLIENT)
 	{
 		net->RegisterPacketHandler(PacketType::HOST_WELCOME,
 			[this](const PacketHeader* packet, const sockaddr_in& sender) {
 				auto welcome = reinterpret_cast<const WelcomePacket*>(packet);
-				this->SpawnPlayer(welcome->assignedNetID, true, { 0.0f, 0.0f });
+				float startX = (static_cast<float>(welcome->assignedNetID) - 1.0f) * 120.0f;
+				this->SpawnPlayer(welcome->assignedNetID, true, { startX, 0.0f });
 			});
 	}
 
@@ -70,7 +73,8 @@ void InGameManager::Start()
 	{
 		for (const auto& [clientNetID, clientInfo] : net->GetConnectedClients())
 		{
-			SpawnPlayer(clientNetID, false, { 100.0f, 0.0f });
+			float startX = (static_cast<float>(clientNetID) - 1.0f) * 120.0f;
+			SpawnPlayer(clientNetID, false, { startX, 0.0f });
 		}
 
 		net->RegisterPacketHandler(PacketType::CLIENT_READY_REQ,
@@ -231,7 +235,21 @@ GameObject* InGameManager::SpawnPlayer(uint32 netId, bool isLocal, Vector2 spawn
 		return nullptr;
 	}
 
+	// 스폰 좌표가 0,0 기본값이면 NetID에 따라 가로 120px 간격으로 일렬 스폰
+	if (spawnPos.x == 0.0f && spawnPos.y == 0.0f)
+	{
+		spawnPos.x = (static_cast<float>(netId) - 1.0f) * 120.0f;
+	}
+
 	pPlayerObj->transform.SetPosition(spawnPos);
+
+	// Box2D 물리 강체 좌표도 스폰 위치로 즉시 동기화 (0,0 겹침 방지)
+	ColliderComponent* pCollider = pPlayerObj->GetComponent<ColliderComponent>();
+	if (pCollider && b2Body_IsValid(pCollider->GetBodyId()))
+	{
+		b2Vec2 b2Pos = { PixelToMeter(spawnPos.x), PixelToMeter(spawnPos.y) };
+		b2Body_SetTransform(pCollider->GetBodyId(), b2Pos, b2Rot_identity);
+	}
 
 	NetworkIdentity* netIdentity = pPlayerObj->GetComponent<NetworkIdentity>();
 	if (!netIdentity)

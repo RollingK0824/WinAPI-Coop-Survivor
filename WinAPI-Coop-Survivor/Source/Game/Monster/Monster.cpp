@@ -1,4 +1,4 @@
-﻿#include "Engine/Core/pch.h"
+#include "Engine/Core/pch.h"
 #include "Game/Monster/Monster.h"
 #include "Engine/Core/Util.h"
 #include "Engine/Framework/GameObject.h"
@@ -10,6 +10,8 @@
 #include "Game/Data/MonsterSO.h"
 #include "Game/Player/Player.h"
 #include "Game/Monster/MonsterSpawner.h"
+#include "Engine/Network/NetworkManager.h"
+#include "Engine/Framework/Components/Render/SpriteRendererComponent.h"
 
 static ComponentRegistrar<Monster> registrar(EngineKey::CustomComponent::Monster.data());
 
@@ -28,15 +30,6 @@ Monster::Monster(GameObject* owner, TransformComponent* transform)
 void Monster::Start()
 {
 	m_pCollider = gameObject.GetComponent<CircleCollider>();
-
-	if (m_monsterAssetID != 0)
-	{
-		auto pSO = DataManager::GetInstance()->GetAsset<MonsterSO>(m_monsterAssetID);
-		if (pSO)
-		{
-			Init(0, const_cast<MonsterSO*>(pSO.get()), transform.GetPosition());
-		}
-	}
 }
 
 void Monster::OnEnable()
@@ -117,6 +110,36 @@ void Monster::FixedUpdate(float fixedDt)
 {
 	if (m_state == EMonsterState::Dead || !gameObject.IsActive())
 		return;
+
+	NetRole role = NetworkManager::GetInstance()->GetRole();
+	if (role == NetRole::CLIENT)
+	{
+		Vector2 lerpPos;
+		if (NetworkManager::GetInstance()->GetInterpolatedPosition(m_netID, lerpPos))
+		{
+			Vector2 currentPos = transform.GetPosition();
+			Vector2 moveDir = lerpPos - currentPos;
+
+			transform.SetPosition(lerpPos);
+
+			if (m_pCollider.IsValid() && b2Body_IsValid(m_pCollider->GetBodyId()))
+			{
+				b2Vec2 b2Pos = { PixelToMeter(lerpPos.x), PixelToMeter(lerpPos.y) };
+				b2Body_SetTransform(m_pCollider->GetBodyId(), b2Pos, b2Rot_identity);
+				b2Body_SetLinearVelocity(m_pCollider->GetBodyId(), { 0.0f, 0.0f });
+			}
+
+			if (std::abs(moveDir.x) > 0.01f)
+			{
+				auto pSprite = gameObject.GetComponent<SpriteRendererComponent>();
+				if (pSprite)
+				{
+					pSprite->SetFlip(moveDir.x < 0.0f, false);
+				}
+			}
+		}
+		return;
+	}
 
 	UpdateTargetSearch(fixedDt);
 	UpdateAI(fixedDt);
@@ -262,6 +285,18 @@ void Monster::OnAttack()
 
 void Monster::OnDie()
 {
+	if (NetworkManager::GetInstance()->GetRole() == NetRole::HOST)
+	{
+		MonsterKillPacket killPacket{};
+		killPacket.header.type = PacketType::MONSTER_KILL;
+		killPacket.header.size = sizeof(MonsterKillPacket);
+		killPacket.monsterNetID = m_netID;
+		killPacket.dropItemPosX = transform.GetPosition().x;
+		killPacket.dropItemPosY = transform.GetPosition().y;
+
+		NetworkManager::GetInstance()->SendReliablePacket(&killPacket, sizeof(MonsterKillPacket));
+	}
+
 	if (m_pCollider.IsValid() && b2Body_IsValid(m_pCollider->GetBodyId()))
 	{
 		b2Body_SetLinearVelocity(m_pCollider->GetBodyId(), { 0.0f, 0.0f });

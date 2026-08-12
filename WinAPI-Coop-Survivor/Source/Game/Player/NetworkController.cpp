@@ -1,4 +1,4 @@
-﻿#include "Engine/Core/pch.h"
+#include "Engine/Core/pch.h"
 #include "NetworkController.h"
 #include "Engine/Network/NetworkManager.h"
 #include "Engine/Framework/GameObject.h"
@@ -16,18 +16,13 @@ void NetworkController::Start()
 }
 
 void NetworkController::Update(float dt) {
-    float x = 0.0f;
-    float y = 0.0f;
-    float angle = 0.0f;
-
-    if (NetworkManager::GetInstance()->GetInterpolatedPosition(m_NetID, x, y, angle)) {
+    Vector2 interpolatedPos;
+    if (NetworkManager::GetInstance()->GetInterpolatedPosition(m_NetID, interpolatedPos)) {
+        transform.SetPosition(interpolatedPos);
         if (m_pCollider.IsValid() && b2Body_IsValid(m_pCollider->GetBodyId())) {
-            b2Vec2 b2Pos = { PixelToMeter(x), PixelToMeter(y) };
-            b2Body_SetTransform(m_pCollider->GetBodyId(), b2Pos, b2MakeRot(angle));
+            b2Vec2 b2Pos = { PixelToMeter(interpolatedPos.x), PixelToMeter(interpolatedPos.y) };
+            b2Body_SetTransform(m_pCollider->GetBodyId(), b2Pos, b2Rot_identity);
             b2Body_SetLinearVelocity(m_pCollider->GetBodyId(), { 0.0f, 0.0f });
-        } else {
-            transform.SetPosition({ x, y });
-            transform.SetRotation(angle);
         }
     }
 }

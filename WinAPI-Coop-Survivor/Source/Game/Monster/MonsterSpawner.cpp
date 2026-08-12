@@ -1,15 +1,19 @@
-﻿#include "Engine/Core/pch.h"
+#include "Engine/Core/pch.h"
 #include "Game/Monster/MonsterSpawner.h"
 #include "Engine/Core/ObjectPool.h"
+#include "Engine/Core/ComponentRegister.h"
+#include "Engine/Manager/TimeManager.h"
+#include "Engine/Manager/DataManager.h"
+#include "Engine/Manager/RandomManager.h"
+#include "Engine/Manager/PrefabManager.h"
+#include "Engine/Network/NetworkManager.h"
+#include "Engine/Network/NetPacket.h"
 #include "Engine/Framework/GameObject.h"
 #include "Engine/Framework/Scene.h"
 #include "Engine/Framework/Components/Core/TransformComponent.h"
 #include "Engine/Framework/Components/Physics/CircleCollider.h"
 #include "Engine/Framework/Components/Render/SpriteRendererComponent.h"
-#include "Engine/Core/ComponentRegister.h"
-#include "Engine/Manager/DataManager.h"
-#include "Engine/Manager/RandomManager.h"
-#include "Engine/Manager/PrefabManager.h"
+#include "Engine/Framework/Components/Network/NetworkIdentity.h"
 #include "Game/Monster/Monster.h"
 #include "Game/Data/MonsterSO.h"
 #include "Game/Player/Player.h"
@@ -68,6 +72,91 @@ void MonsterSpawner::InitPool(size_t defaultCapacity, size_t maxSize)
 
 void MonsterSpawner::FixedUpdate(float fixedDt)
 {
+	NetRole role = NetworkManager::GetInstance()->GetRole();
+
+	// Client는 Host 스냅샷 전용이므로 독자적인 웨이브 스폰을 실행하지 않음!
+	if (role == NetRole::CLIENT) return;
+
+	// Host 전용: 15Hz (66ms) 주기로 Client별 공간 컬링 스냅샷 패킷 발송
+	if (role == NetRole::HOST)
+	{
+		m_snapshotTimer += fixedDt;
+		if (m_snapshotTimer >= m_snapshotInterval)
+		{
+			m_snapshotTimer = 0.0f;
+
+			const auto& connectedClients = NetworkManager::GetInstance()->GetConnectedClients();
+			Scene* pScene = gameObject.GetOwnerScene();
+
+			for (const auto& [clientNetID, clientInfo] : connectedClients)
+			{
+				Vector2 clientPos = { 0.0f, 0.0f };
+				GameObject* clientPlayerObj = NetworkManager::GetInstance()->GetNetworkObject(clientNetID);
+				if (clientPlayerObj && clientPlayerObj->IsActive())
+				{
+					clientPos = clientPlayerObj->transform.GetPosition();
+				}
+				else if (pScene)
+				{
+					for (auto* obj : pScene->GetGameObjects())
+					{
+						if (obj && obj->IsActive())
+						{
+							auto* netComp = obj->GetComponent<NetworkIdentity>();
+							if (netComp && netComp->GetNetID() == clientNetID)
+							{
+								clientPos = obj->transform.GetPosition();
+								break;
+							}
+						}
+					}
+				}
+
+				std::vector<MonsterSnapshotData> culledMonsters;
+				culledMonsters.reserve(m_activeMonsterMap.size());
+
+				for (auto& [netID, pMonster] : m_activeMonsterMap)
+				{
+					if (!pMonster || pMonster->IsDead() || !pMonster->gameObject.IsActive()) continue;
+
+					Vector2 monsterPos = pMonster->transform.GetPosition();
+					float distSq = Vector2::DistanceSquared(monsterPos, clientPos);
+
+					// 화면 외곽(1920x1080 반경) 950px Culling
+					if (distSq <= 950.0f * 950.0f)
+					{
+						culledMonsters.push_back({ netID, monsterPos.x, monsterPos.y });
+					}
+				}
+
+				if (culledMonsters.empty()) continue;
+
+				// UDP MTU (1472B) 제한 준수를 위해 100마리 단위 청크 분할 발송
+				const size_t MAX_PER_PACKET = 100;
+				size_t totalMonsters = culledMonsters.size();
+				size_t offset = 0;
+
+				while (offset < totalMonsters)
+				{
+					size_t chunkSize = (std::min)(MAX_PER_PACKET, totalMonsters - offset);
+					size_t packetSize = sizeof(MonsterSnapshotPacket) + (chunkSize - 1) * sizeof(MonsterSnapshotData);
+					std::vector<char> buffer(packetSize);
+
+					auto* packet = reinterpret_cast<MonsterSnapshotPacket*>(buffer.data());
+					packet->header.type = PacketType::MONSTER_SNAPSHOT;
+					packet->header.size = static_cast<uint16>(packetSize);
+					packet->timestamp = static_cast<uint32>(TimeManager::GetInstance()->GetGameTime() * 1000.0f);
+					packet->monsterCount = static_cast<uint16>(chunkSize);
+
+					std::memcpy(packet->monsters, &culledMonsters[offset], chunkSize * sizeof(MonsterSnapshotData));
+
+					NetworkManager::GetInstance()->SendPacket(packet, static_cast<int>(packetSize), &clientInfo.address);
+					offset += chunkSize;
+				}
+			}
+		}
+	}
+
 	if (!m_isSpawningEnabled) return;
 
 	m_spawnTimer += fixedDt;
@@ -81,7 +170,6 @@ void MonsterSpawner::FixedUpdate(float fixedDt)
 		for (int i = 0; i < m_spawnCountPerWave; ++i)
 		{
 			Vector2 spawnPos = CalculateDeterministicSpawnPos();
-			spawnPos = { 0.0f,500.0f};
 			SpawnMonster(m_pDefaultMonsterSO.Get(), spawnPos);
 		}
 	}
@@ -130,8 +218,33 @@ Monster* MonsterSpawner::SpawnMonster(MonsterSO* monsterData, const Vector2& spa
 	if (!pMonsterComp) return nullptr;
 
 	uint32 seqId = m_nextSpawnSeqID++;
+	uint16 netID = m_nextMonsterNetID++;
+	if (m_nextMonsterNetID >= 60000)
+	{
+		m_nextMonsterNetID = 2000;
+	}
+	pMonsterComp->SetNetID(netID);
 	pMonsterComp->Init(seqId, monsterData, spawnPos, this);
 
+	m_activeMonsterMap[netID] = pMonsterComp;
+	m_activeMonsterCount++;
+	return pMonsterComp;
+}
+
+Monster* MonsterSpawner::SpawnMonsterClient(uint16 netID, const Vector2& spawnPos)
+{
+	GameObject* pMonsterObj = PoolManager::GetInstance()->Spawn<GameObject>(m_prefabKey);
+	if (!pMonsterObj) return nullptr;
+
+	pMonsterObj->SetActive(true);
+
+	Monster* pMonsterComp = pMonsterObj->GetComponent<Monster>();
+	if (!pMonsterComp) return nullptr;
+
+	pMonsterComp->SetNetID(netID);
+	pMonsterComp->Init(0, m_pDefaultMonsterSO.Get(), spawnPos, this);
+
+	m_activeMonsterMap[netID] = pMonsterComp;
 	m_activeMonsterCount++;
 	return pMonsterComp;
 }
@@ -140,10 +253,37 @@ void MonsterSpawner::DespawnMonster(GameObject* pMonsterObj)
 {
 	if (!pMonsterObj) return;
 
+	Monster* pMonsterComp = pMonsterObj->GetComponent<Monster>();
+	if (pMonsterComp)
+	{
+		uint16 netID = pMonsterComp->GetNetID();
+		m_activeMonsterMap.erase(netID);
+		NetworkManager::GetInstance()->RemoveInterpolation(netID);
+	}
+
 	pMonsterObj->SetActive(false);
 	PoolManager::GetInstance()->Despawn<GameObject>(m_prefabKey, pMonsterObj);
 	if (m_activeMonsterCount > 0)
 	{
 		m_activeMonsterCount--;
+	}
+}
+
+Monster* MonsterSpawner::GetMonsterByNetID(uint16 netID)
+{
+	auto it = m_activeMonsterMap.find(netID);
+	if (it != m_activeMonsterMap.end())
+	{
+		return it->second;
+	}
+	return nullptr;
+}
+
+void MonsterSpawner::DespawnMonsterByNetID(uint16 netID)
+{
+	Monster* pMonster = GetMonsterByNetID(netID);
+	if (pMonster)
+	{
+		DespawnMonster(&pMonster->gameObject);
 	}
 }

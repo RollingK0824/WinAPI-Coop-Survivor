@@ -19,6 +19,12 @@ struct NetClientInfo {
     unsigned int assignedNetID = 0;
 };
 
+struct RawPacketData {
+    sockaddr_in senderAddr{};
+    int size = 0;
+    std::vector<char> buffer;
+};
+
 struct InterpolationData {
     Vector2 startPos{ 0.0f,0.0f };
     Vector2 targetPos{ 0.0f,0.0f };
@@ -70,11 +76,17 @@ private:
 
     void ProcessIncomingPackets();
     void HandlePacket(const char* buffer, int size, const sockaddr_in& senderAddr);
+    void NetworkThreadLoop();
 
 private:
     NetRole m_Role = NetRole::NONE;
     SOCKET m_Socket = INVALID_SOCKET;
     sockaddr_in m_HostAddr{};
+
+    std::thread m_networkThread;
+    std::mutex m_queueMutex;
+    std::atomic<bool> m_bNetworkThreadRunning = false;
+    std::vector<RawPacketData> m_incomingPacketQueue;
 
     std::unordered_map<uint32, GameObject*> m_networkObjects;
     std::unordered_map<uint32, NetClientInfo> m_ConnectedClients; 
