@@ -1,4 +1,4 @@
-﻿﻿#include "Engine/Core/pch.h"
+﻿#include "Engine/Core/pch.h"
 #include "NetworkManager.h"
 #include "Engine/Manager/TimeManager.h"
 #include "Engine/Manager/SceneManager.h"
@@ -544,6 +544,26 @@ void NetworkManager::HandlePacket(const char* buffer, int size, const sockaddr_i
 		}
 		break;
 	}
+	case PacketType::MONSTER_SNAPSHOT:
+	{
+		if (m_Role != NetRole::CLIENT) break;
+		if (size < sizeof(MonsterSnapshotPacket)) break;
+
+		const MonsterSnapshotPacket* snapshot = reinterpret_cast<const MonsterSnapshotPacket*>(buffer);
+		size_t expectedSize = sizeof(MonsterSnapshotPacket);
+		if (snapshot->monsterCount > 1) {
+			expectedSize += (snapshot->monsterCount - 1) * sizeof(MonsterSnapshotData);
+		}
+
+		if (size < static_cast<int>(expectedSize)) break;
+
+		for (uint16 i = 0; i < snapshot->monsterCount; ++i) {
+			uint32 monsterNetID = snapshot->monsters[i].monsterNetID;
+			Vector2 targetPos{ snapshot->monsters[i].posX, snapshot->monsters[i].posY };
+			UpdateInterpolationTarget(monsterNetID, targetPos, 0.066f); // 15Hz duration
+		}
+		break;
+	}
 	case PacketType::GAME_STATE_SYNC:
 	{
 		if (m_Role != NetRole::CLIENT) break;
@@ -559,48 +579,46 @@ void NetworkManager::HandlePacket(const char* buffer, int size, const sockaddr_i
 	}
 }
 
-void NetworkManager::UpdateInterpolationTarget(unsigned int netID, float targetX, float targetY, float targetAngle) {
-	auto& data = m_InterpolationMap[netID];
-
-	float currentX = data.targetX;
-	float currentY = data.targetY;
-	float currentAngle = data.targetAngle;
-
-	if (data.elapsed > 0.0f && data.elapsed < data.duration) {
-		float t = data.elapsed / data.duration;
-		currentX = data.startX + (data.targetX - data.startX) * t;
-		currentY = data.startY + (data.targetY - data.startY) * t;
-		currentAngle = data.startAngle + (data.targetAngle - data.startAngle) * t;
-	}
-	else if (data.elapsed == 0.0f && data.startX == 0.0f && data.startY == 0.0f) {
-		currentX = targetX;
-		currentY = targetY;
-		currentAngle = targetAngle;
-	}
-
-	data.startX = currentX;
-	data.startY = currentY;
-	data.startAngle = currentAngle;
-	data.targetX = targetX;
-	data.targetY = targetY;
-	data.targetAngle = targetAngle;
-	data.elapsed = 0.0f;
-	data.duration = m_SendInterval;
-}
-
-bool NetworkManager::GetInterpolatedPosition(unsigned int netID, float& outX, float& outY, float& outAngle) {
+bool NetworkManager::GetInterpolatedPosition(uint32 netID, Vector2& outPos) {
 	auto it = m_InterpolationMap.find(netID);
 	if (it == m_InterpolationMap.end()) {
 		return false;
 	}
 
 	const auto& data = it->second;
-	float t = data.elapsed / data.duration;
-	if (t > 1.0f) t = 1.0f;
-	if (t < 0.0f) t = 0.0f;
-
-	outX = data.startX + (data.targetX - data.startX) * t;
-	outY = data.startY + (data.targetY - data.startY) * t;
-	outAngle = data.startAngle + (data.targetAngle - data.startAngle) * t;
+	float t = (data.duration > 0.0f) ? std::clamp(data.elapsed / data.duration, 0.0f, 1.0f) : 1.0f;
+	outPos = Vector2::Lerp(data.startPos, data.targetPos, t);
 	return true;
+}
+
+bool NetworkManager::GetInterpolatedPosition(uint32 netID, float& outX, float& outY, float& outAngle) {
+	Vector2 pos;
+	if (!GetInterpolatedPosition(netID, pos)) return false;
+	outX = pos.x;
+	outY = pos.y;
+	outAngle = 0.0f;
+	return true;
+}
+
+void NetworkManager::UpdateInterpolationTarget(uint32 netID, const Vector2& targetPos, float duration) {
+	auto& data = m_InterpolationMap[netID];
+
+	Vector2 currentPos = targetPos;
+	if (data.elapsed > 0.0f && data.duration > 0.0f) {
+		float t = std::clamp(data.elapsed / data.duration, 0.0f, 1.0f);
+		currentPos = Vector2::Lerp(data.startPos, data.targetPos, t);
+	}
+
+	data.startPos = currentPos;
+	data.targetPos = targetPos;
+	data.elapsed = 0.0f;
+	data.duration = duration;
+}
+
+void NetworkManager::UpdateInterpolationTarget(uint32 netID, float targetX, float targetY, float targetAngle, float duration) {
+	UpdateInterpolationTarget(netID, Vector2{ targetX, targetY }, duration);
+}
+
+void NetworkManager::RemoveInterpolation(uint32 netID) {
+	m_InterpolationMap.erase(netID);
 }

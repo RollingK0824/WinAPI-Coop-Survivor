@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <cmath>
 
 #define SMALL_NUMBER            (1.e-8f)
@@ -99,6 +99,16 @@ struct Vector2
 	static float Distance(const Vector2& a, const Vector2& b)
 	{
 		return (a - b).Length();
+	}
+
+	static float DistanceSquared(const Vector2& a, const Vector2& b)
+	{
+		return (a - b).LengthSquared();
+	}
+
+	static Vector2 Lerp(const Vector2& a, const Vector2& b, float t)
+	{
+		return Vector2(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t);
 	}
 
 	Vector2 Rotate(float radian) const

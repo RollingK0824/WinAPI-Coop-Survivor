@@ -10,25 +10,24 @@ enum class PacketType : uint8 {
 	GAME_STATE_SYNC,  // Room/Game State Sync
 	CLIENT_DISCONN,    // Disconnect
 	CLIENT_READY_REQ,
-	GAME_START_SIGNAL
+	GAME_START_SIGNAL,
+	MONSTER_SNAPSHOT,
+	MONSTER_KILL
 };
 
 #pragma pack(push, 1)
-
 struct PacketHeader {
 	PacketType type;
 	uint16 size;
 	uint32 sequenceNumber;
 };
 
-// WelcomePacket
 struct WelcomePacket {
 	PacketHeader header;
-	uint32 assignedNetID; // assigned client NetID
+	uint32 assignedNetID;
 	uint32 randomSeed;
 };
 
-// PlayerInputPacket
 struct PlayerInputPacket {
 	PacketHeader header;
 	uint8 netID;
@@ -39,7 +38,6 @@ struct PlayerInputPacket {
 	float angle;
 };
 
-// EntitySyncData
 struct EntitySyncData {
 	uint8 netID;
 	float posX;
@@ -49,14 +47,12 @@ struct EntitySyncData {
 	float angle;
 };
 
-// Heartbeat & Ping 겸용 Packet
 struct HeartbeatPacket
 {
 	PacketHeader header;
 	uint8 clientTime;
 };
 
-// EntityStateSyncPacket
 struct EntityStateSyncPacket {
 	PacketHeader header;
 	int32 entityCount;
@@ -73,7 +69,6 @@ struct GameStateSyncPacket
 	float gameElapsedTime;
 };
 
-// ClientDisconnPacket
 struct ClientDisconnPacket
 {
 	PacketHeader header;
@@ -92,5 +87,28 @@ struct GameStartSignalPacket
 	PacketHeader header;
 	uint32 randomSeed;
 	float countdown;
+};
+
+struct MonsterSnapshotData
+{
+	uint16 monsterNetID;
+	float posX;
+	float posY;
+};
+
+struct MonsterSnapshotPacket
+{
+	PacketHeader header;
+	uint32 timestamp;
+	uint16 monsterCount;
+	MonsterSnapshotData monsters[1];
+};
+
+struct MonsterKillPacket
+{
+	PacketHeader header;
+	uint16 monsterNetID;
+	float dropItemPosX;
+	float dropItemPosY;
 };
 #pragma pack(pop)
