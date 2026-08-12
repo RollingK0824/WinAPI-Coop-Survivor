@@ -1,4 +1,4 @@
-﻿#include "Engine/Core/pch.h"
+#include "Engine/Core/pch.h"
 #include "GUISystem.h"
 #include "Engine/Core/GameApp.h"
 #include "Engine/Renderer/GraphicManager.h"
@@ -88,7 +88,7 @@ void GUISystem::RegisterPanel(IGUIPanel* pPanel)
 
 void GUISystem::UnRegisterPanel(IGUIPanel* pPanel)
 {
-    if (pPanel == nullptr) return;
+    if (pPanel == nullptr || !m_bInitialized) return;
 
     m_vPanels.erase(std::remove(m_vPanels.begin(), m_vPanels.end(), pPanel), m_vPanels.end());
 }
