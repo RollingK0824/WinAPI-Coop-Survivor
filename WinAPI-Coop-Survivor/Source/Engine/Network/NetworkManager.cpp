@@ -54,7 +54,6 @@ void NetworkManager::Release() {
 	m_bConnected = false;
 	m_networkObjects.clear();
 	m_ConnectedClients.clear();
-	m_InterpolationMap.clear();
 	
 	{
 		std::lock_guard<std::mutex> lock(m_queueMutex);
@@ -93,7 +92,6 @@ bool NetworkManager::StartHost(int port) {
 	m_bConnected = true;
 	uint32 newSeed = RandomManager::GetInstance()->GenerateNewSeed();
 	m_ConnectedClients.clear();
-	m_InterpolationMap.clear();
 	m_NextNetID = 2;
 
 	Scene* scene = SceneManager::GetInstance()->GetActiveScene();
@@ -155,7 +153,6 @@ bool NetworkManager::ConnectToHost(const std::string& ip, int port) {
 	m_Role = NetRole::CLIENT;
 	m_bConnected = false;
 	m_connRetryTimer = 0.0f;
-	m_InterpolationMap.clear();
 
 	// Host에 접속 요청 발송
 	PacketHeader connPacket;
@@ -180,6 +177,7 @@ void NetworkManager::Update(float dt) {
 	// 1. 패킷 수신 및 처리
 	ProcessIncomingPackets();
 
+	// 2. 연결 재시도 (미연결 클라이언트)
 	if (m_Role == NetRole::CLIENT && !m_bConnected)
 	{
 		m_connRetryTimer += dt;
@@ -196,103 +194,105 @@ void NetworkManager::Update(float dt) {
 		}
 	}
 
-	// 2. 보간 경과 시간 업데이트
-	for (auto& pair : m_InterpolationMap) {
-		pair.second.elapsed += dt;
+	// 3. Fixed Tick Loop (60Hz 고정 주기 패킷 전송)
+	m_tickAccumulator += dt;
+	while (m_tickAccumulator >= FIXED_DT) {
+		m_tickAccumulator -= FIXED_DT;
+		m_currentTick++;
+		TickUpdate();
 	}
+}
 
-	// 3. 60Hz 주기로 패킷 전송 (Heartbeat 포함)
-	m_SendTimer += dt;
-	if (m_SendTimer >= m_SendInterval) {
-		m_SendTimer = 0.0f;
+void NetworkManager::TickUpdate() {
+	if (m_Role == NetRole::CLIENT && m_bConnected) {
+		// Heartbeat 전송
+		QueryPerformanceCounter(&m_LastHeartbeatSentTick);
 
-		if (m_Role == NetRole::CLIENT && m_bConnected) {
-			// Heartbeat 전송
-			QueryPerformanceCounter(&m_LastHeartbeatSentTick);
+		PacketHeader hb;
+		hb.type = PacketType::HEARTBEAT;
+		hb.size = sizeof(PacketHeader);
+		hb.tick = m_currentTick;
+		SendPacket(&hb, sizeof(PacketHeader));
+	}
+	else if (m_Role == NetRole::HOST) {
+		// 클라이언트 타임아웃 검사 (30초 무반응 시 제거)
+		float currentTime = TimeManager::GetInstance()->GetRealTime();
+		for (auto it = m_ConnectedClients.begin(); it != m_ConnectedClients.end();) {
+			if (currentTime - it->second.lastHeartbeatTime > 30.0f) {
+				uint32 deadNetID = it->first;
+				std::cout << "Client (NetID: " << deadNetID << ") timed out." << std::endl;
 
-			PacketHeader hb;
-			hb.type = PacketType::HEARTBEAT;
-			hb.size = sizeof(PacketHeader);
-			SendPacket(&hb, sizeof(PacketHeader));
+				ClientDisconnPacket disconnPkt{};
+				disconnPkt.header.type = PacketType::CLIENT_DISCONN;
+				disconnPkt.header.size = sizeof(ClientDisconnPacket);
+				disconnPkt.header.tick = m_currentTick;
+				disconnPkt.disconnectedNetID = deadNetID;
+				SendPacket(&disconnPkt, sizeof(ClientDisconnPacket));
+
+				it = m_ConnectedClients.erase(it);
+			}
+			else {
+				++it;
+			}
 		}
-		else if (m_Role == NetRole::HOST) {
-			// 접속이 오래 끊긴 클라이언트 타임아웃 검사 (비활성화 창 대기 감안 30초 간 무반응 시 제거)
-			float currentTime = TimeManager::GetInstance()->GetRealTime();
-			for (auto it = m_ConnectedClients.begin(); it != m_ConnectedClients.end();) {
-				if (currentTime - it->second.lastHeartbeatTime > 30.0f) {
-					uint32 deadNetID = it->first;
-					std::cout << "Client (NetID: " << deadNetID << ") timed out." << std::endl;
 
-					// 다른 클라이언트들에게 이탈 브로드캐스트
-					ClientDisconnPacket disconnPkt{};
-					disconnPkt.header.type = PacketType::CLIENT_DISCONN;
-					disconnPkt.header.size = sizeof(ClientDisconnPacket);
-					disconnPkt.disconnectedNetID = deadNetID;
-					SendPacket(&disconnPkt, sizeof(ClientDisconnPacket));
+		// 0.5초 주기로 GameStateSync 브로드캐스트
+		m_stateBroadcastTimer += FIXED_DT;
+		if (m_stateBroadcastTimer >= 0.5f) {
+			m_stateBroadcastTimer = 0.0f;
 
-					it = m_ConnectedClients.erase(it);
-				}
-				else {
-					++it;
-				}
-			}
+			GameStateSyncPacket statePacket;
+			statePacket.header.type = PacketType::GAME_STATE_SYNC;
+			statePacket.header.size = sizeof(GameStateSyncPacket);
+			statePacket.header.tick = m_currentTick;
+			statePacket.currentGameState = GameState::PLAYING;
+			statePacket.randomSeed = RandomManager::GetInstance()->GetSharedSeed();
+			statePacket.gameElapsedTime = TimeManager::GetInstance()->GetGameTime();
+			SendPacket(&statePacket, sizeof(GameStateSyncPacket));
+		}
 
-			m_stateBroadcastTimer += dt;
-			if (m_stateBroadcastTimer >= 0.5f) {
-				m_stateBroadcastTimer = 0.0f;
+		// 60Hz 주기로 플레이어 EntityStateSync 브로드캐스트
+		Scene* scene = SceneManager::GetInstance()->GetActiveScene();
+		if (scene) {
+			EntityStateSyncPacket syncPacket;
+			syncPacket.header.type = PacketType::ENTITY_STATE_SYNC;
+			syncPacket.header.size = sizeof(EntityStateSyncPacket);
+			syncPacket.header.tick = m_currentTick;
+			syncPacket.entityCount = 0;
 
-				GameStateSyncPacket statePacket;
-				statePacket.header.type = PacketType::GAME_STATE_SYNC;
-				statePacket.header.size = sizeof(GameStateSyncPacket);
-				statePacket.currentGameState = GameState::PLAYING; // 현재 게임 상태
-				statePacket.randomSeed = RandomManager::GetInstance()->GetSharedSeed();                    // 공유할 Seed
-				statePacket.gameElapsedTime = TimeManager::GetInstance()->GetGameTime();
-				// 연결된 모든 클라이언트에게 전송
-				SendPacket(&statePacket, sizeof(GameStateSyncPacket));
-			}
+			for (auto* obj : scene->GetGameObjects()) {
+				if (obj && obj->IsActive()) {
+					NetworkIdentity* netIdComp = obj->GetComponent<NetworkIdentity>();
+					// 몬스터 제외, 플레이어 객체만 ENTITY_STATE_SYNC로 동기화 (NetID < 1000)
+					if (netIdComp && netIdComp->GetNetID() > 0 && netIdComp->GetNetID() < 1000) {
+						int idx = syncPacket.entityCount;
+						if (idx >= 32) break;
 
-			// 60Hz 주기로 모든 클라이언트에게 상태 패킷 브로드캐스트
-			Scene* scene = SceneManager::GetInstance()->GetActiveScene();
-			if (scene) {
-				EntityStateSyncPacket syncPacket;
-				syncPacket.header.type = PacketType::ENTITY_STATE_SYNC;
-				syncPacket.header.size = sizeof(EntityStateSyncPacket);
-				syncPacket.entityCount = 0;
+						syncPacket.entities[idx].netID = netIdComp->GetNetID();
 
-				for (auto* obj : scene->GetGameObjects()) {
-					if (obj && obj->IsActive()) {
-						NetworkIdentity* netIdComp = obj->GetComponent<NetworkIdentity>();
-						// 몬스터 제외, 플레이어 객체만 ENTITY_STATE_SYNC로 60Hz 동기화 (NetID < 1000)
-						if (netIdComp && netIdComp->GetNetID() > 0 && netIdComp->GetNetID() < 1000) {
-							int idx = syncPacket.entityCount;
-							if (idx >= 32) break; // 최대 32개 제한
+						ColliderComponent* pCollider = obj->GetComponent<ColliderComponent>();
+						if (pCollider && b2Body_IsValid(pCollider->GetBodyId())) {
+							b2Vec2 pos = b2Body_GetPosition(pCollider->GetBodyId());
+							b2Vec2 vel = b2Body_GetLinearVelocity(pCollider->GetBodyId());
+							float angle = b2Rot_GetAngle(b2Body_GetRotation(pCollider->GetBodyId()));
 
-							syncPacket.entities[idx].netID = netIdComp->GetNetID();
-
-							ColliderComponent* pCollider = obj->GetComponent<ColliderComponent>();
-							if (pCollider && b2Body_IsValid(pCollider->GetBodyId())) {
-								b2Vec2 pos = b2Body_GetPosition(pCollider->GetBodyId());
-								b2Vec2 vel = b2Body_GetLinearVelocity(pCollider->GetBodyId());
-								float angle = b2Rot_GetAngle(b2Body_GetRotation(pCollider->GetBodyId()));
-
-								syncPacket.entities[idx].pos = Vector2(MeterToPixel(pos.x), MeterToPixel(pos.y));
-								syncPacket.entities[idx].vel = Vector2(MeterToPixel(vel.x), MeterToPixel(vel.y));
-								syncPacket.entities[idx].angle = angle;
-							}
-							else {
-								TransformComponent* transform = &obj->transform;
-								syncPacket.entities[idx].pos = transform->GetPosition();
-								syncPacket.entities[idx].vel = Vector2(0.0f, 0.0f);
-								syncPacket.entities[idx].angle = transform->GetRotation().angle;
-							}
-							syncPacket.entityCount++;
+							syncPacket.entities[idx].pos = Vector2(MeterToPixel(pos.x), MeterToPixel(pos.y));
+							syncPacket.entities[idx].vel = Vector2(MeterToPixel(vel.x), MeterToPixel(vel.y));
+							syncPacket.entities[idx].angle = angle;
 						}
+						else {
+							TransformComponent* transform = &obj->transform;
+							syncPacket.entities[idx].pos = transform->GetPosition();
+							syncPacket.entities[idx].vel = Vector2(0.0f, 0.0f);
+							syncPacket.entities[idx].angle = transform->GetRotation().angle;
+						}
+						syncPacket.entityCount++;
 					}
 				}
-				if (syncPacket.entityCount > 0) {
-					int packetSize = sizeof(PacketHeader) + sizeof(int) + sizeof(EntitySyncData) * syncPacket.entityCount;
-					SendPacket(&syncPacket, packetSize);
-				}
+			}
+			if (syncPacket.entityCount > 0) {
+				int packetSize = sizeof(PacketHeader) + sizeof(int) + sizeof(EntitySyncData) * syncPacket.entityCount;
+				SendPacket(&syncPacket, packetSize);
 			}
 		}
 	}
@@ -363,7 +363,7 @@ void NetworkManager::SendPacket(const void* data, int size, const sockaddr_in* t
 void NetworkManager::SendReliablePacket(const void* data, int size, const sockaddr_in* targetAddr)
 {
 	PacketHeader* header = (PacketHeader*)data;
-	header->sequenceNumber = m_txSequenceNumber++;
+	header->tick = m_currentTick;
 
 	for (int i = 0; i < 3; ++i)
 	{
@@ -379,7 +379,6 @@ void NetworkManager::RegisterNetworkObject(uint32 netID, GameObject* obj)
 void NetworkManager::UnRegisterNetworkObject(uint32 netID)
 {
 	m_networkObjects.erase(netID);
-	m_InterpolationMap.erase(netID);
 }
 
 GameObject* NetworkManager::GetNetworkObject(uint32 netID)
@@ -585,7 +584,11 @@ void NetworkManager::HandlePacket(const char* buffer, int size, const sockaddr_i
 			const EntitySyncData& data = syncPacket->entities[i];
 			if (data.netID != m_MyNetID)
 			{
-				UpdateInterpolationTarget(data.netID, data.pos.x, data.pos.y, data.angle);
+				GameObject* obj = GetNetworkObject(data.netID);
+				if (obj) {
+					NetworkIdentity* netId = obj->GetComponent<NetworkIdentity>();
+					if (netId) netId->SetInterpolationTarget({ data.pos.x, data.pos.y });
+				}
 			}
 		}
 		break;
@@ -630,7 +633,12 @@ void NetworkManager::HandlePacket(const char* buffer, int size, const sockaddr_i
 				}
 			}
 
-			UpdateInterpolationTarget(monsterNetID, targetPos, 0.066f); // 15Hz duration
+			// 보간 목표를 NetworkIdentity에 직접 전달 (15Hz duration)
+			GameObject* monsterObj = GetNetworkObject(monsterNetID);
+			if (monsterObj) {
+				NetworkIdentity* netId = monsterObj->GetComponent<NetworkIdentity>();
+				if (netId) netId->SetInterpolationTarget(targetPos, 0.066f);
+			}
 		}
 		break;
 	}
@@ -657,7 +665,6 @@ void NetworkManager::HandlePacket(const char* buffer, int size, const sockaddr_i
 				}
 			}
 		}
-		RemoveInterpolation(netID);
 		break;
 	}
 	case PacketType::GAME_STATE_SYNC:
@@ -675,46 +682,4 @@ void NetworkManager::HandlePacket(const char* buffer, int size, const sockaddr_i
 	}
 }
 
-bool NetworkManager::GetInterpolatedPosition(uint32 netID, Vector2& outPos) {
-	auto it = m_InterpolationMap.find(netID);
-	if (it == m_InterpolationMap.end()) {
-		return false;
-	}
 
-	const auto& data = it->second;
-	float t = (data.duration > 0.0f) ? std::clamp(data.elapsed / data.duration, 0.0f, 1.0f) : 1.0f;
-	outPos = Vector2::Lerp(data.startPos, data.targetPos, t);
-	return true;
-}
-
-bool NetworkManager::GetInterpolatedPosition(uint32 netID, float& outX, float& outY, float& outAngle) {
-	Vector2 pos;
-	if (!GetInterpolatedPosition(netID, pos)) return false;
-	outX = pos.x;
-	outY = pos.y;
-	outAngle = 0.0f;
-	return true;
-}
-
-void NetworkManager::UpdateInterpolationTarget(uint32 netID, const Vector2& targetPos, float duration) {
-	auto& data = m_InterpolationMap[netID];
-
-	Vector2 currentPos = targetPos;
-	if (data.duration > 0.0f && (data.startPos.x != 0.0f || data.startPos.y != 0.0f || data.targetPos.x != 0.0f || data.targetPos.y != 0.0f)) {
-		float t = std::clamp(data.elapsed / data.duration, 0.0f, 1.0f);
-		currentPos = Vector2::Lerp(data.startPos, data.targetPos, t);
-	}
-
-	data.startPos = currentPos;
-	data.targetPos = targetPos;
-	data.elapsed = 0.0f;
-	data.duration = duration;
-}
-
-void NetworkManager::UpdateInterpolationTarget(uint32 netID, float targetX, float targetY, float targetAngle, float duration) {
-	UpdateInterpolationTarget(netID, Vector2{ targetX, targetY }, duration);
-}
-
-void NetworkManager::RemoveInterpolation(uint32 netID) {
-	m_InterpolationMap.erase(netID);
-}

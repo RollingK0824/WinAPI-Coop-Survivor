@@ -145,7 +145,6 @@ void MonsterSpawner::FixedUpdate(float fixedDt)
 					auto* packet = reinterpret_cast<MonsterSnapshotPacket*>(buffer.data());
 					packet->header.type = PacketType::MONSTER_SNAPSHOT;
 					packet->header.size = static_cast<uint16>(packetSize);
-					packet->timestamp = static_cast<uint32>(TimeManager::GetInstance()->GetGameTime() * 1000.0f);
 					packet->monsterCount = static_cast<uint16>(chunkSize);
 
 					std::memcpy(packet->monsters, &culledMonsters[offset], chunkSize * sizeof(MonsterSnapshotData));
@@ -258,7 +257,7 @@ void MonsterSpawner::DespawnMonster(GameObject* pMonsterObj)
 	{
 		uint16 netID = pMonsterComp->GetNetID();
 		m_activeMonsterMap.erase(netID);
-		NetworkManager::GetInstance()->RemoveInterpolation(netID);
+		// NetworkIdentity가 GameObject와 함께 소멸하므로 별도 보간 정리 불필요
 	}
 
 	pMonsterObj->SetActive(false);

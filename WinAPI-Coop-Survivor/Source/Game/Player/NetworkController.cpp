@@ -1,6 +1,6 @@
 #include "Engine/Core/pch.h"
 #include "NetworkController.h"
-#include "Engine/Network/NetworkManager.h"
+#include "Engine/Framework/Components/Network/NetworkIdentity.h"
 #include "Engine/Framework/GameObject.h"
 #include "Engine/Framework/Components/Core/TransformComponent.h"
 #include "Engine/Framework/Components/Physics/BoxCollider.h"
@@ -17,7 +17,8 @@ void NetworkController::Start()
 
 void NetworkController::Update(float dt) {
     Vector2 interpolatedPos;
-    if (NetworkManager::GetInstance()->GetInterpolatedPosition(m_NetID, interpolatedPos)) {
+    NetworkIdentity* netId = gameObject.GetComponent<NetworkIdentity>();
+    if (netId && netId->GetInterpolatedPosition(interpolatedPos)) {
         transform.SetPosition(interpolatedPos);
         if (m_pCollider.IsValid() && b2Body_IsValid(m_pCollider->GetBodyId())) {
             b2Vec2 b2Pos = { PixelToMeter(interpolatedPos.x), PixelToMeter(interpolatedPos.y) };

@@ -12,6 +12,7 @@
 #include "Game/Monster/MonsterSpawner.h"
 #include "Game/Manager/InGameManager.h"
 #include "Engine/Network/NetworkManager.h"
+#include "Engine/Framework/Components/Network/NetworkIdentity.h"
 #include "Engine/Framework/Components/Render/SpriteRendererComponent.h"
 
 static ComponentRegistrar<Monster> registrar(EngineKey::CustomComponent::Monster.data());
@@ -120,7 +121,8 @@ void Monster::FixedUpdate(float fixedDt)
 	if (role == NetRole::CLIENT)
 	{
 		Vector2 lerpPos;
-		if (NetworkManager::GetInstance()->GetInterpolatedPosition(m_netID, lerpPos))
+		NetworkIdentity* netId = gameObject.GetComponent<NetworkIdentity>();
+		if (netId && netId->GetInterpolatedPosition(lerpPos))
 		{
 			Vector2 currentPos = transform.GetPosition();
 			Vector2 moveDir = lerpPos - currentPos;

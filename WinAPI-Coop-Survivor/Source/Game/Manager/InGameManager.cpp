@@ -188,8 +188,11 @@ void InGameManager::Start()
 					this->SpawnPlayer(clientNetID, false, inputPkt->pos);
 				}
 
-				NetworkManager::GetInstance()->UpdateInterpolationTarget(
-					clientNetID, inputPkt->pos.x, inputPkt->pos.y, inputPkt->angle);
+				GameObject* obj = NetworkManager::GetInstance()->GetNetworkObject(clientNetID);
+				if (obj) {
+					NetworkIdentity* netId = obj->GetComponent<NetworkIdentity>();
+					if (netId) netId->SetInterpolationTarget({ inputPkt->pos.x, inputPkt->pos.y });
+				}
 			});
 	}
 
