@@ -80,4 +80,28 @@ void LocalController::Move(float dt) {
 
     b2Vec2 b2Velocity = { PixelToMeter(targetVelocity.x), PixelToMeter(targetVelocity.y) };
     b2Body_SetLinearVelocity(m_pCollider->GetBodyId(), b2Velocity);
+
+    ApplyMapClamp();
+}
+
+void LocalController::ApplyMapClamp() {
+    if (!m_pCollider.IsValid() || !b2Body_IsValid(m_pCollider->GetBodyId())) return;
+
+    b2Vec2 pos = b2Body_GetPosition(m_pCollider->GetBodyId());
+    float px = MeterToPixel(pos.x);
+    float py = MeterToPixel(pos.y);
+
+    float clampedX = std::clamp(px, -k_MapHalfWidth,  k_MapHalfWidth);
+    float clampedY = std::clamp(py, -k_MapHalfHeight, k_MapHalfHeight);
+
+    if (clampedX != px || clampedY != py)
+    {
+        b2Body_SetTransform(
+            m_pCollider->GetBodyId(),
+            { PixelToMeter(clampedX), PixelToMeter(clampedY) },
+            b2Body_GetRotation(m_pCollider->GetBodyId())
+        );
+        b2Body_SetLinearVelocity(m_pCollider->GetBodyId(), { 0.0f, 0.0f });
+        transform.SetPosition(clampedX, clampedY);
+    }
 }

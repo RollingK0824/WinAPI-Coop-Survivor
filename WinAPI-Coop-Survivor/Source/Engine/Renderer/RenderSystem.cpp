@@ -1,4 +1,4 @@
-﻿#include "Engine/Core/pch.h"
+#include "Engine/Core/pch.h"
 #include "RenderSystem.h"
 #include "Engine/Manager/CameraManager.h"
 #include "Engine/Renderer/GraphicManager.h"
@@ -73,7 +73,34 @@ void RenderSystem::Render()
 void RenderSystem::DrawBitmap(ID2D1RenderTarget* pRT, const RenderCommand& cmd)
 {
 	const Sprite& sprite = cmd.bitmap.sprite;
-	if (!sprite.pTexture) return;
+	if (!sprite.pTexture)
+	{
+		// 텍스처가 없는 단색 UI Image 폴백 렌더링
+		float renderW = cmd.bitmap.size.x;
+		float renderH = cmd.bitmap.size.y;
+		if (renderW <= 0.0f || renderH <= 0.0f) return;
+
+		float fill = cmd.bitmap.fillAmount;
+		if (fill <= 0.0f) return;
+		renderW *= fill;
+
+		D2D1_POINT_2F pivot = sprite.pivot;
+		float left = -renderW * pivot.x + sprite.offset.x;
+		float top = -renderH * pivot.y + sprite.offset.y;
+
+		D2D1_RECT_F destRect = D2D1::RectF(left, top, left + renderW, top + renderH);
+
+		pRT->SetTransform(CalculateSRTMatrix(cmd, renderW, renderH));
+
+		ID2D1SolidColorBrush* pBrush = nullptr;
+		pRT->CreateSolidColorBrush(cmd.color, &pBrush);
+		if (pBrush)
+		{
+			pRT->FillRectangle(destRect, pBrush);
+			pBrush->Release();
+		}
+		return;
+	}
 
 	float srcWidth = sprite.srcRect.right - sprite.srcRect.left;
 	float srcHeight = sprite.srcRect.bottom - sprite.srcRect.top;
@@ -81,6 +108,14 @@ void RenderSystem::DrawBitmap(ID2D1RenderTarget* pRT, const RenderCommand& cmd)
 
 	float renderW = (cmd.bitmap.size.x > 0.0f) ? cmd.bitmap.size.x : srcWidth;
 	float renderH = (cmd.bitmap.size.y > 0.0f) ? cmd.bitmap.size.y : srcHeight;
+
+	// fillAmount 적용 (0.0~1.0, Left 방향 클리핑)
+	float fill = cmd.bitmap.fillAmount;
+	if (fill <= 0.0f) return;
+	if (fill < 1.0f)
+	{
+		renderW *= fill;
+	}
 
 	D2D1_POINT_2F pivot = sprite.pivot;
 
@@ -94,6 +129,13 @@ void RenderSystem::DrawBitmap(ID2D1RenderTarget* pRT, const RenderCommand& cmd)
 		top + renderH
 	);
 
+	// fillAmount만큼 srcRect의 오른쪽도 잘라냄 (텍스처 늘어남 방지)
+	D2D1_RECT_F clippedSrcRect = sprite.srcRect;
+	if (fill < 1.0f)
+	{
+		clippedSrcRect.right = sprite.srcRect.left + srcWidth * fill;
+	}
+
 	pRT->SetTransform(CalculateSRTMatrix(cmd, renderW, renderH));
 
 	pRT->DrawBitmap(
@@ -101,7 +143,7 @@ void RenderSystem::DrawBitmap(ID2D1RenderTarget* pRT, const RenderCommand& cmd)
 		destRect,
 		cmd.bitmap.opacity,
 		D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
-		&sprite.srcRect
+		&clippedSrcRect
 	);
 }
 

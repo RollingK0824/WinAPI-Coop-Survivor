@@ -171,6 +171,7 @@
                             "y": 0.0
                         },
                         "FillAmount": 1.0,
+                        "IsUI": true,
                         "FlipX": false,
                         "FlipY": false
                     }
@@ -248,6 +249,7 @@
                             "y": 0.0
                         },
                         "FillAmount": 1.0,
+                        "IsUI": true,
                         "FlipX": false,
                         "FlipY": false
                     }
@@ -325,6 +327,7 @@
                             "y": 0.0
                         },
                         "FillAmount": 1.0,
+                        "IsUI": true,
                         "FlipX": false,
                         "FlipY": false
                     }

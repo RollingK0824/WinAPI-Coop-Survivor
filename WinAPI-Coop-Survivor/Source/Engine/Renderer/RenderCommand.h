@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <d2d1.h>
 #include "Engine/Renderer/Sprite.h"
 
@@ -18,6 +18,7 @@ struct BitmapParams
 	Sprite sprite;
 	Vector2 size = { 0.0f, 0.0f };
 	float opacity = 1.0f;
+	float fillAmount = 1.0f; // 0.0 ~ 1.0, Left 방향 Fill (1.0 = 전체 표시)
 	bool flipX = false;
 	bool flipY = false;
 };

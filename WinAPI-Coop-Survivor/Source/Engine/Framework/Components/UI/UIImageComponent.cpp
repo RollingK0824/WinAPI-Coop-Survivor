@@ -1,4 +1,4 @@
-﻿#include "Engine/Core/pch.h"
+#include "Engine/Core/pch.h"
 #include "UIImageComponent.h"
 #include "Engine/Core/ComponentRegister.h"
 #include "Engine/Manager/ResourceManager.h"
@@ -17,6 +17,7 @@ UIImageComponent::UIImageComponent(GameObject* owner, TransformComponent* transf
 	ExposeVariable("Pivot", &m_RenderCommand.bitmap.sprite.pivot);
 	ExposeVariable("Offset", &m_RenderCommand.bitmap.sprite.offset);
 	ExposeVariable("FillAmount", &m_fillAmount);
+	ExposeVariable("IsUI", &m_RenderCommand.isUI);
 	ExposeVariable("FlipX", &m_RenderCommand.bitmap.flipX);
 	ExposeVariable("FlipY", &m_RenderCommand.bitmap.flipY);
 }
