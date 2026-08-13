@@ -23,8 +23,6 @@ Monster::Monster(GameObject* owner, TransformComponent* transform)
 	ExposeVariable("MaxHP", &m_maxHP);
 	ExposeVariable("MoveSpeed", &m_moveSpeed);
 	ExposeVariable("AttackDamage", &m_attackDamage);
-	ExposeVariable("AttackRange", &m_attackRange);
-	ExposeVariable("AttackCooldown", &m_attackCooldown);
 }
 
 void Monster::Start()
@@ -40,7 +38,6 @@ void Monster::OnEnable()
 {
 	m_state = EMonsterState::Chase;
 	m_targetPlayer = nullptr;
-	m_attackTimer = 0.0f;
 	m_targetSearchTimer = 0.0f;
 
 	if (!m_pCollider.IsValid())
@@ -90,7 +87,6 @@ void Monster::Init(uint32 spawnSeqId, MonsterSO* monsterData, const Vector2& spa
 		m_expAmount = 10;
 	}
 
-	m_attackTimer = 0.0f;
 	m_targetSearchTimer = 0.0f;
 	m_targetPlayer = nullptr;
 
@@ -206,18 +202,8 @@ void Monster::UpdateAI(float fixedDt)
 		return;
 	}
 
-	Vector2 myPos = transform.GetPosition();
-	Vector2 targetPos = m_targetPlayer->transform.GetPosition();
-	float dist = Vector2::Distance(myPos, targetPos);
-
-	if (dist <= m_attackRange)
-	{
-		m_state = EMonsterState::Attack;
-	}
-	else
-	{
-		m_state = EMonsterState::Chase;
-	}
+	// 항상 Chase 상태 유지 (접촉 피해는 Player::OnCollision에서 처리)
+	m_state = EMonsterState::Chase;
 }
 
 void Monster::UpdateBehaviour(float fixedDt)
@@ -229,20 +215,6 @@ void Monster::UpdateBehaviour(float fixedDt)
 
 	case EMonsterState::Chase:
 		MoveTowardsTarget(fixedDt);
-		break;
-
-	case EMonsterState::Attack:
-		if (m_pCollider.IsValid() && b2Body_IsValid(m_pCollider->GetBodyId()))
-		{
-			b2Body_SetLinearVelocity(m_pCollider->GetBodyId(), { 0.0f, 0.0f });
-		}
-
-		m_attackTimer += fixedDt;
-		if (m_attackTimer >= m_attackCooldown)
-		{
-			m_attackTimer = 0.0f;
-			OnAttack();
-		}
 		break;
 
 	case EMonsterState::Dead:
@@ -285,10 +257,6 @@ void Monster::TakeDamage(float damage, GameObject* pAttacker)
 		m_state = EMonsterState::Dead;
 		OnDie();
 	}
-}
-
-void Monster::OnAttack()
-{
 }
 
 void Monster::OnDie()

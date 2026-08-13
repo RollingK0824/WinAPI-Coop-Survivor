@@ -12,7 +12,6 @@ enum class EMonsterState
 {
 	Spawn,
 	Chase,
-	Attack,
 	Dead
 };
 
@@ -46,12 +45,12 @@ public:
 	void SetNetID(uint16 netID) { m_netID = netID; }
 	float GetCurrentHP() const { return m_currentHP; }
 	float GetMaxHP() const { return m_maxHP; }
+	float GetAttackDamage() const { return m_attackDamage; }
 	EMonsterState GetState() const { return m_state; }
 
 protected:
 	virtual void UpdateAI(float fixedDt);
 	virtual void UpdateBehaviour(float fixedDt);
-	virtual void OnAttack();
 	virtual void OnDie();
 
 private:
@@ -70,9 +69,6 @@ private:
 	float m_maxHP = 100.0f;
 	float m_moveSpeed = 120.0f;
 	float m_attackDamage = 10.0f;
-	float m_attackRange = 40.0f;
-	float m_attackCooldown = 1.0f;
-	float m_attackTimer = 0.0f;
 	int32 m_expAmount = 10;
 
 	ObserverPtr<GameObject> m_targetPlayer;

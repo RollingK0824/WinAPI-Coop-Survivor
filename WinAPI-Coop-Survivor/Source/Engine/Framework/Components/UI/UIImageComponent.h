@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Engine/Framework/Components/Core/RenderComponent.h"
 #include "Engine/Renderer/Sprite.h"
 
@@ -24,6 +24,8 @@ public:
 
 	void SetFillAmount(float fill) { m_fillAmount = (fill < 0.0f) ? 0.0f : (fill > 1.0f) ? 1.0f : fill; }
 	void SetSize(Vector2 size) { m_size = size; }
+	void SetIsUI(bool isUI) { m_RenderCommand.isUI = isUI; }
+	bool IsUI() const { return m_RenderCommand.isUI; }
 
 	Vector2 GetSize() const { return m_size; }
 	float GetFillAmount() const { return m_fillAmount; }
@@ -32,6 +34,7 @@ public:
 	virtual const RenderCommand& GetRenderCommand() override
 	{
 		m_RenderCommand.bitmap.size = m_size;
+		m_RenderCommand.bitmap.fillAmount = m_fillAmount;
 		return m_RenderCommand;
 	}
 
