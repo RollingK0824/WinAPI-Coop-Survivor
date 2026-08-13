@@ -2,6 +2,7 @@
 #include "NetworkIdentity.h"
 #include "Engine/Core/ComponentRegister.h"
 #include "Engine/Network/NetworkManager.h"
+#include "Engine/Framework/Components/Core/TransformComponent.h"
 static ComponentRegistrar<NetworkIdentity>registrar(EngineKey::Component::NetworkIdentity.data());
 
 NetworkIdentity::NetworkIdentity(GameObject* owner, TransformComponent* transform) : ScriptComponent(owner,transform)
@@ -37,6 +38,11 @@ void NetworkIdentity::Start()
 	}
 }
 
+void NetworkIdentity::OnDisable()
+{
+	ResetInterpolation(transform.GetPosition());
+}
+
 void NetworkIdentity::Update(float dt)
 {
 	if (m_interpData.active)
@@ -45,10 +51,19 @@ void NetworkIdentity::Update(float dt)
 	}
 }
 
+void NetworkIdentity::ResetInterpolation(const Vector2& pos)
+{
+	m_interpData.startPos  = pos;
+	m_interpData.targetPos = pos;
+	m_interpData.elapsed   = 0.0f;
+	m_interpData.duration  = 0.0f;
+	m_interpData.active    = false;
+}
+
 void NetworkIdentity::SetInterpolationTarget(const Vector2& targetPos, float duration)
 {
-	// 현재 보간 진행 중이라면 현재 위치를 startPos로 사용
-	Vector2 currentPos = targetPos;
+	// 비활성화 상태이거나 이전 보간이 없던 경우 현재 Transform 위치를 시작 위치로 사용
+	Vector2 currentPos = transform.GetPosition();
 	if (m_interpData.active && m_interpData.duration > 0.0f)
 	{
 		float t = std::clamp(m_interpData.elapsed / m_interpData.duration, 0.0f, 1.0f);

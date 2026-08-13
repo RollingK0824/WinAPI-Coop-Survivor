@@ -112,7 +112,7 @@ void Monster::SetSpawner(MonsterSpawner* spawner)
 	m_pSpawner = spawner;
 }
 
-void Monster::FixedUpdate(float fixedDt)
+void Monster::Update(float dt)
 {
 	if (m_state == EMonsterState::Dead || !gameObject.IsActive())
 		return;
@@ -145,8 +145,17 @@ void Monster::FixedUpdate(float fixedDt)
 				}
 			}
 		}
-		return;
 	}
+}
+
+void Monster::FixedUpdate(float fixedDt)
+{
+	if (m_state == EMonsterState::Dead || !gameObject.IsActive())
+		return;
+
+	NetRole role = NetworkManager::GetInstance()->GetRole();
+	if (role == NetRole::CLIENT)
+		return;
 
 	UpdateTargetSearch(fixedDt);
 	UpdateAI(fixedDt);

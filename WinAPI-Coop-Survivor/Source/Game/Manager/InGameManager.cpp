@@ -13,6 +13,7 @@
 #include "Engine/Framework/Components/Physics/ColliderComponent.h"
 #include "Engine/Manager/DebugManager.h"
 #include "Game/Player/Player.h"
+#include "Game/Monster/Monster.h"
 #include "Game/Monster/MonsterSpawner.h"
 #include "Game/Skill/SkillComponent.h"
 #include "Game/Item/ExpGem.h"
@@ -136,10 +137,87 @@ void InGameManager::Start()
 				this->SpawnPlayer(welcome->assignedNetID, true, { startX, 0.0f });
 			});
 
+		net->RegisterPacketHandler(PacketType::MONSTER_SNAPSHOT,
+			[this](const PacketHeader* packet, const sockaddr_in& sender) {
+				int size = packet->size;
+				if (size < static_cast<int>(sizeof(MonsterSnapshotPacket))) return;
+
+				const MonsterSnapshotPacket* snapshot = reinterpret_cast<const MonsterSnapshotPacket*>(packet);
+
+				size_t expectedSize = sizeof(MonsterSnapshotPacket);
+				if (snapshot->monsterCount > 1)
+					expectedSize += (snapshot->monsterCount - 1) * sizeof(MonsterSnapshotData);
+				if (size < static_cast<int>(expectedSize)) return;
+
+				// MonsterSpawner 탐색
+				MonsterSpawner* spawner = nullptr;
+				Scene* pScene = gameObject.GetOwnerScene();
+				if (pScene)
+				{
+					for (auto* obj : pScene->GetGameObjects())
+					{
+						if (obj && obj->IsActive())
+						{
+							spawner = obj->GetComponent<MonsterSpawner>();
+							if (spawner) break;
+						}
+					}
+				}
+
+				for (uint16 i = 0; i < snapshot->monsterCount; ++i)
+				{
+					uint16 monsterNetID = snapshot->monsters[i].monsterNetID;
+					Vector2 targetPos   = snapshot->monsters[i].pos;
+
+					Monster* pMonster = nullptr;
+					if (spawner)
+					{
+						pMonster = spawner->GetMonsterByNetID(monsterNetID);
+						if (!pMonster)
+						{
+							pMonster = spawner->SpawnMonsterClient(monsterNetID, targetPos);
+						}
+						else
+						{
+							// 컬링 후 재진입 등 거리 차이가 큰 경우 즉시 위치 세팅(Snap)하여 대각선 고속 이동/텔레포트 방지
+							float dist = Vector2::Distance(pMonster->transform.GetPosition(), targetPos);
+							if (dist > 150.0f)
+							{
+								pMonster->transform.SetPosition(targetPos);
+							}
+						}
+					}
+
+					if (pMonster)
+					{
+						NetworkIdentity* netId = pMonster->gameObject.GetComponent<NetworkIdentity>();
+						if (netId) netId->SetInterpolationTarget(targetPos, 0.08f);
+					}
+				}
+			});
+
 		net->RegisterPacketHandler(PacketType::MONSTER_KILL,
 			[this](const PacketHeader* packet, const sockaddr_in& sender) {
 				auto killPkt = reinterpret_cast<const MonsterKillPacket*>(packet);
 				this->SpawnExpGem(killPkt->dropItemPos, 10);
+
+				// Client 몬스터 Despawn 처리
+				Scene* pScene = gameObject.GetOwnerScene();
+				if (pScene)
+				{
+					for (auto* obj : pScene->GetGameObjects())
+					{
+						if (obj && obj->IsActive())
+						{
+							auto* spawner = obj->GetComponent<MonsterSpawner>();
+							if (spawner)
+							{
+								spawner->DespawnMonsterByNetID(killPkt->monsterNetID);
+								break;
+							}
+						}
+					}
+				}
 			});
 
 		net->RegisterPacketHandler(PacketType::TEAM_EXP_SYNC,
@@ -191,7 +269,7 @@ void InGameManager::Start()
 				GameObject* obj = NetworkManager::GetInstance()->GetNetworkObject(clientNetID);
 				if (obj) {
 					NetworkIdentity* netId = obj->GetComponent<NetworkIdentity>();
-					if (netId) netId->SetInterpolationTarget({ inputPkt->pos.x, inputPkt->pos.y });
+					if (netId) netId->SetInterpolationTarget({ inputPkt->pos.x, inputPkt->pos.y }, 0.033f);
 				}
 			});
 	}
@@ -224,10 +302,20 @@ void InGameManager::Start()
 			{
 				const EntitySyncData& entity = syncPkt->entities[i];
 
-				if (!NetworkManager::GetInstance()->GetNetworkObject(entity.netID))
+				GameObject* obj = NetworkManager::GetInstance()->GetNetworkObject(entity.netID);
+				if (!obj)
 				{
 					bool isLocal = (entity.netID == myID);
 					this->SpawnPlayer(entity.netID, isLocal, entity.pos);
+					obj = NetworkManager::GetInstance()->GetNetworkObject(entity.netID);
+				}
+
+				if (entity.netID != myID && obj)
+				{
+					if (auto* netId = obj->GetComponent<NetworkIdentity>())
+					{
+						netId->SetInterpolationTarget({ entity.pos.x, entity.pos.y }, 0.033f);
+					}
 				}
 			}
 		});

@@ -10,6 +10,7 @@ public:
 	virtual ~NetworkIdentity() override;
 
 	virtual void Start() override;
+	virtual void OnDisable() override;
 	virtual void Update(float dt) override;
 
 	void SetNetID(uint32 netID);
@@ -20,6 +21,7 @@ public:
 	bool HasAuthority() const { return m_bIsLocalPlayer; }
 
 	// 보간 API (패킷 수신 측에서 목표 위치를 설정)
+	void ResetInterpolation(const Vector2& pos);
 	void SetInterpolationTarget(const Vector2& targetPos, float duration = 0.0166f);
 	bool GetInterpolatedPosition(Vector2& outPos) const;
 

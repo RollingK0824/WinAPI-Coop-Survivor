@@ -8,7 +8,6 @@
 #include "Engine/Framework/Components/Core/TransformComponent.h"
 #include "Engine/Framework/Components/Physics/BoxCollider.h"
 #include "Engine/Framework/Components/Network/NetworkIdentity.h"
-#include "Game/Monster/MonsterSpawner.h"
 
 NetworkManager::~NetworkManager() {
 	Release();
@@ -575,108 +574,7 @@ void NetworkManager::HandlePacket(const char* buffer, int size, const sockaddr_i
 		break;
 	}
 
-	case PacketType::ENTITY_STATE_SYNC:
-	{
-		if (m_Role != NetRole::CLIENT) break;
-		const EntityStateSyncPacket* syncPacket = (const EntityStateSyncPacket*)buffer;
-		for (int i = 0; i < syncPacket->entityCount; ++i)
-		{
-			const EntitySyncData& data = syncPacket->entities[i];
-			if (data.netID != m_MyNetID)
-			{
-				GameObject* obj = GetNetworkObject(data.netID);
-				if (obj) {
-					NetworkIdentity* netId = obj->GetComponent<NetworkIdentity>();
-					if (netId) netId->SetInterpolationTarget({ data.pos.x, data.pos.y });
-				}
-			}
-		}
-		break;
-	}
-	case PacketType::MONSTER_SNAPSHOT:
-	{
-		if (m_Role != NetRole::CLIENT) break;
-		if (size < sizeof(MonsterSnapshotPacket)) break;
 
-		const MonsterSnapshotPacket* snapshot = reinterpret_cast<const MonsterSnapshotPacket*>(buffer);
-		size_t expectedSize = sizeof(MonsterSnapshotPacket);
-		if (snapshot->monsterCount > 1) {
-			expectedSize += (snapshot->monsterCount - 1) * sizeof(MonsterSnapshotData);
-		}
-
-		if (size < static_cast<int>(expectedSize)) break;
-
-		MonsterSpawner* spawner = nullptr;
-		Scene* pScene = SceneManager::GetInstance()->GetActiveScene();
-		if (pScene)
-		{
-			for (auto* obj : pScene->GetGameObjects())
-			{
-				if (obj && obj->IsActive())
-				{
-					spawner = obj->GetComponent<MonsterSpawner>();
-					if (spawner) break;
-				}
-			}
-		}
-
-		for (uint16 i = 0; i < snapshot->monsterCount; ++i) {
-			uint16 monsterNetID = snapshot->monsters[i].monsterNetID;
-			Vector2 targetPos = snapshot->monsters[i].pos;
-
-			if (spawner)
-			{
-				Monster* pMonster = spawner->GetMonsterByNetID(monsterNetID);
-				if (!pMonster)
-				{
-					pMonster = spawner->SpawnMonsterClient(monsterNetID, targetPos);
-				}
-			}
-
-			// 보간 목표를 NetworkIdentity에 직접 전달 (15Hz duration)
-			GameObject* monsterObj = GetNetworkObject(monsterNetID);
-			if (monsterObj) {
-				NetworkIdentity* netId = monsterObj->GetComponent<NetworkIdentity>();
-				if (netId) netId->SetInterpolationTarget(targetPos, 0.066f);
-			}
-		}
-		break;
-	}
-	case PacketType::MONSTER_KILL:
-	{
-		if (m_Role != NetRole::CLIENT) break;
-		if (size < sizeof(MonsterKillPacket)) break;
-
-		const MonsterKillPacket* killPkt = reinterpret_cast<const MonsterKillPacket*>(buffer);
-		uint16 netID = killPkt->monsterNetID;
-
-		Scene* pScene = SceneManager::GetInstance()->GetActiveScene();
-		if (pScene)
-		{
-			for (auto* obj : pScene->GetGameObjects())
-			{
-				if (obj && obj->IsActive())
-				{
-					auto* spawner = obj->GetComponent<MonsterSpawner>();
-					if (spawner)
-					{
-						spawner->DespawnMonsterByNetID(netID);
-					}
-				}
-			}
-		}
-		break;
-	}
-	case PacketType::GAME_STATE_SYNC:
-	{
-		if (m_Role != NetRole::CLIENT) break;
-		const GameStateSyncPacket* packet = (const GameStateSyncPacket*)buffer;
-		if (RandomManager::GetInstance()->GetSharedSeed() != packet->randomSeed)
-		{
-			RandomManager::GetInstance()->SetSharedSeed(packet->randomSeed);
-		}
-		break;
-	}
 	default:
 		break;
 	}

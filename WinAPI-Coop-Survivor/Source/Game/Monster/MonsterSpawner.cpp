@@ -223,6 +223,15 @@ Monster* MonsterSpawner::SpawnMonster(MonsterSO* monsterData, const Vector2& spa
 		m_nextMonsterNetID = 2000;
 	}
 	pMonsterComp->SetNetID(netID);
+
+	NetworkIdentity* netIdComp = pMonsterObj->GetComponent<NetworkIdentity>();
+	if (!netIdComp)
+	{
+		netIdComp = pMonsterObj->AddComponent<NetworkIdentity>();
+	}
+	netIdComp->SetNetID(netID);
+	netIdComp->ResetInterpolation(spawnPos);
+
 	pMonsterComp->Init(seqId, monsterData, spawnPos, this);
 
 	m_activeMonsterMap[netID] = pMonsterComp;
@@ -241,6 +250,15 @@ Monster* MonsterSpawner::SpawnMonsterClient(uint16 netID, const Vector2& spawnPo
 	if (!pMonsterComp) return nullptr;
 
 	pMonsterComp->SetNetID(netID);
+
+	NetworkIdentity* netIdComp = pMonsterObj->GetComponent<NetworkIdentity>();
+	if (!netIdComp)
+	{
+		netIdComp = pMonsterObj->AddComponent<NetworkIdentity>();
+	}
+	netIdComp->SetNetID(netID);
+	netIdComp->ResetInterpolation(spawnPos);
+
 	pMonsterComp->Init(0, m_pDefaultMonsterSO.Get(), spawnPos, this);
 
 	m_activeMonsterMap[netID] = pMonsterComp;
