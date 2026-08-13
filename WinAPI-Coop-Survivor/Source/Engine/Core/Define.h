@@ -87,6 +87,7 @@ namespace EngineKey
 		constexpr std::string_view SkillComponent = "SkillComponent";
 		constexpr std::string_view AuraComponent = "AuraComponent";
 		constexpr std::string_view AoEComponent = "AoEComponent";
+		constexpr std::string_view ExpGem = "ExpGem";
 	}
 
 	namespace ScriptableObject

@@ -653,7 +653,6 @@ void NetworkManager::HandlePacket(const char* buffer, int size, const sockaddr_i
 					if (spawner)
 					{
 						spawner->DespawnMonsterByNetID(netID);
-						break;
 					}
 				}
 			}

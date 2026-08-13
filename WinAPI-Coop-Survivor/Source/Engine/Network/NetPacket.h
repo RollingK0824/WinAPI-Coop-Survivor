@@ -13,7 +13,8 @@ enum class PacketType : uint8 {
 	GAME_START_SIGNAL,
 	MONSTER_SNAPSHOT,
 	MONSTER_KILL,
-	SKILL_FIRE
+	SKILL_FIRE,
+	TEAM_EXP_SYNC
 };
 
 #pragma pack(push, 1)
@@ -114,5 +115,13 @@ struct SkillFirePacket
 	uint32 skillID;
 	Vector2 spawnPos;
 	Vector2 dir;
+};
+
+struct TeamExpSyncPacket
+{
+	PacketHeader header;
+	int32 teamLevel;
+	float teamExp;
+	float teamMaxExp;
 };
 #pragma pack(pop)

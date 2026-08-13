@@ -1,4 +1,4 @@
-﻿#include "Engine/Core/pch.h"
+#include "Engine/Core/pch.h"
 #include "DebugManager.h"
 #include "Engine/Manager/ActionManager.h"
 #include "Engine/Manager/TimeManager.h"
@@ -15,6 +15,7 @@
 #include "Engine/Framework/Components/UI/UIImageComponent.h"
 #include "Engine/Framework/Components/UI/HUDPresenter.h"
 #include "Engine/Framework/Components/UI/DebugHUDComponent.h"
+#include "Game/Manager/InGameManager.h"
 
 bool DebugManager::Initialize()
 {
@@ -62,6 +63,17 @@ void DebugManager::Update(float dt)
         {"NetID",std::to_string(myNetID)},
         {"Ping",pingStr}
     };
+
+    InGameManager* inGameMgr = InGameManager::GetInstance();
+    if (inGameMgr)
+    {
+        debugData.push_back({ "TeamLvl", std::to_string(inGameMgr->GetTeamLevel()) });
+        debugData.push_back({ "TeamEXP", std::format("{:.0f}/{:.0f}", inGameMgr->GetTeamExp(), inGameMgr->GetTeamMaxExp()) });
+        if (inGameMgr->IsSimulationPaused())
+        {
+            debugData.push_back({ "Status", "PAUSED (LEVEL UP!)" });
+        }
+    }
 
     m_pDebugHUDComp->UpdateDebugData("Debug HUD", debugData);
 }

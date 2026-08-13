@@ -10,6 +10,7 @@
 #include "Game/Monster/MonsterSO.h"
 #include "Game/Player/Player.h"
 #include "Game/Monster/MonsterSpawner.h"
+#include "Game/Manager/InGameManager.h"
 #include "Engine/Network/NetworkManager.h"
 #include "Engine/Framework/Components/Render/SpriteRendererComponent.h"
 
@@ -261,8 +262,16 @@ void Monster::TakeDamage(float damage, GameObject* pAttacker)
 
 void Monster::OnDie()
 {
-	if (NetworkManager::GetInstance()->GetRole() == NetRole::HOST)
+	NetRole role = NetworkManager::GetInstance()->GetRole();
+
+	if (role == NetRole::HOST)
 	{
+		// Host: 로컬 경험치 보석 스폰 및 Client 들에게 MONSTER_KILL 패킷 전송
+		if (InGameManager* mgr = InGameManager::GetInstance())
+		{
+			mgr->SpawnExpGem(transform.GetPosition(), m_expAmount);
+		}
+
 		MonsterKillPacket killPacket{};
 		killPacket.header.type = PacketType::MONSTER_KILL;
 		killPacket.header.size = sizeof(MonsterKillPacket);
@@ -270,6 +279,14 @@ void Monster::OnDie()
 		killPacket.dropItemPos = transform.GetPosition();
 
 		NetworkManager::GetInstance()->SendReliablePacket(&killPacket, sizeof(MonsterKillPacket));
+	}
+	else if (role == NetRole::NONE)
+	{
+		// 싱글 플레이어: 로컬 경험치 보석 스폰
+		if (InGameManager* mgr = InGameManager::GetInstance())
+		{
+			mgr->SpawnExpGem(transform.GetPosition(), m_expAmount);
+		}
 	}
 
 	if (m_pCollider.IsValid() && b2Body_IsValid(m_pCollider->GetBodyId()))

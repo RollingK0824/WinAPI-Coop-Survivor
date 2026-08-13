@@ -34,6 +34,7 @@ public:
 private:
 	void CreateTestHPBar();
 	void UpdateHPBar();
+	void UpdateExpGemMagnet(float dt);
 
 private:
 	float m_Speed = 500.0f;
