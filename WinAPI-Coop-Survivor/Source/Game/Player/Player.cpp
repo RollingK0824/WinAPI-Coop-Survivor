@@ -96,8 +96,8 @@ void Player::UpdateExpGemMagnet(float dt)
 	if (!mgr || mgr->IsSimulationPaused()) return;
 
 	Vector2 myPos = transform.GetPosition();
-	float magnetRange = 160.0f; // 자력 반응 반경 (픽셀)
-	float pickupRange = 25.0f;  // 실제 획득 반경 (픽셀)
+	float magnetRange = 280.0f; // 자력 반응 반경 (픽셀)
+	float pickupRange = 70.0f;  // 실제 획득 반경 (픽셀)
 
 	// 안전한 순회를 위해 벡터 복사본 사용 (UnregisterGem 호출 시 m_activeGems 수정으로 인한 이터레이터 파괴 방지)
 	std::vector<ExpGem*> gemsToProcess = mgr->GetActiveGems();
@@ -122,10 +122,25 @@ void Player::UpdateExpGemMagnet(float dt)
 			continue;
 		}
 
-		// 2. 자력 반응 반경 진입 처리
-		if (dist <= magnetRange && !pGem->HasTargetPlayer())
+		// 2. 자력 반응 반경 진입 처리 (더 가까운 플레이어로 자동 타깃 갱신)
+		if (dist <= magnetRange)
 		{
-			pGem->SetTargetPlayer(&gameObject);
+			if (!pGem->HasTargetPlayer())
+			{
+				pGem->SetTargetPlayer(&gameObject);
+			}
+			else
+			{
+				GameObject* currentTarget = pGem->GetTargetPlayer();
+				if (currentTarget && currentTarget != &gameObject)
+				{
+					float currentDist = Vector2::Distance(currentTarget->transform.GetPosition(), gemPos);
+					if (dist < currentDist)
+					{
+						pGem->SetTargetPlayer(&gameObject);
+					}
+				}
+			}
 		}
 	}
 }

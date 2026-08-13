@@ -28,6 +28,7 @@ public:
 
 	int32 GetExpAmount() const { return m_expAmount; }
 	bool HasTargetPlayer() const { return m_targetPlayer.IsValid(); }
+	GameObject* GetTargetPlayer() const { return m_targetPlayer.Get(); }
 	void SetTargetPlayer(GameObject* pPlayerObj) { m_targetPlayer = pPlayerObj; }
 	void Despawn();
 

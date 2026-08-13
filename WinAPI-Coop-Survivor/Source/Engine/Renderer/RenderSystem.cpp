@@ -26,10 +26,12 @@ void RenderSystem::Render()
 {
 	if (m_commands.empty())return;
 
-	// zOrder 기준으로 오름차순 정렬
-	std::sort(m_commands.begin(), m_commands.end(),
+	// zOrder 오름차순, 동일 zOrder일 경우 position.y 오름차순 (2D Top-down Y-Sorting & 안정 정렬)
+	std::stable_sort(m_commands.begin(), m_commands.end(),
 		[](const RenderCommand& a, const RenderCommand& b) {
-			return a.zOrder < b.zOrder;
+			if (a.zOrder != b.zOrder)
+				return a.zOrder < b.zOrder;
+			return a.position.y < b.position.y;
 		});
 
 	ID2D1RenderTarget* pRT = GraphicManager::GetInstance()->GetRenderTarget();

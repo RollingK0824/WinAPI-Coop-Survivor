@@ -109,7 +109,7 @@ void InGameManager::Start()
 			[](GameObject* obj) { if (obj) obj->SetActive(true); },
 			[](GameObject* obj) { if (obj) obj->SetActive(false); },
 			nullptr,
-			500, 300
+			300, 1000
 		);
 	}
 
