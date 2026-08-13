@@ -15,6 +15,9 @@
 #include "Game/Player/Player.h"
 #include "Game/Monster/MonsterSpawner.h"
 #include "Game/Skill/SkillComponent.h"
+#include "Game/Item/ExpGem.h"
+#include "Engine/Framework/Components/UI/UIImageComponent.h"
+#include "Engine/Framework/Components/UI/UITextComponent.h"
 
 InGameManager* InGameManager::s_instance = nullptr;
 
@@ -23,6 +26,11 @@ static ComponentRegistrar<InGameManager> registrar(EngineKey::CustomComponent::I
 InGameManager::InGameManager(GameObject* owner, TransformComponent* transform) : ScriptComponent(owner, transform)
 {
 	s_instance = this;
+
+	ExposeVariable("TeamLevel", &m_teamLevel);
+	ExposeVariable("TeamExp", &m_teamExp);
+	ExposeVariable("TeamMaxExp", &m_teamMaxExp);
+	ExposeVariable("IsSimulationPaused", &m_bIsSimulationPaused);
 }
 
 InGameManager::~InGameManager()
@@ -34,6 +42,14 @@ void InGameManager::OnDestroy()
 {
 	ScriptComponent::OnDestroy();
 	if (s_instance == this) s_instance = nullptr;
+
+	Scene* pScene = gameObject.GetOwnerScene();
+	if (pScene)
+	{
+		if (m_pExpBarBgObj.IsValid()) pScene->DestroyObjects(m_pExpBarBgObj.Get());
+		if (m_pExpBarFillObj.IsValid()) pScene->DestroyObjects(m_pExpBarFillObj.Get());
+		if (m_pExpTextObj.IsValid()) pScene->DestroyObjects(m_pExpTextObj.Get());
+	}
 }
 
 void InGameManager::Start()
@@ -42,6 +58,13 @@ void InGameManager::Start()
 	m_countdownTimer = 3.0f;
 	m_bIsCountDown = false;
 	m_bIsGameStarted = (NetworkManager::GetInstance()->GetRole() == NetRole::NONE);
+
+	m_teamLevel = 1;
+	m_teamExp = 0.0f;
+	m_teamMaxExp = 100.0f;
+	m_bIsSimulationPaused = false;
+
+	CreateTeamExpBarUI();
 
 	Scene* pScene = gameObject.GetOwnerScene();
 	if (pScene)
@@ -62,6 +85,32 @@ void InGameManager::Start()
 		initSkillPool("GenericProjectilePrefab", 300);
 		initSkillPool("GenericAuraPrefab", 20);
 		initSkillPool("GenericAoEPrefab", 50);
+
+		// ExpGem 오브젝트 풀 초기화 (미등록 시 런타임 자동 생성 폴백 백업)
+		PoolManager::GetInstance()->CreatePool<GameObject>(
+			"ExpGemPrefab",
+			[pScene]() {
+				GameObject* pObj = PrefabManager::GetInstance()->Instantiate("ExpGemPrefab", pScene);
+				if (!pObj)
+				{
+					pObj = pScene->CreateGameObject("ExpGem");
+					pObj->AddComponent<ExpGem>();
+					UIImageComponent* pImg = pObj->AddComponent<UIImageComponent>();
+					if (pImg)
+					{
+						pImg->SetIsUI(false);
+						pImg->SetSize({ 12.0f, 12.0f });
+						pImg->SetColor(D2D1::ColorF(0.1f, 0.85f, 1.0f, 1.0f));
+						pImg->SetZOrder(150);
+					}
+				}
+				return pObj;
+			},
+			[](GameObject* obj) { if (obj) obj->SetActive(true); },
+			[](GameObject* obj) { if (obj) obj->SetActive(false); },
+			nullptr,
+			500, 300
+		);
 	}
 
 	if (!gameObject.GetComponent<MonsterSpawner>())
@@ -77,13 +126,36 @@ void InGameManager::Start()
 		float startX = (static_cast<float>(myNetID) - 1.0f) * 120.0f;
 		SpawnPlayer(myNetID, true, { startX, 0.0f });
 	}
-	else if (net->GetRole() == NetRole::CLIENT)
+
+	if (net->GetRole() == NetRole::CLIENT)
 	{
 		net->RegisterPacketHandler(PacketType::HOST_WELCOME,
 			[this](const PacketHeader* packet, const sockaddr_in& sender) {
 				auto welcome = reinterpret_cast<const WelcomePacket*>(packet);
 				float startX = (static_cast<float>(welcome->assignedNetID) - 1.0f) * 120.0f;
 				this->SpawnPlayer(welcome->assignedNetID, true, { startX, 0.0f });
+			});
+
+		net->RegisterPacketHandler(PacketType::MONSTER_KILL,
+			[this](const PacketHeader* packet, const sockaddr_in& sender) {
+				auto killPkt = reinterpret_cast<const MonsterKillPacket*>(packet);
+				this->SpawnExpGem(killPkt->dropItemPos, 10);
+			});
+
+		net->RegisterPacketHandler(PacketType::TEAM_EXP_SYNC,
+			[this](const PacketHeader* packet, const sockaddr_in& sender) {
+				auto syncPkt = reinterpret_cast<const TeamExpSyncPacket*>(packet);
+				bool leveledUp = (syncPkt->teamLevel > this->m_teamLevel);
+				this->m_teamLevel = syncPkt->teamLevel;
+				this->m_teamExp = syncPkt->teamExp;
+				this->m_teamMaxExp = syncPkt->teamMaxExp;
+
+				if (leveledUp && this->m_onTeamLevelUp)
+				{
+					this->m_onTeamLevelUp(this->m_teamLevel);
+				}
+
+				this->UpdateTeamExpBarUI();
 			});
 	}
 
@@ -340,4 +412,162 @@ bool InGameManager::IsAllClientsReady() const
 		}
 	}
 	return true;
+}
+
+void InGameManager::AddTeamExp(float amount)
+{
+	m_teamExp += amount;
+
+	if (m_onExpChanged)
+	{
+		m_onExpChanged(m_teamExp, m_teamMaxExp);
+	}
+
+	// 팀 경험치가 목표치를 달성할 때까지 반복 레벨업 처리 (경험치 이월 지원)
+	while (m_teamExp >= m_teamMaxExp)
+	{
+		m_teamExp -= m_teamMaxExp;
+		m_teamLevel++;
+		m_teamMaxExp *= 1.25f; // 다음 레벨업 필요 경험치 25% 증가
+
+		if (m_onTeamLevelUp)
+		{
+			m_onTeamLevelUp(m_teamLevel);
+		}
+
+		// 결정론적 시뮬레이션 일시정지 (5단계 UI 연동 전 테스트를 위해 임시 비활성화)
+		// PauseSimulation(true);
+	}
+
+	// Host 권한 기반 팀 레벨/경험치 상태 패킷 동기화 전송
+	if (NetworkManager::GetInstance()->GetRole() == NetRole::HOST)
+	{
+		TeamExpSyncPacket syncPkt{};
+		syncPkt.header.type = PacketType::TEAM_EXP_SYNC;
+		syncPkt.header.size = sizeof(TeamExpSyncPacket);
+		syncPkt.teamLevel = m_teamLevel;
+		syncPkt.teamExp = m_teamExp;
+		syncPkt.teamMaxExp = m_teamMaxExp;
+
+		NetworkManager::GetInstance()->SendReliablePacket(&syncPkt, sizeof(syncPkt));
+	}
+
+	UpdateTeamExpBarUI();
+}
+
+void InGameManager::PauseSimulation(bool pause)
+{
+	m_bIsSimulationPaused = pause;
+	TimeManager::GetInstance()->SetPaused(pause);
+}
+
+void InGameManager::SpawnExpGem(Vector2 pos, int32 expAmount)
+{
+	GameObject* pGemObj = PoolManager::GetInstance()->Spawn<GameObject>("ExpGemPrefab");
+	if (pGemObj)
+	{
+		pGemObj->transform.SetPosition(pos);
+		ExpGem* pGem = pGemObj->GetComponent<ExpGem>();
+		if (!pGem)
+		{
+			pGem = pGemObj->AddComponent<ExpGem>();
+		}
+		if (pGem)
+		{
+			pGem->Init(expAmount);
+		}
+		pGemObj->SetActive(true);
+	}
+}
+
+void InGameManager::CreateTeamExpBarUI()
+{
+	Scene* pScene = gameObject.GetOwnerScene();
+	if (!pScene) return;
+
+	Vector2 barPos = { 710.0f, 15.0f }; // 화면 상단 중앙 (1920 / 2 - 250 = 710)
+	Vector2 barSize = { 500.0f, 16.0f };
+
+	// 1. 팀 경험치 바 배경 (UIImageComponent)
+	m_pExpBarBgObj = pScene->CreateGameObject("TeamEXPBar_BG");
+	if (m_pExpBarBgObj.IsValid())
+	{
+		m_pExpBarBgObj->transform.SetPosition(barPos);
+		UIImageComponent* pBgImg = m_pExpBarBgObj->AddComponent<UIImageComponent>();
+		if (pBgImg)
+		{
+			pBgImg->SetIsUI(true);
+			pBgImg->SetSize(barSize);
+			pBgImg->SetColor(D2D1::ColorF(0.1f, 0.1f, 0.15f, 0.85f));
+			pBgImg->SetZOrder(900);
+		}
+	}
+
+	// 2. 팀 경험치 바 Fill (UIImageComponent)
+	m_pExpBarFillObj = pScene->CreateGameObject("TeamEXPBar_Fill");
+	if (m_pExpBarFillObj.IsValid())
+	{
+		m_pExpBarFillObj->transform.SetPosition(barPos);
+		m_pExpBarFillImg = m_pExpBarFillObj->AddComponent<UIImageComponent>();
+		if (m_pExpBarFillImg.IsValid())
+		{
+			m_pExpBarFillImg->SetIsUI(true);
+			m_pExpBarFillImg->SetSize(barSize);
+			m_pExpBarFillImg->SetColor(D2D1::ColorF(0.2f, 0.85f, 1.0f, 1.0f)); // 민트/하늘색
+			m_pExpBarFillImg->SetFillAmount(0.0f);
+			m_pExpBarFillImg->SetZOrder(901);
+		}
+	}
+
+	// 3. 레벨/경험치 수치 텍스트 (UITextComponent)
+	m_pExpTextObj = pScene->CreateGameObject("TeamEXP_Text");
+	if (m_pExpTextObj.IsValid())
+	{
+		m_pExpTextObj->transform.SetPosition(barPos.x + 180.0f, barPos.y - 2.0f);
+		m_pExpTextComp = m_pExpTextObj->AddComponent<UITextComponent>();
+		if (m_pExpTextComp.IsValid())
+		{
+			m_pExpTextComp->SetFontSize(13.0f);
+			m_pExpTextComp->SetColor(D2D1::ColorF(D2D1::ColorF::White));
+			m_pExpTextComp->SetZOrder(902);
+		}
+	}
+
+	UpdateTeamExpBarUI();
+}
+
+void InGameManager::UpdateTeamExpBarUI()
+{
+	if (m_pExpBarFillImg.IsValid())
+	{
+		m_pExpBarFillImg->SetFillAmount(GetTeamExpRatio());
+	}
+
+	if (m_pExpTextComp.IsValid())
+	{
+		std::wstring text = L"LV." + std::to_wstring(m_teamLevel) + L"  ("
+			+ std::to_wstring(static_cast<int>(m_teamExp)) + L" / "
+			+ std::to_wstring(static_cast<int>(m_teamMaxExp)) + L")";
+		m_pExpTextComp->SetText(text);
+	}
+}
+
+void InGameManager::RegisterGem(ExpGem* gem)
+{
+	if (!gem) return;
+	auto it = std::find(m_activeGems.begin(), m_activeGems.end(), gem);
+	if (it == m_activeGems.end())
+	{
+		m_activeGems.push_back(gem);
+	}
+}
+
+void InGameManager::UnregisterGem(ExpGem* gem)
+{
+	if (!gem) return;
+	auto it = std::find(m_activeGems.begin(), m_activeGems.end(), gem);
+	if (it != m_activeGems.end())
+	{
+		m_activeGems.erase(it);
+	}
 }

@@ -1,16 +1,19 @@
 #include "Engine/Core/pch.h"
 #include "Player.h"
 #include "Engine/Core/ComponentRegister.h"
+#include "Engine/Physics/PhysicsManager.h"
+#include "Engine/Network/NetworkManager.h"
 #include "Engine/Framework/GameObject.h"
 #include "Engine/Framework/Scene.h"
 #include "Engine/Framework/Components/Core/TransformComponent.h"
 #include "Engine/Framework/Components/Network/NetworkIdentity.h"
 #include "Engine/Framework/Components/Physics/BoxCollider.h"
 #include "Engine/Framework/Components/UI/UIImageComponent.h"
-#include "Engine/Physics/PhysicsManager.h"
 #include "LocalController.h"
 #include "NetworkController.h"
 #include "Game/Monster/Monster.h"
+#include "Game/Item/ExpGem.h"
+#include "Game/Manager/InGameManager.h"
 
 static ComponentRegistrar<Player> registrar(EngineKey::CustomComponent::Player.data());
 
@@ -82,6 +85,49 @@ void Player::Update(float dt)
 	}
 
 	UpdateHPBar();
+	UpdateExpGemMagnet(dt);
+}
+
+void Player::UpdateExpGemMagnet(float dt)
+{
+	if (IsDead()) return;
+
+	InGameManager* mgr = InGameManager::GetInstance();
+	if (!mgr || mgr->IsSimulationPaused()) return;
+
+	Vector2 myPos = transform.GetPosition();
+	float magnetRange = 160.0f; // 자력 반응 반경 (픽셀)
+	float pickupRange = 25.0f;  // 실제 획득 반경 (픽셀)
+
+	// 안전한 순회를 위해 벡터 복사본 사용 (UnregisterGem 호출 시 m_activeGems 수정으로 인한 이터레이터 파괴 방지)
+	std::vector<ExpGem*> gemsToProcess = mgr->GetActiveGems();
+
+	for (ExpGem* pGem : gemsToProcess)
+	{
+		if (!pGem || !pGem->gameObject.IsActive()) continue;
+
+		Vector2 gemPos = pGem->transform.GetPosition();
+		float dist = Vector2::Distance(myPos, gemPos);
+
+		// 1. 보석 획득 판정 (Player 주체로 AddTeamExp 호출 및 반납)
+		if (dist <= pickupRange)
+		{
+			// Host 및 싱글플레이어에서만 전역 경험치 변경 (Client는 Host 패킷으로 100% 동기화)
+			if (NetworkManager::GetInstance()->GetRole() != NetRole::CLIENT)
+			{
+				mgr->AddTeamExp(static_cast<float>(pGem->GetExpAmount()));
+			}
+
+			pGem->Despawn();
+			continue;
+		}
+
+		// 2. 자력 반응 반경 진입 처리
+		if (dist <= magnetRange && !pGem->HasTargetPlayer())
+		{
+			pGem->SetTargetPlayer(&gameObject);
+		}
+	}
 }
 
 void Player::OnDestroy()
