@@ -33,6 +33,7 @@ public:
     virtual bool Initialize() override;
     virtual void Release() override;
     virtual void Update(float dt) override;
+    virtual void FixedUpdate(float fixedDt) override;
 
     virtual void OnDrawGUI() override;
 
@@ -89,7 +90,6 @@ private:
 
     // Fixed Tick
     uint32 m_currentTick     = 0;
-    float  m_tickAccumulator = 0.0f;
 
     uint32 m_NextNetID = 1000; 
 

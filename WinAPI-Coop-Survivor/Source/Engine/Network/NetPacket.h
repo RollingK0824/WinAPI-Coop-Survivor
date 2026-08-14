@@ -43,6 +43,7 @@ struct EntitySyncData {
 	Vector2 pos;
 	Vector2 vel;
 	float angle;
+	float hp;
 };
 
 struct HeartbeatPacket

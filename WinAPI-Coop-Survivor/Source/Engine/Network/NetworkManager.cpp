@@ -193,13 +193,13 @@ void NetworkManager::Update(float dt) {
 		}
 	}
 
-	// 3. Fixed Tick Loop (60Hz 고정 주기 패킷 전송)
-	m_tickAccumulator += dt;
-	while (m_tickAccumulator >= FIXED_DT) {
-		m_tickAccumulator -= FIXED_DT;
-		m_currentTick++;
-		TickUpdate();
-	}
+}
+
+void NetworkManager::FixedUpdate(float fixedDt) {
+	if (m_Role == NetRole::NONE) return;
+
+	m_currentTick++;
+	TickUpdate();
 }
 
 void NetworkManager::TickUpdate() {
@@ -248,51 +248,6 @@ void NetworkManager::TickUpdate() {
 			statePacket.randomSeed = RandomManager::GetInstance()->GetSharedSeed();
 			statePacket.gameElapsedTime = TimeManager::GetInstance()->GetGameTime();
 			SendPacket(&statePacket, sizeof(GameStateSyncPacket));
-		}
-
-		// 60Hz 주기로 플레이어 EntityStateSync 브로드캐스트
-		Scene* scene = SceneManager::GetInstance()->GetActiveScene();
-		if (scene) {
-			EntityStateSyncPacket syncPacket;
-			syncPacket.header.type = PacketType::ENTITY_STATE_SYNC;
-			syncPacket.header.size = sizeof(EntityStateSyncPacket);
-			syncPacket.header.tick = m_currentTick;
-			syncPacket.entityCount = 0;
-
-			for (auto* obj : scene->GetGameObjects()) {
-				if (obj && obj->IsActive()) {
-					NetworkIdentity* netIdComp = obj->GetComponent<NetworkIdentity>();
-					// 몬스터 제외, 플레이어 객체만 ENTITY_STATE_SYNC로 동기화 (NetID < 1000)
-					if (netIdComp && netIdComp->GetNetID() > 0 && netIdComp->GetNetID() < 1000) {
-						int idx = syncPacket.entityCount;
-						if (idx >= 32) break;
-
-						syncPacket.entities[idx].netID = netIdComp->GetNetID();
-
-						ColliderComponent* pCollider = obj->GetComponent<ColliderComponent>();
-						if (pCollider && b2Body_IsValid(pCollider->GetBodyId())) {
-							b2Vec2 pos = b2Body_GetPosition(pCollider->GetBodyId());
-							b2Vec2 vel = b2Body_GetLinearVelocity(pCollider->GetBodyId());
-							float angle = b2Rot_GetAngle(b2Body_GetRotation(pCollider->GetBodyId()));
-
-							syncPacket.entities[idx].pos = Vector2(MeterToPixel(pos.x), MeterToPixel(pos.y));
-							syncPacket.entities[idx].vel = Vector2(MeterToPixel(vel.x), MeterToPixel(vel.y));
-							syncPacket.entities[idx].angle = angle;
-						}
-						else {
-							TransformComponent* transform = &obj->transform;
-							syncPacket.entities[idx].pos = transform->GetPosition();
-							syncPacket.entities[idx].vel = Vector2(0.0f, 0.0f);
-							syncPacket.entities[idx].angle = transform->GetRotation().angle;
-						}
-						syncPacket.entityCount++;
-					}
-				}
-			}
-			if (syncPacket.entityCount > 0) {
-				int packetSize = sizeof(PacketHeader) + sizeof(int) + sizeof(EntitySyncData) * syncPacket.entityCount;
-				SendPacket(&syncPacket, packetSize);
-			}
 		}
 	}
 }
