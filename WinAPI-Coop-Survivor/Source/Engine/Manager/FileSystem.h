@@ -1,35 +1,16 @@
-﻿#pragma once
-#include "Engine/Core/Singleton.h"
-#include "nlohmann/json.hpp"
-#include <string>
-#include <fstream>
+#pragma once
 
-class FileSystem : public Singleton<FileSystem>
+namespace FileSystem
 {
-	friend class Singleton<FileSystem>;
-public:
-	std::string GetResourcePath(const std::string& path)
-	{
-		return "Resources/" + path;
-	}
+	bool Exists(const std::string& path);
+	bool CreateDirectoryPath(const std::string& path);
+	bool RemoveFile(const std::string& path);
 
-	bool ReadJson(const std::string& filePath, nlohmann::json& outJson)
-	{
-		std::ifstream file(GetResourcePath(filePath));
-		if (!file.is_open())return false;
+	bool ReadJson(const std::string& filePath, json& outJson);
+	bool WriteJson(const std::string& filePath, const json& inJson);
 
-		file >> outJson;
-		file.close();
-		return true;
-	}
-	bool WriteJson(const std::string& filePath, const nlohmann::json& inJson)
-	{
-		std::ofstream file(GetResourcePath(filePath));
-		if (!file.is_open())return false;
-
-		file << inJson.dump(4);
-		file.close();
-		return true;
-	}
-
-};
+	std::vector<std::string> GetFilesInDirectory(
+		const std::string& dirPath,
+		const std::string& extension,
+		bool recursive = false);
+}

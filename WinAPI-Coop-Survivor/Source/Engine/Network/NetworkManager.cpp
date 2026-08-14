@@ -28,23 +28,36 @@ bool NetworkManager::Initialize() {
 void NetworkManager::Release() {
 	GUISystem::GetInstance()->UnRegisterPanel(this);
 
+	m_bNetworkThreadRunning = false;
+
 	if (m_Socket != INVALID_SOCKET) {
 		// 클라이언트인 경우 종료 알림 전송
 		if (m_Role == NetRole::CLIENT && m_bConnected) {
-			PacketHeader disconnPacket;
-			disconnPacket.type = PacketType::CLIENT_DISCONN;
-			disconnPacket.size = sizeof(PacketHeader);
-			SendPacket(&disconnPacket, sizeof(PacketHeader));
+			ClientDisconnPacket disconnPacket;
+			disconnPacket.header.type = PacketType::CLIENT_DISCONN;
+			disconnPacket.header.size = sizeof(ClientDisconnPacket);
+			disconnPacket.disconnectedNetID = m_MyNetID;
+			SendPacket(&disconnPacket, sizeof(ClientDisconnPacket));
 		}
 
 		closesocket(m_Socket);
 		m_Socket = INVALID_SOCKET;
 	}
+
+	if (m_networkThread.joinable()) {
+		m_networkThread.join();
+	}
+
 	WSACleanup();
 	m_Role = NetRole::NONE;
 	m_bConnected = false;
+	m_networkObjects.clear();
 	m_ConnectedClients.clear();
-	m_InterpolationMap.clear();
+	
+	{
+		std::lock_guard<std::mutex> lock(m_queueMutex);
+		m_incomingPacketQueue.clear();
+	}
 }
 
 bool NetworkManager::StartHost(int port) {
@@ -78,8 +91,7 @@ bool NetworkManager::StartHost(int port) {
 	m_bConnected = true;
 	uint32 newSeed = RandomManager::GetInstance()->GenerateNewSeed();
 	m_ConnectedClients.clear();
-	m_InterpolationMap.clear();
-	m_NextNetID = 1000;
+	m_NextNetID = 2;
 
 	Scene* scene = SceneManager::GetInstance()->GetActiveScene();
 	if (scene) {
@@ -96,6 +108,13 @@ bool NetworkManager::StartHost(int port) {
 	}
 
 	std::cout << "Host started on port " << port << std::endl;
+
+	m_bNetworkThreadRunning = true;
+	if (m_networkThread.joinable()) {
+		m_networkThread.join();
+	}
+	m_networkThread = std::thread(&NetworkManager::NetworkThreadLoop, this);
+
 	return true;
 }
 
@@ -133,7 +152,6 @@ bool NetworkManager::ConnectToHost(const std::string& ip, int port) {
 	m_Role = NetRole::CLIENT;
 	m_bConnected = false;
 	m_connRetryTimer = 0.0f;
-	m_InterpolationMap.clear();
 
 	// Host에 접속 요청 발송
 	PacketHeader connPacket;
@@ -142,6 +160,13 @@ bool NetworkManager::ConnectToHost(const std::string& ip, int port) {
 	SendPacket(&connPacket, sizeof(PacketHeader));
 
 	std::cout << "Sent connection request to Host " << ip << ":" << port << std::endl;
+
+	m_bNetworkThreadRunning = true;
+	if (m_networkThread.joinable()) {
+		m_networkThread.join();
+	}
+	m_networkThread = std::thread(&NetworkManager::NetworkThreadLoop, this);
+
 	return true;
 }
 
@@ -151,6 +176,7 @@ void NetworkManager::Update(float dt) {
 	// 1. 패킷 수신 및 처리
 	ProcessIncomingPackets();
 
+	// 2. 연결 재시도 (미연결 클라이언트)
 	if (m_Role == NetRole::CLIENT && !m_bConnected)
 	{
 		m_connRetryTimer += dt;
@@ -167,98 +193,61 @@ void NetworkManager::Update(float dt) {
 		}
 	}
 
-	// 2. 보간 경과 시간 업데이트
-	for (auto& pair : m_InterpolationMap) {
-		pair.second.elapsed += dt;
+}
+
+void NetworkManager::FixedUpdate(float fixedDt) {
+	if (m_Role == NetRole::NONE) return;
+
+	m_currentTick++;
+	TickUpdate();
+}
+
+void NetworkManager::TickUpdate() {
+	if (m_Role == NetRole::CLIENT && m_bConnected) {
+		// Heartbeat 전송
+		QueryPerformanceCounter(&m_LastHeartbeatSentTick);
+
+		PacketHeader hb;
+		hb.type = PacketType::HEARTBEAT;
+		hb.size = sizeof(PacketHeader);
+		hb.tick = m_currentTick;
+		SendPacket(&hb, sizeof(PacketHeader));
 	}
+	else if (m_Role == NetRole::HOST) {
+		// 클라이언트 타임아웃 검사 (30초 무반응 시 제거)
+		float currentTime = TimeManager::GetInstance()->GetRealTime();
+		for (auto it = m_ConnectedClients.begin(); it != m_ConnectedClients.end();) {
+			if (currentTime - it->second.lastHeartbeatTime > 30.0f) {
+				uint32 deadNetID = it->first;
+				std::cout << "Client (NetID: " << deadNetID << ") timed out." << std::endl;
 
-	// 3. 60Hz 주기로 패킷 전송 (Heartbeat 포함)
-	m_SendTimer += dt;
-	if (m_SendTimer >= m_SendInterval) {
-		m_SendTimer = 0.0f;
+				ClientDisconnPacket disconnPkt{};
+				disconnPkt.header.type = PacketType::CLIENT_DISCONN;
+				disconnPkt.header.size = sizeof(ClientDisconnPacket);
+				disconnPkt.header.tick = m_currentTick;
+				disconnPkt.disconnectedNetID = deadNetID;
+				SendPacket(&disconnPkt, sizeof(ClientDisconnPacket));
 
-		if (m_Role == NetRole::CLIENT && m_bConnected) {
-			// Heartbeat 전송
-			QueryPerformanceCounter(&m_LastHeartbeatSentTick);
-
-			PacketHeader hb;
-			hb.type = PacketType::HEARTBEAT;
-			hb.size = sizeof(PacketHeader);
-			SendPacket(&hb, sizeof(PacketHeader));
+				it = m_ConnectedClients.erase(it);
+			}
+			else {
+				++it;
+			}
 		}
-		else if (m_Role == NetRole::HOST) {
-			// 접속이 오래 끊긴 클라이언트 타임아웃 검사 (5초 간 무반응 시 제거)
-			float currentTime = TimeManager::GetInstance()->GetRealTime();
-			for (auto it = m_ConnectedClients.begin(); it != m_ConnectedClients.end();) {
-				if (currentTime - it->second.lastHeartbeatTime > 5.0f) {
-					std::cout << "Client (NetID: " << it->first << ") timed out." << std::endl;
-					it = m_ConnectedClients.erase(it);
-				}
-				else {
-					++it;
-				}
-			}
 
-			m_stateBroadcastTimer += dt;
-			if (m_stateBroadcastTimer >= 0.5f) {
-				m_stateBroadcastTimer = 0.0f;
+		// 0.5초 주기로 GameStateSync 브로드캐스트
+		m_stateBroadcastTimer += FIXED_DT;
+		if (m_stateBroadcastTimer >= 0.5f) {
+			m_stateBroadcastTimer = 0.0f;
 
-				GameStateSyncPacket statePacket;
-				statePacket.header.type = PacketType::GAME_STATE_SYNC;
-				statePacket.header.size = sizeof(GameStateSyncPacket);
-				statePacket.currentGameState = GameState::PLAYING; // 현재 게임 상태
-				statePacket.randomSeed = RandomManager::GetInstance()->GetSharedSeed();                    // 공유할 Seed
-				statePacket.gameElapsedTime = TimeManager::GetInstance()->GetGameTime();
-				// 연결된 모든 클라이언트에게 전송
-				SendPacket(&statePacket, sizeof(GameStateSyncPacket));
-			}
-
-			// 60Hz 주기로 모든 클라이언트에게 상태 패킷 브로드캐스트
-			Scene* scene = SceneManager::GetInstance()->GetActiveScene();
-			if (scene) {
-				EntityStateSyncPacket syncPacket;
-				syncPacket.header.type = PacketType::ENTITY_STATE_SYNC;
-				syncPacket.header.size = sizeof(EntityStateSyncPacket);
-				syncPacket.entityCount = 0;
-
-				for (auto* obj : scene->GetGameObjects()) {
-					if (obj && obj->IsActive()) {
-						NetworkIdentity* netIdComp = obj->GetComponent<NetworkIdentity>();
-						if (netIdComp && netIdComp->GetNetID() > 0) {
-							int idx = syncPacket.entityCount;
-							if (idx >= 32) break; // 최대 32개 제한
-
-							syncPacket.entities[idx].netID = netIdComp->GetNetID();
-
-							ColliderComponent* pCollider = obj->GetComponent<ColliderComponent>();
-							if (pCollider && b2Body_IsValid(pCollider->GetBodyId())) {
-								b2Vec2 pos = b2Body_GetPosition(pCollider->GetBodyId());
-								b2Vec2 vel = b2Body_GetLinearVelocity(pCollider->GetBodyId());
-								float angle = b2Rot_GetAngle(b2Body_GetRotation(pCollider->GetBodyId()));
-
-								syncPacket.entities[idx].posX = MeterToPixel(pos.x);
-								syncPacket.entities[idx].posY = MeterToPixel(pos.y);
-								syncPacket.entities[idx].velX = MeterToPixel(vel.x);
-								syncPacket.entities[idx].velY = MeterToPixel(vel.y);
-								syncPacket.entities[idx].angle = angle;
-							}
-							else {
-								TransformComponent* transform = &obj->transform;
-								syncPacket.entities[idx].posX = transform->GetPosition().x;
-								syncPacket.entities[idx].posY = transform->GetPosition().y;
-								syncPacket.entities[idx].velX = 0;
-								syncPacket.entities[idx].velY = 0;
-								syncPacket.entities[idx].angle = transform->GetRotation().angle;
-							}
-							syncPacket.entityCount++;
-						}
-					}
-				}
-				if (syncPacket.entityCount > 0) {
-					int packetSize = sizeof(PacketHeader) + sizeof(int) + sizeof(EntitySyncData) * syncPacket.entityCount;
-					SendPacket(&syncPacket, packetSize);
-				}
-			}
+			GameStateSyncPacket statePacket;
+			statePacket.header.type = PacketType::GAME_STATE_SYNC;
+			statePacket.header.size = sizeof(GameStateSyncPacket);
+			statePacket.header.tick = m_currentTick;
+			statePacket.currentGameState = GameState::PLAYING;
+			statePacket.randomSeed = RandomManager::GetInstance()->GetSharedSeed();
+			statePacket.gameElapsedTime = TimeManager::GetInstance()->GetGameTime();
+			SendPacket(&statePacket, sizeof(GameStateSyncPacket));
 		}
 	}
 }
@@ -328,7 +317,7 @@ void NetworkManager::SendPacket(const void* data, int size, const sockaddr_in* t
 void NetworkManager::SendReliablePacket(const void* data, int size, const sockaddr_in* targetAddr)
 {
 	PacketHeader* header = (PacketHeader*)data;
-	header->sequenceNumber = m_txSequenceNumber++;
+	header->tick = m_currentTick;
 
 	for (int i = 0; i < 3; ++i)
 	{
@@ -336,24 +325,66 @@ void NetworkManager::SendReliablePacket(const void* data, int size, const sockad
 	}
 }
 
-void NetworkManager::ProcessIncomingPackets() {
+void NetworkManager::RegisterNetworkObject(uint32 netID, GameObject* obj)
+{
+	m_networkObjects[netID] = obj;
+}
+
+void NetworkManager::UnRegisterNetworkObject(uint32 netID)
+{
+	m_networkObjects.erase(netID);
+}
+
+GameObject* NetworkManager::GetNetworkObject(uint32 netID)
+{
+	auto it = m_networkObjects.find(netID);
+	if (it != m_networkObjects.end())
+	{
+		return it->second;
+	}
+	return nullptr;
+}
+
+void NetworkManager::NetworkThreadLoop() {
 	char buffer[2048];
 	sockaddr_in senderAddr;
 	int senderAddrLen = sizeof(senderAddr);
 
-	while (true) {
+	while (m_bNetworkThreadRunning) {
+		if (m_Socket == INVALID_SOCKET) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
+			continue;
+		}
+
 		int bytesReceived = recvfrom(m_Socket, buffer, sizeof(buffer), 0, (sockaddr*)&senderAddr, &senderAddrLen);
-		if (bytesReceived == SOCKET_ERROR) {
-			int errorCode = WSAGetLastError();
-			if (errorCode != WSAEWOULDBLOCK) {
-				std::cerr << "recvfrom failed with error: " << errorCode << std::endl;
-			}
-			break; // 더 이상 읽을 데이터가 없음 (또는 에러)
+		if (bytesReceived <= 0 || bytesReceived == SOCKET_ERROR) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
+			continue;
 		}
 
 		if (bytesReceived >= sizeof(PacketHeader)) {
-			HandlePacket(buffer, bytesReceived, senderAddr);
+			RawPacketData rawPacket;
+			rawPacket.senderAddr = senderAddr;
+			rawPacket.size = bytesReceived;
+			rawPacket.buffer.assign(buffer, buffer + bytesReceived);
+
+			{
+				std::lock_guard<std::mutex> lock(m_queueMutex);
+				m_incomingPacketQueue.push_back(std::move(rawPacket));
+			}
 		}
+	}
+}
+
+void NetworkManager::ProcessIncomingPackets() {
+	std::vector<RawPacketData> localQueue;
+	{
+		std::lock_guard<std::mutex> lock(m_queueMutex);
+		localQueue.swap(m_incomingPacketQueue);
+	}
+
+	for (const auto& rawPkt : localQueue) {
+		HandlePacket(rawPkt.buffer.data(), rawPkt.size, rawPkt.senderAddr);
 	}
 }
 
@@ -474,88 +505,34 @@ void NetworkManager::HandlePacket(const char* buffer, int size, const sockaddr_i
 	case PacketType::CLIENT_DISCONN:
 	{
 		if (m_Role != NetRole::HOST) break;
+		const ClientDisconnPacket* disconnPkt = (const ClientDisconnPacket*)buffer;
+		uint32 targetNetID = disconnPkt->disconnectedNetID;
+
 		for (auto it = m_ConnectedClients.begin(); it != m_ConnectedClients.end(); ++it) {
-			if (it->second.address.sin_addr.s_addr == senderAddr.sin_addr.s_addr &&
-				it->second.address.sin_port == senderAddr.sin_port) {
-				std::cout << "Client (NetID: " << it->first << ") disconnected." << std::endl;
+			if (it->first == targetNetID || 
+				(it->second.address.sin_addr.s_addr == senderAddr.sin_addr.s_addr &&
+				 it->second.address.sin_port == senderAddr.sin_port)) {
+				
+				uint32 deadNetID = it->first;
+				std::cout << "Client (NetID: " << deadNetID << ") disconnected." << std::endl;
 				m_ConnectedClients.erase(it);
+
+				// 남아있는 다른 클라이언트들에게 이탈 브로드캐스트
+				ClientDisconnPacket broadcastPkt{};
+				broadcastPkt.header.type = PacketType::CLIENT_DISCONN;
+				broadcastPkt.header.size = sizeof(ClientDisconnPacket);
+				broadcastPkt.disconnectedNetID = deadNetID;
+				SendPacket(&broadcastPkt, sizeof(ClientDisconnPacket));
 				break;
 			}
 		}
 		break;
 	}
 
-	case PacketType::ENTITY_STATE_SYNC:
-	{
-		if (m_Role != NetRole::CLIENT) break;
-		const EntityStateSyncPacket* syncPacket = (const EntityStateSyncPacket*)buffer;
-		for (int i = 0; i < syncPacket->entityCount; ++i)
-		{
-			const EntitySyncData& data = syncPacket->entities[i];
-			if (data.netID != m_MyNetID)
-			{
-				UpdateInterpolationTarget(data.netID, data.posX, data.posY, data.angle);
-			}
-		}
-		break;
-	}
-	case PacketType::GAME_STATE_SYNC:
-	{
-		if (m_Role != NetRole::CLIENT) break;
-		const GameStateSyncPacket* packet = (const GameStateSyncPacket*)buffer;
-		if (RandomManager::GetInstance()->GetSharedSeed() != packet->randomSeed)
-		{
-			RandomManager::GetInstance()->SetSharedSeed(packet->randomSeed);
-		}
-		break;
-	}
+
 	default:
 		break;
 	}
 }
 
-void NetworkManager::UpdateInterpolationTarget(unsigned int netID, float targetX, float targetY, float targetAngle) {
-	auto& data = m_InterpolationMap[netID];
 
-	float currentX = data.targetX;
-	float currentY = data.targetY;
-	float currentAngle = data.targetAngle;
-
-	if (data.elapsed > 0.0f && data.elapsed < data.duration) {
-		float t = data.elapsed / data.duration;
-		currentX = data.startX + (data.targetX - data.startX) * t;
-		currentY = data.startY + (data.targetY - data.startY) * t;
-		currentAngle = data.startAngle + (data.targetAngle - data.startAngle) * t;
-	}
-	else if (data.elapsed == 0.0f && data.startX == 0.0f && data.startY == 0.0f) {
-		currentX = targetX;
-		currentY = targetY;
-		currentAngle = targetAngle;
-	}
-
-	data.startX = currentX;
-	data.startY = currentY;
-	data.startAngle = currentAngle;
-	data.targetX = targetX;
-	data.targetY = targetY;
-	data.targetAngle = targetAngle;
-	data.elapsed = 0.0f;
-	data.duration = m_SendInterval;
-}
-
-bool NetworkManager::GetInterpolatedPosition(unsigned int netID, float& outX, float& outY, float& outAngle) {
-	auto it = m_InterpolationMap.find(netID);
-	if (it == m_InterpolationMap.end()) {
-		return false;
-	}
-
-	const auto& data = it->second;
-	float t = data.elapsed / data.duration;
-	if (t > 1.0f) t = 1.0f;
-	if (t < 0.0f) t = 0.0f;
-
-	outX = data.startX + (data.targetX - data.startX) * t;
-	outY = data.startY + (data.targetY - data.startY) * t;
-	outAngle = data.startAngle + (data.targetAngle - data.startAngle) * t;
-	return true;
-}

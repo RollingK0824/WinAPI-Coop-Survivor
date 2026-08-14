@@ -1,0 +1,362 @@
+{
+    "SceneName": "Title",
+    "GameObjects": [
+        {
+            "Name": "Main Camera",
+            "InstanceID": 5,
+            "IsActive": true,
+            "Components": [
+                {
+                    "Type": "TransformComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Position": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "Rotation": 0.0,
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        }
+                    }
+                },
+                {
+                    "Type": "CameraComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Zoom": 1.0,
+                        "Enable Follow": false,
+                        "Smooth Follow": true,
+                        "Follow Speed": 5.0,
+                        "Use Map Bounds": false,
+                        "Map Bounds": {
+                            "left": 0.0,
+                            "top": 0.0,
+                            "right": 0.0,
+                            "bottom": 0.0
+                        },
+                        "Follow Target": 0
+                    }
+                }
+            ]
+        },
+        {
+            "Name": "TitleBackground",
+            "InstanceID": 11,
+            "IsActive": true,
+            "Components": [
+                {
+                    "Type": "TransformComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Position": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "Rotation": 0.0,
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        }
+                    }
+                },
+                {
+                    "Type": "SpriteRendererComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "RenderType": 0,
+                        "ZOrder": -1000,
+                        "Opacity": 1.0,
+                        "Color": {
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 1.0,
+                            "a": 1.0
+                        },
+                        "SpriteKey": "introBG/introBG.png",
+                        "Size": {
+                            "x": 1920.0,
+                            "y": 1080.0
+                        },
+                        "Pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "Offset": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "FlipX": false,
+                        "FlipY": false
+                    }
+                }
+            ]
+        },
+        {
+            "Name": "TitleSceneController",
+            "InstanceID": 8,
+            "IsActive": true,
+            "Components": [
+                {
+                    "Type": "TransformComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Position": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "Rotation": 0.0,
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        }
+                    }
+                },
+                {
+                    "Type": "TitleSceneController",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Host Button": 15,
+                        "Join Button": 16,
+                        "Exit Button": 17
+                    }
+                }
+            ]
+        },
+        {
+            "Name": "Host_Btn",
+            "InstanceID": 15,
+            "IsActive": true,
+            "Components": [
+                {
+                    "Type": "TransformComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Position": {
+                            "x": 550.0,
+                            "y": 300.0
+                        },
+                        "Rotation": 0.0,
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        }
+                    }
+                },
+                {
+                    "Type": "UIImageComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "RenderType": 256,
+                        "ZOrder": 9999,
+                        "Opacity": 1.0,
+                        "Color": {
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 1.0,
+                            "a": 1.0
+                        },
+                        "SpriteKey": "tilemap_packed.png",
+                        "Size": {
+                            "x": 95.0,
+                            "y": 27.0
+                        },
+                        "Pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "Offset": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "FillAmount": 1.0,
+                        "IsUI": true,
+                        "FlipX": false,
+                        "FlipY": false
+                    }
+                },
+                {
+                    "Type": "UIButtonComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "IsHovered": true
+                    }
+                },
+                {
+                    "Type": "UITextComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "RenderType": 257,
+                        "ZOrder": 9999,
+                        "Opacity": 1.0,
+                        "Color": {
+                            "r": 0.0,
+                            "g": 0.0,
+                            "b": 0.0,
+                            "a": 1.0
+                        },
+                        "Text": "Host",
+                        "FontSize": 14.0
+                    }
+                }
+            ]
+        },
+        {
+            "Name": "Join_Btn",
+            "InstanceID": 16,
+            "IsActive": true,
+            "Components": [
+                {
+                    "Type": "TransformComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Position": {
+                            "x": 550.0,
+                            "y": 400.0
+                        },
+                        "Rotation": 0.0,
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        }
+                    }
+                },
+                {
+                    "Type": "UIImageComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "RenderType": 256,
+                        "ZOrder": 9999,
+                        "Opacity": 1.0,
+                        "Color": {
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 1.0,
+                            "a": 1.0
+                        },
+                        "SpriteKey": "tilemap_packed.png",
+                        "Size": {
+                            "x": 95.0,
+                            "y": 27.0
+                        },
+                        "Pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "Offset": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "FillAmount": 1.0,
+                        "IsUI": true,
+                        "FlipX": false,
+                        "FlipY": false
+                    }
+                },
+                {
+                    "Type": "UIButtonComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "IsHovered": false
+                    }
+                },
+                {
+                    "Type": "UITextComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "RenderType": 257,
+                        "ZOrder": 9999,
+                        "Opacity": 1.0,
+                        "Color": {
+                            "r": 0.0,
+                            "g": 0.0,
+                            "b": 0.0,
+                            "a": 1.0
+                        },
+                        "Text": "Join",
+                        "FontSize": 14.0
+                    }
+                }
+            ]
+        },
+        {
+            "Name": "Exit_Btn",
+            "InstanceID": 17,
+            "IsActive": true,
+            "Components": [
+                {
+                    "Type": "TransformComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Position": {
+                            "x": 550.0,
+                            "y": 500.0
+                        },
+                        "Rotation": 0.0,
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        }
+                    }
+                },
+                {
+                    "Type": "UIImageComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "RenderType": 256,
+                        "ZOrder": 9999,
+                        "Opacity": 1.0,
+                        "Color": {
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 1.0,
+                            "a": 1.0
+                        },
+                        "SpriteKey": "tilemap_packed.png",
+                        "Size": {
+                            "x": 95.0,
+                            "y": 27.0
+                        },
+                        "Pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "Offset": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "FillAmount": 1.0,
+                        "IsUI": true,
+                        "FlipX": false,
+                        "FlipY": false
+                    }
+                },
+                {
+                    "Type": "UIButtonComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "IsHovered": false
+                    }
+                },
+                {
+                    "Type": "UITextComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "RenderType": 257,
+                        "ZOrder": 9999,
+                        "Opacity": 1.0,
+                        "Color": {
+                            "r": 0.0,
+                            "g": 0.0,
+                            "b": 0.0,
+                            "a": 1.0
+                        },
+                        "Text": "Exit",
+                        "FontSize": 14.0
+                    }
+                }
+            ]
+        }
+    ]
+}

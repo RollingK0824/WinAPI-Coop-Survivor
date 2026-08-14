@@ -1,0 +1,16 @@
+{
+    "Type": "SkillSO",
+    "AssetID": 301,
+    "AssetName": "NewSkill",
+    "SkillID": 1,
+    "SkillName": "DefaultSkill",
+    "Category": 0,
+    "Cooldown": 1.0,
+    "Damage": 20.0,
+    "Speed": 600.0,
+    "Range": 800.0,
+    "Duration": 0.5,
+    "PenetrationCount": 1,
+    "ProjectileCount": 1,
+    "PrefabKey": "DefaultProjectile"
+}

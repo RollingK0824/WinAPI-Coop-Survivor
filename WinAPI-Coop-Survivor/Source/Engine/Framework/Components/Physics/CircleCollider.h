@@ -1,24 +1,16 @@
-#pragma once
+﻿#pragma once
 #include "Engine/Framework/Components/Physics/ColliderComponent.h"
 
 class CircleCollider : public ColliderComponent
 {
 public:
-	CircleCollider() = default;
-	virtual ~CircleCollider() = default;
+	CLONEABLE_COMPONENT(CircleCollider)
 
-    virtual void Serialize(json& outJson) const override
-    {
-        ColliderComponent::Serialize(outJson);
-        outJson["Radius"] = m_Radius;
-    }
+	CircleCollider(GameObject* owner, TransformComponent* transform);
+	virtual ~CircleCollider() override = default;
 
-    virtual void Deserialize(const json& inJson) override
-    {
-        ColliderComponent::Deserialize(inJson);
-        if (inJson.contains("Radius")) m_Radius = inJson["Radius"].get<float>();
-        RebuildShape();
-    }
+	virtual void Awake() override;
+	virtual void PostDeserialize(Scene* pScene) override;
 
 	void SetRadius(float radius) 
 	{ 
@@ -26,13 +18,20 @@ public:
 		RebuildShape();
 	}
 
-protected:
-	virtual b2ShapeId CreateShape(b2BodyId bodyId, const b2ShapeDef* shapeDef)override
+	virtual std::string_view GetComponentType() const override
 	{
-		if (m_Radius <= 0.0f)return b2_nullShapeId;
+		return EngineKey::Component::CircleCollider;
+	}
+
+	virtual void DrawDebug() override;
+
+protected:
+	virtual b2ShapeId CreateShape(b2BodyId bodyId, const b2ShapeDef* shapeDef) override
+	{
+		if (m_Radius <= 0.0f) return b2_nullShapeId;
 
 		b2Circle circle;
-		circle.center = b2Vec2{ 0.0f,0.0f };
+		circle.center = b2Vec2{ PixelToMeter(m_offset.x), PixelToMeter(m_offset.y) };
 		circle.radius = PixelToMeter(m_Radius);
 		return b2CreateCircleShape(bodyId, shapeDef, &circle);
 	}

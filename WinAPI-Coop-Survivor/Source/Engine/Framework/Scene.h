@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Engine/Framework/Base/ISystem.h"
 #include "Engine/Framework/Base/IUpdatable.h"
 #include "Engine/Framework/Base/IRenderable.h"
@@ -39,6 +39,14 @@ public:
 
 	void DestroyObjects(GameObject* pObj);
 	void PostFrameCleanUp();
+
+	void ReorderGameObject(GameObject* targetObj, int newIndex);
+	void UpdateGameObjectIndices();
+
+	GameObject* FindGameObjectByName(const std::string& name) const;
+	GameObject* FindGameObjectByInstanceID(uint64 instanceID) const;
+
+	void PostDeserialize();
 
 	const std::vector<GameObject*>& GetGameObjects() const { return m_vGameObjects; }
 

@@ -1,5 +1,6 @@
 #include "Engine/Core/pch.h"
 #include "JsonSerializer.h"
+#include "FileSystem.h"
 #include "Engine/Framework/Scene.h"
 #include "Engine/Framework/GameObject.h"
 #include "Engine/Framework/Base/Component.h"
@@ -7,7 +8,7 @@
 
 bool JsonSerializer::SaveScene(Scene* pScene, const std::string& filePath)
 {
-	if (pScene == nullptr)return false;
+	if (pScene == nullptr) return false;
 
 	json sceneJson;
 	sceneJson[EngineKey::Document::SceneName.data()] = pScene->GetSceneName();
@@ -16,22 +17,13 @@ bool JsonSerializer::SaveScene(Scene* pScene, const std::string& filePath)
 	const auto& gameObjects = pScene->GetGameObjects();
 	for (auto* obj : gameObjects)
 	{
-		if (obj == nullptr || obj->IsDead())continue;
-
+		if (obj == nullptr || obj->IsDead()) continue;
 		sceneJson[EngineKey::Document::GameObjects.data()].push_back(SerializeGameObject(obj));
 	}
 
-	std::ofstream file(filePath);
-	if (!file.is_open())
-	{
-		std::cout << "파일을 저장할 수 없습니다. ->" << filePath << std::endl;
-		return false;
-	}
-
-	file << sceneJson.dump(4);
-	file.close();
-	return true;
+	return FileSystem::WriteJson(filePath, sceneJson);
 }
+
 
 bool JsonSerializer::LoadScene(Scene* pScene, json& sceneJson)
 {
@@ -46,30 +38,17 @@ bool JsonSerializer::LoadScene(Scene* pScene, json& sceneJson)
 			ApplyJsonToGameObject(newObj, objJson);
 		}
 	}
+
+	pScene->PostDeserialize();
+
 	return true;
 }
 
 
-bool JsonSerializer::SavePrefab(GameObject* pObj, const std::string& saveDirectory)
+bool JsonSerializer::SavePrefab(GameObject* pObj, const std::string& filePath)
 {
 	if (pObj == nullptr) return false;
-
-	json prefabJson = SerializeGameObject(pObj);
-
-	std::filesystem::path dirPath = saveDirectory;
-	std::filesystem::path finalPath = dirPath / (pObj->GetName() + ".prefab");
-
-	if (!std::filesystem::exists(dirPath))
-	{
-		std::filesystem::create_directories(dirPath);
-	}
-
-	std::ofstream file(finalPath);
-	if (!file.is_open()) return false;
-
-	file << prefabJson.dump(4);
-	file.close();
-	return true;
+	return FileSystem::WriteJson(filePath, SerializeGameObject(pObj));
 }
 
 GameObject* JsonSerializer::InstantiateFromPrefabData(Scene* pScene, const json& prefabJson)
@@ -80,41 +59,17 @@ GameObject* JsonSerializer::InstantiateFromPrefabData(Scene* pScene, const json&
 
 	ApplyJsonToGameObject(cloneObj, prefabJson);
 
+	cloneObj->PostDeserialize(pScene);
+
 	return cloneObj;
 }
 
 json JsonSerializer::SerializeGameObject(GameObject* pObj)
 {
 	json objJson;
-	objJson[EngineKey::Property::Name.data()] = pObj->GetName();
-	objJson[EngineKey::Property::IsActive.data()] = pObj->IsActive();
-	objJson[EngineKey::Property::Components.data()] = std::vector<json>();
-
-	json transformJson;
-	std::string trName = pObj->transform.GetComponentType().data();
-	if (trName.empty())trName = EngineKey::Component::Trnasform.data();
-
-	transformJson[EngineKey::Property::Type.data()] = trName;
-
-	json transformData;
-	pObj->transform.Serialize(transformData);
-	transformJson[EngineKey::Property::Data.data()] = transformData;
-
-	objJson[EngineKey::Property::Components.data()].push_back(transformJson);
-
-	const auto& components = pObj->GetComponents();
-	for (auto* comp : components)
+	if (pObj != nullptr)
 	{
-		if (comp == nullptr)continue;
-
-		json compJson;
-		compJson[EngineKey::Property::Type.data()] = comp->GetComponentType();
-
-		json compData;
-		comp->Serialize(compData);
-		compJson[EngineKey::Property::Data.data()] = compData;
-
-		objJson[EngineKey::Property::Components.data()].push_back(compJson);
+		pObj->Serialize(objJson);
 	}
 	return objJson;
 }
@@ -123,19 +78,17 @@ void JsonSerializer::ApplyJsonToGameObject(GameObject* pObj, const json& objJson
 {
 	if (pObj == nullptr || objJson.empty()) return;
 
-	if (objJson.contains(EngineKey::Property::IsActive.data()))
-	{
-		pObj->SetActive(objJson[EngineKey::Property::IsActive.data()].get<bool>());
-	}
-	if (objJson.contains(EngineKey::Property::Name.data()))
-	{
-		pObj->SetName(objJson[EngineKey::Property::Name.data()].get<std::string>());
-	}
+	pObj->Deserialize(objJson);
 
 	if (objJson.contains(EngineKey::Property::Components.data()))
 	{
 		for (const auto& compJson : objJson[EngineKey::Property::Components.data()])
 		{
+			if (!compJson.contains(EngineKey::Property::Type.data()) || !compJson.contains(EngineKey::Property::Data.data()))
+			{
+				continue;
+			}
+
 			std::string type = compJson[EngineKey::Property::Type.data()].get<std::string>();
 			json data = compJson[EngineKey::Property::Data.data()];
 

@@ -15,12 +15,14 @@ public:
 	virtual void Render() override;
 
 	virtual void DrawBitmap(ID2D1RenderTarget* pRT, const RenderCommand& cmd);
+	virtual void DrawTextString(ID2D1RenderTarget* pRT, const RenderCommand& cmd, ID2D1SolidColorBrush* pBrush);
+	virtual void DrawRect(ID2D1RenderTarget* pRT, const RenderCommand& cmd, ID2D1SolidColorBrush* pBrush);
+
 	virtual void DrawDebugRect(ID2D1RenderTarget* pRT, const RenderCommand& cmd, ID2D1SolidColorBrush* pBrush);
 	virtual void DrawDebugCircle(ID2D1RenderTarget* pRT, const RenderCommand& cmd, ID2D1SolidColorBrush* pBrush);
 	virtual void DrawDebugLine(ID2D1RenderTarget* pRT, const RenderCommand& cmd, ID2D1SolidColorBrush* pBrush);
 	virtual void DrawDebugText(ID2D1RenderTarget* pRT, const RenderCommand& cmd, ID2D1SolidColorBrush* pBrush);
 
-	// 객체가 그리기 요청할 함수
 	void SubmitCommand(const RenderCommand& command);
 
 private:

@@ -1,0 +1,156 @@
+{
+  "frames": [
+    {
+      "filename": "Character0.png",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      }
+    },
+    {
+      "filename": "Character1.png",
+      "frame": {
+        "x": 16,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      }
+    },
+    {
+      "filename": "Character2.png",
+      "frame": {
+        "x": 32,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      }
+    },
+    {
+      "filename": "Character3.png",
+      "frame": {
+        "x": 48,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      }
+    },
+    {
+      "filename": "Character4.png",
+      "frame": {
+        "x": 64,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      }
+    },
+    {
+      "filename": "Character5.png",
+      "frame": {
+        "x": 80,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      }
+    }
+  ],
+  "meta": {
+    "app": "https://www.codeandweb.com/texturepacker",
+    "version": "1.0",
+    "image": "Characeter_Green.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 96,
+      "h": 16
+    },
+    "scale": "1",
+    "smartupdate": "$TexturePacker:SmartUpdate:a532618d6b2507120412d830bbd1f14e:4173d6b156ff96d0b21feef16a5f583d:75039bb9e0e1cc545fdf6fbea126be44$",
+    "custom_clips": [
+      {
+        "name": "Green_Player_Run",
+        "frameRate": 0.1,
+        "isLoop": true,
+        "frames": [ "Character0.png", "Character1.png", "Character2.png", "Character3.png", "Character4.png" ]
+      },
+      {
+        "name": "Green_Player_Die",
+        "frameRate": 1,
+        "isLoop": false,
+        "frames": [ "Character5.png" ]
+      }
+    ]
+  }
+}

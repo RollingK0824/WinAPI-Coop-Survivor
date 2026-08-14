@@ -164,6 +164,7 @@
     <ClInclude Include="Source\Engine\Editor\Panels\InspectorPanel.h" />
     <ClInclude Include="Source\Engine\Editor\Panels\MainMenuBarPanel.h" />
     <ClInclude Include="Source\Engine\Framework\Components\Core\CameraComponent.h" />
+    <ClInclude Include="Source\Engine\Framework\Components\Render\SpriteRendererComponent.h" />
     <ClInclude Include="Source\Engine\Framework\Components\UI\DebugHUDComponent.h" />
     <ClInclude Include="Source\Engine\Framework\Components\UI\HUDPresenter.h" />
     <ClInclude Include="Source\Engine\Framework\Components\UI\UIButtonComponent.h" />
@@ -189,7 +190,7 @@
     <ClInclude Include="Source\Engine\Framework\Components\Physics\CircleCollider.h" />
     <ClInclude Include="Source\Engine\Framework\Components\Core\ScriptComponent.h" />
     <ClInclude Include="Source\Engine\Framework\Components\Physics\ColliderComponent.h" />
-    <ClInclude Include="Source\Engine\Framework\Components\Render\RenderComponent.h" />
+    <ClInclude Include="Source\Engine\Framework\Components\Core\RenderComponent.h" />
     <ClInclude Include="Source\Engine\Framework\Components\Core\TransformComponent.h" />
     <ClInclude Include="Source\Engine\Framework\Base\Component.h" />
     <ClInclude Include="Source\Engine\Framework\GameObject.h" />
@@ -200,6 +201,7 @@
     <ClInclude Include="Source\Engine\Framework\Base\IRenderable.h" />
     <ClInclude Include="Source\Engine\Framework\Base\ISystem.h" />
     <ClInclude Include="Source\Engine\Framework\Base\IUpdatable.h" />
+    <ClInclude Include="Source\Game\Interface\IDamageable.h" />
     <ClInclude Include="Source\Engine\Renderer\RenderGizmo.h" />
     <ClInclude Include="Source\Engine\Renderer\RenderSystem.h" />
     <ClInclude Include="Source\Engine\Core\EngineKernel.h" />
@@ -213,6 +215,27 @@
     <ClInclude Include="Source\Engine\Manager\ResourceManager.h" />
     <ClInclude Include="Source\Engine\Renderer\Sprite.h" />
     <ClInclude Include="Source\Engine\Framework\Components\UI\UIImageComponent.h" />
+    <ClInclude Include="Source\Game\Item\ExpGem.h" />
+    <ClInclude Include="Source\Game\Manager\InGameManager.h" />
+    <ClInclude Include="Source\Game\Player\Controller.h" />
+    <ClInclude Include="Source\Game\Player\LocalController.h" />
+    <ClInclude Include="Source\Game\Player\NetworkController.h" />
+    <ClInclude Include="Source\Game\Player\Player.h" />
+    <ClInclude Include="Source\Game\Scripts\UI\TitleSceneController.h" />
+    <ClInclude Include="Source\Engine\Core\ExposedProperty.h" />
+    <ClInclude Include="Source\Game\UI\InGameSceneController.h" />
+    <ClInclude Include="Source\Game\UI\TitleSceneController.h" />
+    <ClInclude Include="Source\Engine\Framework\Base\ScriptableObject.h" />
+    <ClInclude Include="Source\Engine\Core\ScriptableObjectRegister.h" />
+    <ClInclude Include="Source\Game\Monster\MonsterSO.h" />
+    <ClInclude Include="Source\Game\Skill\SkillSO.h" />
+    <ClInclude Include="Source\Game\Skill\ProjectileComponent.h" />
+    <ClInclude Include="Source\Game\Skill\AuraComponent.h" />
+    <ClInclude Include="Source\Game\Skill\AoEComponent.h" />
+    <ClInclude Include="Source\Game\Skill\SkillComponent.h" />
+    <ClInclude Include="Source\Game\Monster\Monster.h" />
+    <ClInclude Include="Source\Game\Monster\MonsterSpawner.h" />
+    <ClInclude Include="Source\Engine\Manager\DataManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Engine\Editor\Panels\ContentBrowserPanel.cpp" />
@@ -221,6 +244,7 @@
     <ClCompile Include="Source\Engine\Editor\Panels\InspectorPanel.cpp" />
     <ClCompile Include="Source\Engine\Editor\Panels\MainMenuBarPanel.cpp" />
     <ClCompile Include="Source\Engine\Framework\Components\Core\CameraComponent.cpp" />
+    <ClCompile Include="Source\Engine\Framework\Components\Render\SpriteRendererComponent.cpp" />
     <ClCompile Include="Source\Engine\Framework\Components\UI\DebugHUDComponent.cpp" />
     <ClCompile Include="Source\Engine\Framework\Components\UI\HUDPresenter.cpp" />
     <ClCompile Include="Source\Engine\Framework\Components\Network\NetworkIdentity.cpp" />
@@ -245,7 +269,7 @@
     <ClCompile Include="Source\Engine\Core\Util.cpp" />
     <ClCompile Include="Source\Engine\Framework\Components\Render\AnimatorComponent.cpp" />
     <ClCompile Include="Source\Engine\Manager\JsonSerializer.cpp" />
-    <ClCompile Include="Source\Engine\Framework\Components\Render\RenderComponent.cpp" />
+    <ClCompile Include="Source\Engine\Framework\Components\Core\RenderComponent.cpp" />
     <ClCompile Include="Source\Engine\Framework\Components\Core\ScriptComponent.cpp" />
     <ClCompile Include="Source\Engine\Framework\GameObject.cpp" />
     <ClCompile Include="Source\Engine\Manager\SceneManager.cpp" />
@@ -260,6 +284,25 @@
     <ClCompile Include="Source\Engine\Manager\TimeManager.cpp" />
     <ClCompile Include="Source\Engine\Manager\ResourceManager.cpp" />
     <ClCompile Include="Source\Engine\Framework\Components\UI\UIImageComponent.cpp" />
+    <ClCompile Include="Source\Engine\Framework\Base\Component.cpp" />
+    <ClCompile Include="Source\Game\Item\ExpGem.cpp" />
+    <ClCompile Include="Source\Game\Manager\InGameManager.cpp" />
+    <ClCompile Include="Source\Game\Player\LocalController.cpp" />
+    <ClCompile Include="Source\Game\Player\NetworkController.cpp" />
+    <ClCompile Include="Source\Game\Player\Player.cpp" />
+    <ClCompile Include="Source\Game\UI\InGameSceneController.cpp" />
+    <ClCompile Include="Source\Game\UI\TitleSceneController.cpp" />
+    <ClCompile Include="Source\Engine\Framework\Base\ScriptableObject.cpp" />
+    <ClCompile Include="Source\Game\Monster\MonsterSO.cpp" />
+    <ClCompile Include="Source\Game\Skill\SkillSO.cpp" />
+    <ClCompile Include="Source\Game\Skill\ProjectileComponent.cpp" />
+    <ClCompile Include="Source\Game\Skill\AuraComponent.cpp" />
+    <ClCompile Include="Source\Game\Skill\AoEComponent.cpp" />
+    <ClCompile Include="Source\Game\Skill\SkillComponent.cpp" />
+    <ClCompile Include="Source\Game\Monster\Monster.cpp" />
+    <ClCompile Include="Source\Game\Monster\MonsterSpawner.cpp" />
+    <ClCompile Include="Source\Engine\Manager\DataManager.cpp" />
+    <ClCompile Include="Source\Engine\Manager\FileSystem.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="imgui.ini" />

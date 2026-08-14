@@ -1,4 +1,4 @@
-#include "Engine/Core/pch.h"
+﻿#include "Engine/Core/pch.h"
 #include "RandomManager.h"
 
 bool RandomManager::Initialize()

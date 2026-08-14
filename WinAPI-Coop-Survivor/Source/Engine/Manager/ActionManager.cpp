@@ -1,4 +1,4 @@
-#include "Engine/Core/pch.h"
+﻿#include "Engine/Core/pch.h"
 #include "ActionManager.h"
 #include "Engine/Manager/InputManager.h"
 
@@ -47,7 +47,8 @@ bool ActionManager::GetActionDown(const std::string& actionName) const
         bool modifiersHeld = true;
         for (int modKey : binding.modifierKeys)
         {
-            if (!pInput->GetKeyPress(modKey))
+            bool isModDown = pInput->GetKeyDown(modKey) || pInput->GetKeyPress(modKey);
+            if (!isModDown)
             {
                 modifiersHeld = false;
                 break;

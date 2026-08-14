@@ -1,4 +1,4 @@
-#include "Engine/Core/pch.h"
+﻿#include "Engine/Core/pch.h"
 #include "EngineKernel.h"
 #include "Engine/Manager/TimeManager.h"
 #include "Engine/Framework/base/ISystem.h"
@@ -37,9 +37,7 @@ void EngineKernel::Release()
 void EngineKernel::ProcessFrame()
 {
 	TimeManager* pTime = TimeManager::GetInstance();
-
-	pTime->Update(0.0f);
-
+	
 	float dt = pTime->GetDeltaTime();
 	float fixedDt = pTime->GetFixedDeltaTime();
 

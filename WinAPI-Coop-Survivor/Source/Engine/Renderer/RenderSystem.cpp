@@ -26,10 +26,12 @@ void RenderSystem::Render()
 {
 	if (m_commands.empty())return;
 
-	// zOrder 기준으로 오름차순 정렬
-	std::sort(m_commands.begin(), m_commands.end(),
+	// zOrder 오름차순, 동일 zOrder일 경우 position.y 오름차순 (2D Top-down Y-Sorting & 안정 정렬)
+	std::stable_sort(m_commands.begin(), m_commands.end(),
 		[](const RenderCommand& a, const RenderCommand& b) {
-			return a.zOrder < b.zOrder;
+			if (a.zOrder != b.zOrder)
+				return a.zOrder < b.zOrder;
+			return a.position.y < b.position.y;
 		});
 
 	ID2D1RenderTarget* pRT = GraphicManager::GetInstance()->GetRenderTarget();
@@ -53,6 +55,8 @@ void RenderSystem::Render()
 
 		switch (cmd.type)
 		{
+		case RenderType::TEXT: DrawTextString(pRT, cmd, pBrush); break;
+		case RenderType::RECT: DrawRect(pRT, cmd, pBrush); break;
 		case RenderType::DEBUG_RECT: DrawDebugRect(pRT, cmd, pBrush); break;
 		case RenderType::DEBUG_CIRCLE:DrawDebugCircle(pRT, cmd, pBrush); break;
 		case RenderType::Debug_LINE:DrawDebugLine(pRT, cmd, pBrush); break;
@@ -70,45 +74,170 @@ void RenderSystem::Render()
 
 void RenderSystem::DrawBitmap(ID2D1RenderTarget* pRT, const RenderCommand& cmd)
 {
-	if (!cmd.bitmap.pTexture) return;
+	const Sprite& sprite = cmd.bitmap.sprite;
+	if (!sprite.pTexture)
+	{
+		// 텍스처가 없는 단색 UI Image 폴백 렌더링
+		float renderW = cmd.bitmap.size.x;
+		float renderH = cmd.bitmap.size.y;
+		if (renderW <= 0.0f || renderH <= 0.0f) return;
 
-	float srcWidth = cmd.srcRect.right - cmd.srcRect.left;
-	float srcHeight = cmd.srcRect.bottom - cmd.srcRect.top;
+		float fill = cmd.bitmap.fillAmount;
+		if (fill <= 0.0f) return;
+		renderW *= fill;
 
-	float origW = (cmd.bitmap.originalWidth > 0.0f) ? cmd.bitmap.originalWidth : srcWidth;
-	float origH = (cmd.bitmap.originalHeight > 0.0f) ? cmd.bitmap.originalHeight : srcHeight;
+		D2D1_POINT_2F pivot = sprite.pivot;
+		float left = -renderW * pivot.x + sprite.offset.x;
+		float top = -renderH * pivot.y + sprite.offset.y;
 
-	pRT->SetTransform(CalculateSRTMatrix(cmd, origW, origH));
+		D2D1_RECT_F destRect = D2D1::RectF(left, top, left + renderW, top + renderH);
+
+		pRT->SetTransform(CalculateSRTMatrix(cmd, renderW, renderH));
+
+		ID2D1SolidColorBrush* pBrush = nullptr;
+		pRT->CreateSolidColorBrush(cmd.color, &pBrush);
+		if (pBrush)
+		{
+			pRT->FillRectangle(destRect, pBrush);
+			pBrush->Release();
+		}
+		return;
+	}
+
+	float srcWidth = sprite.srcRect.right - sprite.srcRect.left;
+	float srcHeight = sprite.srcRect.bottom - sprite.srcRect.top;
+	if (srcWidth <= 0.0f || srcHeight <= 0.0f) return;
+
+	float renderW = (cmd.bitmap.size.x > 0.0f) ? cmd.bitmap.size.x : srcWidth;
+	float renderH = (cmd.bitmap.size.y > 0.0f) ? cmd.bitmap.size.y : srcHeight;
+
+	// fillAmount 적용 (0.0~1.0, Left 방향 클리핑)
+	float fill = cmd.bitmap.fillAmount;
+	if (fill <= 0.0f) return;
+	if (fill < 1.0f)
+	{
+		renderW *= fill;
+	}
+
+	D2D1_POINT_2F pivot = sprite.pivot;
+
+	float left = -renderW * pivot.x + sprite.offset.x;
+	float top = -renderH * pivot.y + sprite.offset.y;
 
 	D2D1_RECT_F destRect = D2D1::RectF(
-		cmd.bitmap.offset.x,
-		cmd.bitmap.offset.y,
-		cmd.bitmap.offset.x + srcWidth,
-		cmd.bitmap.offset.y + srcHeight);
-
-	// 최종 렌더 타겟에 스프라이트 드로우 명령 하달
-	pRT->DrawBitmap(
-		cmd.bitmap.pTexture,
-		destRect,
-		cmd.bitmap.opacity, // 알파 브렌딩 투명도 수치 적용
-		D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, // 픽셀 보간 모드 설정
-		&cmd.srcRect
+		left,
+		top,
+		left + renderW,
+		top + renderH
 	);
+
+	// fillAmount만큼 srcRect의 오른쪽도 잘라냄 (텍스처 늘어남 방지)
+	D2D1_RECT_F clippedSrcRect = sprite.srcRect;
+	if (fill < 1.0f)
+	{
+		clippedSrcRect.right = sprite.srcRect.left + srcWidth * fill;
+	}
+
+	pRT->SetTransform(CalculateSRTMatrix(cmd, renderW, renderH));
+
+	pRT->DrawBitmap(
+		sprite.pTexture,
+		destRect,
+		cmd.bitmap.opacity,
+		D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
+		&clippedSrcRect
+	);
+}
+
+void RenderSystem::DrawTextString(ID2D1RenderTarget* pRT, const RenderCommand& cmd, ID2D1SolidColorBrush* pBrush)
+{
+	if (cmd.text.pText.empty()) return;
+	IDWriteFactory* pWriteFactory = GraphicManager::GetInstance()->GetWriteFactory();
+	if (!pWriteFactory) return;
+	IDWriteTextFormat* pTextFormat = nullptr;
+	HRESULT hr = pWriteFactory->CreateTextFormat(
+		L"맑은 고딕",
+		nullptr,
+		DWRITE_FONT_WEIGHT_NORMAL,
+		DWRITE_FONT_STYLE_NORMAL,
+		DWRITE_FONT_STRETCH_NORMAL,
+		cmd.text.fontSize,
+		L"ko-KR",
+		&pTextFormat
+	);
+	if (SUCCEEDED(hr) && pTextFormat)
+	{
+		if (cmd.pivot.x == 0.0f)
+			pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
+		else if (cmd.pivot.x == 1.0f)
+			pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
+		else
+			pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+
+		if (cmd.pivot.y == 0.0f)
+			pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
+		else if (cmd.pivot.y == 1.0f)
+			pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_FAR);
+		else
+			pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+
+		float width = (cmd.srcRect.right > cmd.srcRect.left) ? (cmd.srcRect.right - cmd.srcRect.left) : 300.0f;
+		float height = (cmd.srcRect.bottom > cmd.srcRect.top) ? (cmd.srcRect.bottom - cmd.srcRect.top) : 100.0f;
+
+		pRT->SetTransform(CalculateSRTMatrix(cmd, width, height));
+
+		float left = -width * cmd.pivot.x;
+		float top = -height * cmd.pivot.y;
+		D2D1_RECT_F layoutRect = D2D1::RectF(left, top, left + width, top + height);
+
+		pRT->DrawTextW(
+			cmd.text.pText.data(),
+			static_cast<UINT32>(cmd.text.pText.length()),
+			pTextFormat,
+			layoutRect,
+			pBrush
+		);
+		pTextFormat->Release();
+	}
+}
+
+void RenderSystem::DrawRect(ID2D1RenderTarget* pRT, const RenderCommand& cmd, ID2D1SolidColorBrush* pBrush)
+{
+	float width = cmd.srcRect.right - cmd.srcRect.left;
+	float height = cmd.srcRect.bottom - cmd.srcRect.top;
+	if (width <= 0.0f) width = 100.0f;
+	if (height <= 0.0f) height = 100.0f;
+
+	pRT->SetTransform(CalculateSRTMatrix(cmd, width, height));
+
+	float left = -width * cmd.pivot.x;
+	float top = -height * cmd.pivot.y;
+	D2D1_RECT_F drawRect = D2D1::RectF(left, top, left + width, top + height);
+
+	if (cmd.shape.isFilled)
+	{
+		pRT->FillRectangle(drawRect, pBrush);
+	}
+	else
+	{
+		pRT->DrawRectangle(drawRect, pBrush, 1.0f);
+	}
 }
 
 void RenderSystem::DrawDebugRect(ID2D1RenderTarget* pRT, const RenderCommand& cmd, ID2D1SolidColorBrush* pBrush)
 {
 	float width = cmd.srcRect.right - cmd.srcRect.left;
 	float height = cmd.srcRect.bottom - cmd.srcRect.top;
+	if (width <= 0.0f) width = 100.0f;
+	if (height <= 0.0f) height = 100.0f;
 
 	pRT->SetTransform(CalculateSRTMatrix(cmd, width, height));
 
-	D2D1_RECT_F drawRect = D2D1::RectF(0.0f, 0.0f, width, height);
+	float left = -width * cmd.pivot.x;
+	float top = -height * cmd.pivot.y;
+	D2D1_RECT_F drawRect = D2D1::RectF(left, top, left + width, top + height);
 
-	if (cmd.shape.isFilled)
-		pRT->FillRectangle(drawRect, pBrush);
-	else
-		pRT->DrawRectangle(drawRect, pBrush);
+	pRT->DrawRectangle(drawRect, pBrush, 1.0f);
 }
 
 void RenderSystem::DrawDebugCircle(ID2D1RenderTarget* pRT, const RenderCommand& cmd, ID2D1SolidColorBrush* pBrush)
@@ -192,12 +321,10 @@ D2D1_MATRIX_3X2_F RenderSystem::CalculateSRTMatrix(const RenderCommand& cmd, flo
 	float scaleX = flipX ? -cmd.scaleX : cmd.scaleX;
 	float scaleY = flipY ? -cmd.scaleY : cmd.scaleY;
 
-	D2D1_POINT_2F localCenter = D2D1::Point2F(width * cmd.pivot.x, height * cmd.pivot.y);
-
 	D2D1_MATRIX_3X2_F worldMatrix =
-		D2D1::Matrix3x2F::Scale(scaleX, scaleY, localCenter) *
-		D2D1::Matrix3x2F::Rotation(cmd.rotation, localCenter) *
-		D2D1::Matrix3x2F::Translation(cmd.position.x - localCenter.x, cmd.position.y - localCenter.y);
+		D2D1::Matrix3x2F::Scale(scaleX, scaleY) *
+		D2D1::Matrix3x2F::Rotation(cmd.rotation) *
+		D2D1::Matrix3x2F::Translation(cmd.position.x, cmd.position.y);
 
 	if (cmd.isUI)
 	{

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 class Scene;
 class GameObject;
@@ -12,7 +12,7 @@ public:
 
 	static void RegisterComponentFactory(const std::string& typeName, std::function<Component* (GameObject*)> factory);
 
-	static bool SavePrefab(GameObject* pObj, const std::string& saveDirectory);
+	static bool SavePrefab(GameObject* pObj, const std::string& filePath);
 
 	static GameObject* InstantiateFromPrefabData(Scene* pScene, const json& prefabJson);
 

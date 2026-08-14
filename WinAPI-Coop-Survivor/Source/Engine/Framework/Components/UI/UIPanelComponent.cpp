@@ -1,40 +1,52 @@
+﻿// Source/Engine/Framework/Components/UI/UIPanelComponent.cpp
 #include "Engine/Core/pch.h"
 #include "UIPanelComponent.h"
 #include "Engine/Core/ComponentRegister.h"
-#include "Engine/Framework/GameObject.h"
-#include "Engine/Renderer/RenderCommand.h"
+#include "Engine/Manager/ResourceManager.h"
 
 static ComponentRegistrar<UIPanelComponent> registrar(EngineKey::Component::UIPanelComponent.data());
 
-UIPanelComponent::UIPanelComponent(GameObject* owner, TransformComponent* transform):Component(owner,transform)
+UIPanelComponent::UIPanelComponent(GameObject* owner, TransformComponent* transform)
+	: RenderComponent(owner, transform)
 {
+	m_RenderCommand.type = RenderType::RECT;
+	m_RenderCommand.isUI = true;
+	m_RenderCommand.zOrder = 9999;
+	m_RenderCommand.color = D2D1::ColorF(0.0f, 0.0f, 0.0f, 0.6f);
+
+	ExposeTexture("SpriteKey", &m_spriteKey);
+	ExposeVariable("Size", &m_size);
+	ExposeVariable("RenderBackground", &m_bRenderBackground);
 }
 
-void UIPanelComponent::AddChildUI(GameObject* pChildUI)
+void UIPanelComponent::SetSpriteKey(const std::wstring& spriteKey)
 {
-	if (pChildUI)
+	m_spriteKey = spriteKey;
+	const Sprite* pSprite = ResourceManager::GetInstance()->GetSprite(spriteKey);
+	if (pSprite != nullptr && pSprite->pTexture != nullptr)
 	{
-		m_vChildUIObjects.push_back(pChildUI);
+		m_RenderCommand.type = RenderType::BITMAP;
+		m_RenderCommand.isUI = true;
+		m_RenderCommand.bitmap.sprite = *pSprite;
+	}
+	else
+	{
+		m_RenderCommand.type = RenderType::RECT;
+		m_RenderCommand.isUI = true;
 	}
 }
 
-void UIPanelComponent::RenderUI()
+void UIPanelComponent::PostDeserialize(Scene* pScene)
 {
+	RenderComponent::PostDeserialize(pScene);
 
-}
-
-void UIPanelComponent::OnEnable()
-{
-	for (auto* child : m_vChildUIObjects)
+	m_RenderCommand.isUI = true;
+	if (!m_spriteKey.empty())
 	{
-		if (child) child->SetActive(true);
+		SetSpriteKey(m_spriteKey);
 	}
-}
-
-void UIPanelComponent::OnDisable()
-{
-	for (auto* child : m_vChildUIObjects)
+	else
 	{
-		if (child) child->SetActive(false);
+		m_RenderCommand.type = RenderType::RECT;
 	}
 }

@@ -1,4 +1,4 @@
-#include "Engine/Core/pch.h"
+﻿#include "Engine/Core/pch.h"
 #include "Scene.h"
 #include "Engine/Core/EngineKernel.h"
 #include "Engine/Manager/JsonSerializer.h"
@@ -6,7 +6,7 @@
 #include "Engine/Framework/GameObject.h"
 #include "Engine/Framework/Base/Component.h"
 #include "Engine/Framework/Components/Core/ScriptComponent.h"
-#include "Engine/Framework/Components/Render/RenderComponent.h"
+#include "Engine/Framework/Components/Core/RenderComponent.h"
 #include "Engine/Framework/Components/Core/TransformComponent.h"
 
 Scene::~Scene()
@@ -75,7 +75,7 @@ void Scene::Render()
 {
 	for (auto* renderComp : m_vRenderComponents)
 	{
-		if(renderComp == nullptr || !renderComp->IsEnabled() ||!renderComp->gameObject.IsActive()) continue;
+		if (renderComp == nullptr || !renderComp->IsEnabled() || !renderComp->gameObject.IsActive()) continue;
 
 		RenderCommand cmd = renderComp->GetRenderCommand();
 
@@ -113,8 +113,6 @@ bool Scene::Load(const std::string& filePath)
 GameObject* Scene::CreateGameObject()
 {
 	GameObject* newObj = new GameObject(this);
-	//newObj->SetSceneIndex(m_vGameObjects.size());
-	//m_vGameObjects.push_back(newObj);
 	m_vCreationQueue.push_back(newObj);
 	return newObj;
 }
@@ -122,9 +120,6 @@ GameObject* Scene::CreateGameObject()
 GameObject* Scene::CreateGameObject(const std::string& objName)
 {
 	GameObject* newObj = new GameObject(this);
-	/*newObj->SetSceneIndex(m_vGameObjects.size());
-	newObj->SetName(objName);
-	m_vGameObjects.push_back(newObj);*/
 	newObj->SetName(objName);
 	m_vCreationQueue.push_back(newObj);
 	return newObj;
@@ -149,7 +144,7 @@ void Scene::OnComponentAdded(Component* pComponent)
 
 	m_vComponentCreationQueue.push_back(pComponent);
 }
- 
+
 void Scene::UnregisterScriptComponent(ScriptComponent* pComp)
 {
 	if (m_vUpdatableComponents.empty() || pComp == nullptr) return;
@@ -215,52 +210,81 @@ void Scene::DestroyObjects(GameObject* pObj)
 
 void Scene::PostFrameCleanUp()
 {
-	if (!m_vCreationQueue.empty())
+	int iterationCount = 0;
+	constexpr int MAX_CREATION_ITERATIONS = 100;
+
+	while (!m_vCreationQueue.empty() || !m_vComponentCreationQueue.empty())
 	{
-		for (GameObject* pObj : m_vCreationQueue)
+		if (++iterationCount > MAX_CREATION_ITERATIONS)
 		{
-			if (pObj == nullptr)continue;
-			pObj->SetSceneIndex(m_vGameObjects.size());
-			m_vGameObjects.push_back(pObj);
+			break;
 		}
-		m_vCreationQueue.clear();
-	}
 
-	if (!m_vComponentCreationQueue.empty())
-	{
-		for (Component* pComp : m_vComponentCreationQueue)
+		if (!m_vCreationQueue.empty())
 		{
-			if (pComp == nullptr)continue;
+			std::vector<GameObject*> tempObjQueue;
+			tempObjQueue.swap(m_vCreationQueue);
 
-
-			if (EngineKernel::GetInstance()->GetPlayState() == EnginePlayState::Play)
+			for (GameObject* pObj : tempObjQueue)
 			{
-				pComp->Awake();
-				pComp->Start();
-				pComp->OnEnable();
+				if (pObj == nullptr) continue;
+				pObj->SetSceneIndex(m_vGameObjects.size());
+				m_vGameObjects.push_back(pObj);
 			}
-
-			if (auto* updatable = dynamic_cast<ScriptComponent*>(pComp))
-			{
-				pComp->SetSceneVectorIndex(m_vUpdatableComponents.size());
-				m_vUpdatableComponents.push_back(updatable);
-			}
-
-			if (auto* renderComp = dynamic_cast<RenderComponent*>(pComp))
-			{
-				pComp->SetSceneVectorIndex(m_vRenderComponents.size());
-				m_vRenderComponents.push_back(renderComp);
-			}
-
 		}
-		m_vComponentCreationQueue.clear();
+
+		if (!m_vComponentCreationQueue.empty())
+		{
+			std::vector<Component*> tempCompQueue;
+			tempCompQueue.swap(m_vComponentCreationQueue);
+
+			for (Component* pComp : tempCompQueue)
+			{
+				if (pComp == nullptr) continue;
+
+				if (EngineKernel::GetInstance()->GetPlayState() == EnginePlayState::Play)
+				{
+					if (pComp->gameObject.IsActive())
+					{
+						if (!pComp->HasAwoken())
+						{
+							pComp->Awake();
+							pComp->MarkAwoken();
+						}
+
+						if (pComp->IsEnabled())
+						{
+							pComp->OnEnable();
+
+							if (!pComp->HasStarted())
+							{
+								pComp->Start();
+								pComp->MarkStarted();
+							}
+						}
+					}
+				}
+
+				if (auto* updatable = dynamic_cast<ScriptComponent*>(pComp))
+				{
+					pComp->SetSceneVectorIndex(m_vUpdatableComponents.size());
+					m_vUpdatableComponents.push_back(updatable);
+				}
+
+				if (auto* renderComp = dynamic_cast<RenderComponent*>(pComp))
+				{
+					pComp->SetSceneVectorIndex(m_vRenderComponents.size());
+					m_vRenderComponents.push_back(renderComp);
+				}
+			}
+		}
 	}
 
 	if (!m_vDestroyQueue.empty())
 	{
 		for (GameObject* pObj : m_vDestroyQueue)
 		{
-			if (pObj == nullptr)continue;
+			if (pObj == nullptr) continue;
 
 			size_t targetIdx = pObj->GetSceneIndex();
 			size_t lastIdx = m_vGameObjects.size() - 1;
@@ -277,6 +301,76 @@ void Scene::PostFrameCleanUp()
 		}
 
 		m_vDestroyQueue.clear();
+	}
+}
+
+void Scene::ReorderGameObject(GameObject* targetObj, int newIndex)
+{
+	if (!targetObj || newIndex < 0 || newIndex >= (int)m_vGameObjects.size()) return;
+	auto it = std::find(m_vGameObjects.begin(), m_vGameObjects.end(), targetObj);
+	if (it == m_vGameObjects.end()) return;
+	m_vGameObjects.erase(it);
+	m_vGameObjects.insert(m_vGameObjects.begin() + newIndex, targetObj);
+	UpdateGameObjectIndices();
+}
+
+void Scene::UpdateGameObjectIndices()
+{
+	for (size_t i = 0; i < m_vGameObjects.size(); ++i)
+	{
+		if (m_vGameObjects[i])
+		{
+			m_vGameObjects[i]->SetSceneIndex(i);
+		}
+	}
+}
+
+GameObject* Scene::FindGameObjectByName(const std::string& name) const
+{
+	for (GameObject* pObj : m_vGameObjects)
+	{
+		if (pObj != nullptr && pObj->GetName() == name)
+		{
+			return pObj;
+		}
+	}
+	return nullptr;
+}
+
+GameObject* Scene::FindGameObjectByInstanceID(uint64 instanceID) const
+{
+	for (GameObject* pObj : m_vGameObjects)
+	{
+		if (pObj != nullptr && pObj->GetInstanceID() == instanceID)
+		{
+			return pObj;
+		}
+	}
+	for (GameObject* pObj : m_vCreationQueue)
+	{
+		if (pObj != nullptr && pObj->GetInstanceID() == instanceID)
+		{
+			return pObj;
+		}
+	}
+	return nullptr;
+}
+
+void Scene::PostDeserialize()
+{
+	for (GameObject* pObj : m_vGameObjects)
+	{
+		if (pObj != nullptr)
+		{
+			pObj->PostDeserialize(this);
+		}
+	}
+	for (GameObject* pObj : m_vCreationQueue)
+	{
+		if (pObj != nullptr)
+		{
+			pObj->PostDeserialize(this);
+		}
 	}
 }
 

@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "Engine/Core/Singleton.h"
+#include "Engine/Core/Define.h"
 #include "Engine/Framework/Base/ISystem.h"
 #include "Engine/Framework/Base/IUpdatable.h"
 
@@ -21,6 +22,10 @@ public:
 
 	void RegisterCollider(ColliderComponent* pCollider);
 	void UnRegisterCollider(ColliderComponent* pCollider);
+
+	const std::vector<ColliderComponent*>& GetColliders() const { return m_vColliders; }
+
+	std::vector<ColliderComponent*> OverlapAABB(const Vector2& center, float radius, uint32 maskBits = PhysicsLayer::All);
 
 private:
 	PhysicsManager() = default;

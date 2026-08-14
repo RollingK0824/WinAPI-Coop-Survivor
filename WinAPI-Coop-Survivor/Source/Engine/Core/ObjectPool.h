@@ -145,6 +145,11 @@ public:
 		container->GetPool()->Release(obj);
 	}
 
+	bool HasPool(const std::string& key) const
+	{
+		return m_pools.find(key) != m_pools.end();
+	}
+
 	void ClearAll()
 	{
 		for (auto& pair : m_pools)

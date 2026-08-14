@@ -1,4 +1,4 @@
-#include "Engine/Core/pch.h"
+﻿#include "Engine/Core/pch.h"
 #include "Engine/Core/Define.h"
 #include "GameApp.h"
 #include "Engine/Core/EventBus.h"
@@ -11,6 +11,7 @@
 #include "Engine/Manager/SceneManager.h"
 #include "Engine/Manager/ActionManager.h"
 #include "Engine/Manager/PrefabManager.h"
+#include "Engine/Manager/DataManager.h"
 #include "Engine/Manager/CameraManager.h"
 #include "Engine/Manager/DebugManager.h"
 #include "Engine/Network/NetworkManager.h"
@@ -102,7 +103,15 @@ bool GameApp::Initialize(HINSTANCE hInstance, int nCmdShow, DisplayMode mode)
 
 	ResourceManager::GetInstance()->LoadResourcesFromJson(EngineKey::FilePath::ResourceList.data());
 
-	SceneManager::GetInstance()->LoadSceneFromFile(EngineKey::FilePath::DefaultScene.data());
+	std::string defaultScenePath(EngineKey::FilePath::DefaultScene);
+	if (std::filesystem::exists(defaultScenePath))
+	{
+		SceneManager::GetInstance()->LoadSceneFromFile(defaultScenePath);
+	}
+	else
+	{
+		SceneManager::GetInstance()->CreateDefaultTemplateScene("DefaultScene");
+	}
 
 	ShowWindow(m_hWnd, SW_MAXIMIZE);
 	UpdateWindow(m_hWnd);
@@ -159,6 +168,7 @@ void GameApp::RegisterManagers()
 	// 리소스 & 네트워크
 	kernel->RegisterManager(ResourceManager::GetInstance());
 	kernel->RegisterManager(PrefabManager::GetInstance());
+	kernel->RegisterManager(DataManager::GetInstance());
 	kernel->RegisterManager(NetworkManager::GetInstance());
 
 	// 게임 로직 (Update)

@@ -1,21 +1,24 @@
-﻿#pragma once
-#include "Engine/Framework/Base/Component.h"
+﻿// Source/Engine/Framework/Components/UI/UITextComponent.h
+#pragma once
+#include "Engine/Framework/Components/Core/RenderComponent.h"
 
-class UITextComponent : public Component
+class UITextComponent : public RenderComponent
 {
 public:
 	CLONEABLE_COMPONENT(UITextComponent)
 
 	UITextComponent(GameObject* owner, TransformComponent* transform);
-
 	virtual ~UITextComponent() override = default;
 
-	void SetText(const std::wstring& text) { m_text = text; }
-	void SetPosition(Vector2 pos) { m_position = pos; }
-	void SetFontSize(float size) { m_fontSize = size; }
-	void SetColor(D2D1::ColorF color) { m_color = color; }
+	void SetText(const std::wstring& text);
+	void SetFontSize(float size);
+	void SetColor(const D2D1::ColorF& color);
 
-	void RenderUI();
+	const std::wstring& GetText() const { return m_text; }
+	float GetFontSize() const { return m_RenderCommand.text.fontSize; }
+	D2D1_COLOR_F GetColor() const { return m_RenderCommand.color; }
+
+	virtual void PostDeserialize(Scene* pScene) override;
 
 	virtual std::string_view GetComponentType() const override
 	{
@@ -23,8 +26,5 @@ public:
 	}
 
 private:
-	std::wstring m_text = L"";
-	Vector2 m_position = { 10.0f, 10.0f };
-	float m_fontSize = 14.0f;
-	D2D1::ColorF m_color = D2D1::ColorF(D2D1::ColorF::Yellow); 
+	std::wstring m_text = L"New Text";
 };

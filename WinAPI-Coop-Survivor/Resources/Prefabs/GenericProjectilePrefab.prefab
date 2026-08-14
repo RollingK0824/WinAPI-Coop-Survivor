@@ -1,0 +1,75 @@
+{
+    "Name": "GenericProjectilePrefab",
+    "InstanceID": 63,
+    "IsActive": true,
+    "Components": [
+        {
+            "Type": "TransformComponent",
+            "Data": {
+                "IsEnabled": true,
+                "Position": {
+                    "x": 0.0,
+                    "y": 0.0
+                },
+                "Rotation": 0.0,
+                "Scale": {
+                    "x": 1.0,
+                    "y": 1.0
+                }
+            }
+        },
+        {
+            "Type": "SpriteRendererComponent",
+            "Data": {
+                "IsEnabled": true,
+                "RenderType": 0,
+                "ZOrder": 1000,
+                "Opacity": 1.0,
+                "Color": {
+                    "r": 1.0,
+                    "g": 1.0,
+                    "b": 1.0,
+                    "a": 1.0
+                },
+                "SpriteKey": "",
+                "Size": {
+                    "x": 0.0,
+                    "y": 0.0
+                },
+                "Pivot": {
+                    "x": 0.0,
+                    "y": 0.0
+                },
+                "Offset": {
+                    "x": 0.0,
+                    "y": 0.0
+                },
+                "FlipX": false,
+                "FlipY": false
+            }
+        },
+        {
+            "Type": "CircleColliderComponent",
+            "Data": {
+                "IsEnabled": true,
+                "Offset": {
+                    "x": 0.0,
+                    "y": 0.0
+                },
+                "Density": 1.0,
+                "IsSensor": true,
+                "BodyType": 2,
+                "FixedRotation": true,
+                "CategoryBits": 8,
+                "MaskBits": 4,
+                "Radius": 10.0
+            }
+        },
+        {
+            "Type": "ProjectileComponent",
+            "Data": {
+                "IsEnabled": true
+            }
+        }
+    ]
+}

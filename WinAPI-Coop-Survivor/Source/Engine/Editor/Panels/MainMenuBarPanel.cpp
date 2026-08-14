@@ -1,4 +1,4 @@
-#include "Engine/Core/pch.h"
+﻿#include "Engine/Core/pch.h"
 #include "MainMenuBarPanel.h"
 #include "Engine/Core/EngineKernel.h"
 #include "Engine/Manager/SceneManager.h"
@@ -19,7 +19,13 @@ void MainMenuBarPanel::OnDrawGUI()
     {
         if (ImGui::BeginMenu("File"))
         {
-            if (ImGui::MenuItem("Save Scene to JSON", "Ctrl+S"))
+            if (ImGui::MenuItem("New Scene", "Ctrl+N"))
+            {
+                SceneManager::GetInstance()->CreateDefaultTemplateScene("NewScene");
+            }
+            ImGui::Separator();
+
+            if (ImGui::MenuItem("Save Scene", "Ctrl+S"))
             {
                 SceneManager::GetInstance()->SaveActiveScene();
             }

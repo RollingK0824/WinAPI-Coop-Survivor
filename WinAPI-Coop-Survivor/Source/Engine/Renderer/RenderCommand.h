@@ -1,10 +1,12 @@
-﻿#pragma once
+#pragma once
 #include <d2d1.h>
-#include "Engine/Core/Types.h"
+#include "Engine/Renderer/Sprite.h"
 
 enum class RenderType : uint8
 {
 	BITMAP,
+	TEXT,
+	RECT,
 	DEBUG_RECT,
 	DEBUG_CIRCLE,
 	Debug_LINE,
@@ -13,11 +15,10 @@ enum class RenderType : uint8
 
 struct BitmapParams
 {
-	ID2D1Bitmap* pTexture = nullptr;
-	D2D1_POINT_2F offset = { 0, 0 };
-	float originalWidth = 0.0f;
-	float originalHeight = 0.0f;
+	Sprite sprite;
+	Vector2 size = { 0.0f, 0.0f };
 	float opacity = 1.0f;
+	float fillAmount = 1.0f; // 0.0 ~ 1.0, Left 방향 Fill (1.0 = 전체 표시)
 	bool flipX = false;
 	bool flipY = false;
 };
@@ -49,7 +50,7 @@ struct RenderCommand
 	float rotation = 0.0f;
 	float scaleX = 1.0f;
 	float scaleY = 1.0f;
-	int16 zOrder = 0;
+	int32 zOrder = 0;
 	RenderType type = RenderType::BITMAP;
 	bool isUI = false;
 

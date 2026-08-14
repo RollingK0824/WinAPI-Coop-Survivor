@@ -88,6 +88,29 @@ struct Vector2
 		return x * other.y - y * other.x;
 	}
 
+	Vector2 GetNormalized() const
+	{
+		float length = Length();
+		if (length < SMALL_NUMBER)
+			return Vector2(0.0f, 0.0f);
+		return Vector2(x / length, y / length);
+	}
+
+	static float Distance(const Vector2& a, const Vector2& b)
+	{
+		return (a - b).Length();
+	}
+
+	static float DistanceSquared(const Vector2& a, const Vector2& b)
+	{
+		return (a - b).LengthSquared();
+	}
+
+	static Vector2 Lerp(const Vector2& a, const Vector2& b, float t)
+	{
+		return Vector2(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t);
+	}
+
 	Vector2 Rotate(float radian) const
 	{
 		float cosA = std::cos(radian);

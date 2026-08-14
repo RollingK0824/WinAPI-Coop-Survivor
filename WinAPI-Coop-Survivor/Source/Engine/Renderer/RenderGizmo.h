@@ -55,7 +55,7 @@ public:
 		RenderSystem::GetInstance()->SubmitCommand(cmd);
 	}
 
-	static void DrawDebugText(std::wstring text, Vector2 pos, float fontSize, D2D1::ColorF color = D2D1::ColorF::White, int zOrder = 999)
+	static void DrawDebugText(std::wstring_view text, Vector2 pos, float fontSize, D2D1::ColorF color = D2D1::ColorF::White, int zOrder = 999)
 	{
 		RenderCommand cmd;
 		cmd.type = RenderType::Debug_TEXT;

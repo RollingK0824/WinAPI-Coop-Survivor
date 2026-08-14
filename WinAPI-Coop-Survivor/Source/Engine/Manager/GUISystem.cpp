@@ -88,11 +88,7 @@ void GUISystem::RegisterPanel(IGUIPanel* pPanel)
 
 void GUISystem::UnRegisterPanel(IGUIPanel* pPanel)
 {
-    if (pPanel == nullptr)return;
+    if (pPanel == nullptr || !m_bInitialized) return;
 
-    auto it = std::find(m_vPanels.begin(), m_vPanels.end(), pPanel);
-    if (it != m_vPanels.end())
-    {
-        m_vPanels.erase(it);
-    }
+    m_vPanels.erase(std::remove(m_vPanels.begin(), m_vPanels.end(), pPanel), m_vPanels.end());
 }

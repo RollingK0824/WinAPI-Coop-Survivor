@@ -1,4 +1,4 @@
-#include "Engine/Core/pch.h"
+﻿#include "Engine/Core/pch.h"
 #include "ViewportPanel.h"
 #include "Engine/Renderer/GraphicManager.h"
 #include "Engine/Manager/CameraManager.h"
@@ -38,6 +38,8 @@ void ViewportPanel::OnDrawGUI()
 	if (pSRV)
 	{
 		ImGui::Image((ImTextureID)pSRV, currentPanelSize);
+		m_viewportMin = ImGui::GetItemRectMin();
+		m_viewportMax = ImGui::GetItemRectMax();
 	}
 
 	m_bIsHovered = ImGui::IsWindowHovered();

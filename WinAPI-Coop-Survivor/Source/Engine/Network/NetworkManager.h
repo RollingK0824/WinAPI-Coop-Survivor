@@ -5,6 +5,8 @@
 #include "Engine/Framework/Base/IUpdatable.h"
 #include "Engine/Manager/GUISystem.h"
 
+class GameObject;
+
 enum class NetRole {
     NONE,
     HOST,
@@ -14,18 +16,13 @@ enum class NetRole {
 struct NetClientInfo {
     sockaddr_in address{};
     float lastHeartbeatTime = 0.0f;
-    unsigned int assignedNetID = 0;
+    uint32 assignedNetID = 0;
 };
 
-struct InterpolationData {
-    float startX = 0.0f;
-    float startY = 0.0f;
-    float targetX = 0.0f;
-    float targetY = 0.0f;
-    float startAngle = 0.0f;
-    float targetAngle = 0.0f;
-    float elapsed = 0.0f;
-    float duration = 0.0166f; // 30Hz -> 33ms
+struct RawPacketData {
+    sockaddr_in senderAddr{};
+    int size = 0;
+    std::vector<char> buffer;
 };
 
 using PacketHandler = std::function<void(const PacketHeader* packet, const sockaddr_in& sender)>;
@@ -36,6 +33,7 @@ public:
     virtual bool Initialize() override;
     virtual void Release() override;
     virtual void Update(float dt) override;
+    virtual void FixedUpdate(float fixedDt) override;
 
     virtual void OnDrawGUI() override;
 
@@ -43,18 +41,21 @@ public:
     bool ConnectToHost(const std::string& ip, int port);
     
     void SendPacket(const void* data, int size, const sockaddr_in* targetAddr = nullptr);
-
     void SendReliablePacket(const void* data, int size, const sockaddr_in* targetAddr = nullptr);
+
+    void RegisterNetworkObject(uint32 netID, GameObject* obj);
+    void UnRegisterNetworkObject(uint32 netID);
+    GameObject* GetNetworkObject(uint32 netID);
 
     void RegisterPacketHandler(PacketType type, PacketHandler handler) { m_packetHandlers[type] = handler; }
     void UnregisterPacketHandler(PacketType type) { m_packetHandlers.erase(type); }
 
     NetRole GetRole() const { return m_Role; }
-    unsigned int GetMyNetID() const { return m_MyNetID; }
+    uint32 GetMyNetID() const { return m_MyNetID; }
     bool IsConnected() const { return m_bConnected; }
+    const std::unordered_map<uint32, NetClientInfo>& GetConnectedClients() const { return m_ConnectedClients; }
 
-    bool GetInterpolatedPosition(unsigned int netID, float& outX, float& outY, float& outAngle);
-    void UpdateInterpolationTarget(unsigned int netID, float targetX, float targetY, float targetAngle);
+    uint32 GetCurrentTick() const { return m_currentTick; }
 
     float GetPing() const { return m_PingMs; }
 
@@ -64,30 +65,37 @@ private:
 
     void ProcessIncomingPackets();
     void HandlePacket(const char* buffer, int size, const sockaddr_in& senderAddr);
+    void NetworkThreadLoop();
+    void TickUpdate(); // 고정 Tick마다 호출: 패킷 전송, 타임아웃 검사 등
 
 private:
+    static constexpr int   FIXED_TICK_RATE = 60;
+    static constexpr float FIXED_DT        = 1.0f / FIXED_TICK_RATE;
+
     NetRole m_Role = NetRole::NONE;
     SOCKET m_Socket = INVALID_SOCKET;
     sockaddr_in m_HostAddr{};
 
-    std::unordered_map<unsigned int, NetClientInfo> m_ConnectedClients; 
-    std::unordered_map<unsigned int, InterpolationData> m_InterpolationMap; 
+    std::thread m_networkThread;
+    std::mutex m_queueMutex;
+    std::atomic<bool> m_bNetworkThreadRunning = false;
+    std::vector<RawPacketData> m_incomingPacketQueue;
+
+    std::unordered_map<uint32, GameObject*> m_networkObjects;
+    std::unordered_map<uint32, NetClientInfo> m_ConnectedClients; 
     std::unordered_map<PacketType, PacketHandler> m_packetHandlers;
 
-    unsigned int m_MyNetID = 0;
+    uint32 m_MyNetID = 0;
     bool m_bConnected = false;
 
-    float m_SendTimer = 0.0f;
-    const float m_SendInterval = 0.0166f; 
-    unsigned int m_NextNetID = 1000; 
+    // Fixed Tick
+    uint32 m_currentTick     = 0;
+
+    uint32 m_NextNetID = 1000; 
 
     float m_PingMs = 0.0f;
-    double m_LastHeartbeatSentMs = 0.0;
-    LARGE_INTEGER  m_LastHeartbeatSentTick{};
+    LARGE_INTEGER m_LastHeartbeatSentTick{};
 
-    uint32 m_txSequenceNumber = 1;
-    uint32 m_rxLastSequenceNumber = 0;
     float m_stateBroadcastTimer = 0.0f;
-
     float m_connRetryTimer = 0.0f;
 };

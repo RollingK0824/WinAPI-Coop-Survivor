@@ -1,0 +1,290 @@
+{
+    "SceneName": "Title",
+    "GameObjects": [
+        {
+            "Name": "Main Camera",
+            "InstanceID": 13,
+            "IsActive": true,
+            "Components": [
+                {
+                    "Type": "TransformComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Position": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "Rotation": 0.0,
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        }
+                    }
+                },
+                {
+                    "Type": "CameraComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Zoom": 1.0,
+                        "Enable Follow": true,
+                        "Smooth Follow": true,
+                        "Follow Speed": 5.0,
+                        "Use Map Bounds": false,
+                        "Map Bounds": {
+                            "left": 0.0,
+                            "top": 0.0,
+                            "right": 0.0,
+                            "bottom": 0.0
+                        },
+                        "Follow Target": 0
+                    }
+                }
+            ]
+        },
+        {
+            "Name": "TempBackground",
+            "InstanceID": 19,
+            "IsActive": true,
+            "Components": [
+                {
+                    "Type": "TransformComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Position": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "Rotation": 0.0,
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        }
+                    }
+                },
+                {
+                    "Type": "SpriteRendererComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "RenderType": 0,
+                        "ZOrder": -1000,
+                        "Opacity": 1.0,
+                        "Color": {
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 1.0,
+                            "a": 1.0
+                        },
+                        "SpriteKey": "TempBackground.jpg",
+                        "Size": {
+                            "x": 1920.0,
+                            "y": 1080.0
+                        },
+                        "Pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "Offset": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "FlipX": false,
+                        "FlipY": false
+                    }
+                }
+            ]
+        },
+        {
+            "Name": "InGameManager",
+            "InstanceID": 20,
+            "IsActive": true,
+            "Components": [
+                {
+                    "Type": "TransformComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Position": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "Rotation": 0.0,
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        }
+                    }
+                },
+                {
+                    "Type": "InGameManager",
+                    "Data": {
+                        "IsEnabled": true
+                    }
+                },
+                {
+                    "Type": "InGameSceneController",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Action Button": 66,
+                        "Action Button Text": 66,
+                        "Status Text": 67,
+                        "Countdown Text": 68
+                    }
+                }
+            ]
+        },
+        {
+            "Name": "Action_Btn",
+            "InstanceID": 66,
+            "IsActive": true,
+            "Components": [
+                {
+                    "Type": "TransformComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Position": {
+                            "x": 500.0,
+                            "y": 100.0
+                        },
+                        "Rotation": 0.0,
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        }
+                    }
+                },
+                {
+                    "Type": "UIImageComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "RenderType": 256,
+                        "ZOrder": 9999,
+                        "Opacity": 1.0,
+                        "Color": {
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 1.0,
+                            "a": 1.0
+                        },
+                        "SpriteKey": "tilemap_packed/tilemap_packed.png",
+                        "Size": {
+                            "x": 95.0,
+                            "y": 27.0
+                        },
+                        "Pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "Offset": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "FillAmount": 1.0,
+                        "FlipX": false,
+                        "FlipY": false
+                    }
+                },
+                {
+                    "Type": "UIButtonComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "IsHovered": false
+                    }
+                },
+                {
+                    "Type": "UITextComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "RenderType": 257,
+                        "ZOrder": 9999,
+                        "Opacity": 1.0,
+                        "Color": {
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 0.0,
+                            "a": 1.0
+                        },
+                        "Text": "New Text",
+                        "FontSize": 14.0
+                    }
+                }
+            ]
+        },
+        {
+            "Name": "Status_Text",
+            "InstanceID": 67,
+            "IsActive": true,
+            "Components": [
+                {
+                    "Type": "TransformComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Position": {
+                            "x": 500.0,
+                            "y": 140.0
+                        },
+                        "Rotation": 0.0,
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        }
+                    }
+                },
+                {
+                    "Type": "UITextComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "RenderType": 257,
+                        "ZOrder": 9999,
+                        "Opacity": 1.0,
+                        "Color": {
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 0.0,
+                            "a": 1.0
+                        },
+                        "Text": "New Text",
+                        "FontSize": 14.0
+                    }
+                }
+            ]
+        },
+        {
+            "Name": "Countdown_Text",
+            "InstanceID": 68,
+            "IsActive": true,
+            "Components": [
+                {
+                    "Type": "TransformComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Position": {
+                            "x": 500.0,
+                            "y": 50.0
+                        },
+                        "Rotation": 0.0,
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        }
+                    }
+                },
+                {
+                    "Type": "UITextComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "RenderType": 257,
+                        "ZOrder": 9999,
+                        "Opacity": 1.0,
+                        "Color": {
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 0.0,
+                            "a": 1.0
+                        },
+                        "Text": "New Text",
+                        "FontSize": 14.0
+                    }
+                }
+            ]
+        }
+    ]
+}

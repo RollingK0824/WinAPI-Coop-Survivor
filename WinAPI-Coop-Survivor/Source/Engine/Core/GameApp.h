@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include "Engine/Core/Singleton.h"
 #include "Engine/Core/Define.h"
 
@@ -9,13 +9,13 @@ class GameApp : public Singleton<GameApp>
 	friend class Singleton<GameApp>;
 
 public:
-	// À©µµ¿ì »ı¼º ¹× ÃÊ±âÈ­
+	// ìœˆë„ìš° ìƒì„± ë° ì´ˆê¸°í™”
 	bool Initialize(HINSTANCE hInstance, int nCmdShow, DisplayMode mode = DisplayMode::Windowed);
 
-	// °ÔÀÓ ¸ŞÀÎ ·çÇÁ
+	// ê²Œì„ ë©”ì¸ ë£¨í”„
 	int Run();
 
-	// ¿£Áø Á¾·á ¹× ¸Ş¸ğ¸® ÇØÁ¦
+	// ì—”ì§„ ì¢…ë£Œ ë° ë©”ëª¨ë¦¬ í•´ì œ
 	void Release();
 
 	void RegisterManagers();

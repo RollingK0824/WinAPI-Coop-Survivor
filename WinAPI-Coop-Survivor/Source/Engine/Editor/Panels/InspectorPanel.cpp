@@ -3,10 +3,20 @@
 #include "Engine/Editor/EditorSystem.h"
 #include "Engine/Manager/JsonSerializer.h"
 #include "Engine/Manager/ResourceManager.h"
+#include "Engine/Manager/DataManager.h"
+#include "Engine/Framework/Base/ScriptableObject.h"
+#include "Game/Skill/SkillSO.h"
 #include "Engine/Framework/GameObject.h"
 #include "Engine/Framework/Base/Component.h"
 #include "Engine/Framework/Components/Core/TransformComponent.h"
-#include "Engine/Framework/Components/Render/RenderComponent.h"
+#include "Engine/Framework/Components/Render/SpriteRendererComponent.h"
+#include "Engine/Framework/Components/UI/UIImageComponent.h"
+#include "Engine/Framework/Components/UI/UIPanelComponent.h"
+#include "Engine/Framework/Components/UI/UIButtonComponent.h"
+
+static bool LeftDragFloat(const char* label, float* v, float v_speed = 0.1f, const char* format = "%.3f");
+static bool LeftDragInt(const char* label, int* v, float v_speed = 1.0f);
+
 void InspectorPanel::Initialize()
 {
 	GUISystem::GetInstance()->RegisterPanel(this);
@@ -21,6 +31,8 @@ void InspectorPanel::OnDrawGUI()
 {
 	ImGui::Begin("Inspector");
 	GameObject* pSelectedObj = EditorSystem::GetInstance()->GetSelectedObject();
+	ScriptableObject* pSelectedSO = EditorSystem::GetInstance()->GetSelectedScriptableObject();
+
 	if (pSelectedObj)
 	{
 		if (pSelectedObj->IsDead())
@@ -34,7 +46,329 @@ void InspectorPanel::OnDrawGUI()
 		DrawComponents(pSelectedObj);
 		DrawAddComponentButton(pSelectedObj);
 	}
+	else if (pSelectedSO)
+	{
+		DrawScriptableObjectData();
+	}
+	else
+	{
+		ImGui::TextDisabled("No GameObject or ScriptableObject selected.");
+	}
+
 	ImGui::End();
+}
+
+void InspectorPanel::DrawScriptableObjectData()
+{
+	ScriptableObject* pAsset = EditorSystem::GetInstance()->GetSelectedScriptableObject();
+	if (!pAsset) return;
+
+	ImGui::PushID(pAsset);
+
+	ImGui::TextColored(ImVec4(0.3f, 0.9f, 0.3f, 1.0f), "[ ScriptableObject Data Asset ]");
+	ImGui::Separator();
+	ImGui::Spacing();
+
+	uint32 assetID = pAsset->GetAssetID();
+	std::string nameStr = pAsset->GetAssetName();
+	char nameBuf[256];
+	strcpy_s(nameBuf, nameStr.c_str());
+
+	ImGui::Columns(2, "SOPropCols", false);
+	float totalWidth = ImGui::GetContentRegionAvail().x;
+	float col0Width = (std::max)(105.0f, totalWidth * 0.35f);
+	ImGui::SetColumnWidth(0, col0Width);
+
+	// Asset ID
+	ImGui::AlignTextToFramePadding();
+	ImGui::Text("Asset ID");
+	ImGui::NextColumn();
+	ImGui::Text("%u", assetID);
+	ImGui::NextColumn();
+
+	// Asset Name
+	ImGui::AlignTextToFramePadding();
+	ImGui::Text("Asset Name");
+	ImGui::NextColumn();
+	ImGui::SetNextItemWidth(-1.0f);
+	if (ImGui::InputText("##AssetNameInput", nameBuf, sizeof(nameBuf)))
+	{
+		pAsset->SetAssetName(nameBuf);
+	}
+	ImGui::NextColumn();
+
+	for (const auto& prop : pAsset->GetProperties())
+	{
+		if (prop.name == "AssetID" || prop.name == "AssetName") continue;
+
+		ImGui::PushID(prop.name.c_str());
+
+		ImGui::AlignTextToFramePadding();
+		ImGui::Text(prop.name.c_str());
+		ImGui::NextColumn();
+
+		ImGui::SetNextItemWidth(-1.0f);
+
+		switch (prop.type)
+		{
+		case PropType::Int:
+			LeftDragInt(("##" + prop.name).c_str(), static_cast<int*>(prop.data), 1.0f);
+			break;
+
+		case PropType::Float:
+			LeftDragFloat(("##" + prop.name).c_str(), static_cast<float*>(prop.data), 0.1f, "%.3f");
+			break;
+
+		case PropType::Bool:
+			ImGui::Checkbox(("##" + prop.name).c_str(), static_cast<bool*>(prop.data));
+			break;
+
+		case PropType::Vector2:
+		{
+			Vector2* vec = static_cast<Vector2*>(prop.data);
+			float itemW = (ImGui::GetContentRegionAvail().x - 30.0f) * 0.5f;
+			if (itemW < 35.0f) itemW = 35.0f;
+
+			ImGui::Text("X"); ImGui::SameLine();
+			ImGui::SetNextItemWidth(itemW);
+			LeftDragFloat(("##" + prop.name + "X").c_str(), &vec->x, 0.1f, "%.3f");
+			ImGui::SameLine();
+			ImGui::Text("Y"); ImGui::SameLine();
+			ImGui::SetNextItemWidth(itemW);
+			LeftDragFloat(("##" + prop.name + "Y").c_str(), &vec->y, 0.1f, "%.3f");
+		}
+		break;
+
+		case PropType::Color:
+		{
+			D2D1_COLOR_F* color = static_cast<D2D1_COLOR_F*>(prop.data);
+			float colVals[4] = { color->r, color->g, color->b, color->a };
+			if (ImGui::ColorEdit4(("##" + prop.name).c_str(), colVals))
+			{
+				color->r = colVals[0]; color->g = colVals[1];
+				color->b = colVals[2]; color->a = colVals[3];
+			}
+		}
+		break;
+
+		case PropType::Rect:
+		{
+			D2D1_RECT_F* rect = static_cast<D2D1_RECT_F*>(prop.data);
+			float itemW = (ImGui::GetContentRegionAvail().x - 40.0f) * 0.25f;
+			if (itemW < 25.0f) itemW = 25.0f;
+
+			ImGui::Text("L"); ImGui::SameLine();
+			ImGui::SetNextItemWidth(itemW);
+			LeftDragFloat(("##" + prop.name + "L").c_str(), &rect->left, 1.0f, "%.1f");
+			ImGui::SameLine();
+
+			ImGui::Text("T"); ImGui::SameLine();
+			ImGui::SetNextItemWidth(itemW);
+			LeftDragFloat(("##" + prop.name + "T").c_str(), &rect->top, 1.0f, "%.1f");
+			ImGui::SameLine();
+
+			ImGui::Text("R"); ImGui::SameLine();
+			ImGui::SetNextItemWidth(itemW);
+			LeftDragFloat(("##" + prop.name + "R").c_str(), &rect->right, 1.0f, "%.1f");
+			ImGui::SameLine();
+
+			ImGui::Text("B"); ImGui::SameLine();
+			ImGui::SetNextItemWidth(itemW);
+			LeftDragFloat(("##" + prop.name + "B").c_str(), &rect->bottom, 1.0f, "%.1f");
+		}
+		break;
+
+		case PropType::StringVector:
+		{
+			auto* vec = static_cast<std::vector<std::string>*>(prop.data);
+			std::string headerText = prop.name + " (" + std::to_string(vec->size()) + ")";
+			if (ImGui::TreeNode(headerText.c_str()))
+			{
+				int removeIdx = -1;
+				for (size_t i = 0; i < vec->size(); ++i)
+				{
+					ImGui::PushID(static_cast<int>(i));
+					char buf[256];
+					strcpy_s(buf, (*vec)[i].c_str());
+					ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - 30.0f);
+					if (ImGui::InputText(("Element " + std::to_string(i)).c_str(), buf, sizeof(buf)))
+					{
+						(*vec)[i] = buf;
+					}
+					ImGui::SameLine();
+					if (ImGui::Button("-", ImVec2(20, 20))) removeIdx = static_cast<int>(i);
+					ImGui::PopID();
+				}
+				if (removeIdx != -1) vec->erase(vec->begin() + removeIdx);
+				if (ImGui::Button("+ Add Element")) vec->push_back("");
+				ImGui::TreePop();
+			}
+		}
+		break;
+
+		case PropType::String:
+		{
+			std::string* str = static_cast<std::string*>(prop.data);
+			char buffer[256];
+			strcpy_s(buffer, str->c_str());
+			if (ImGui::InputText(("##" + prop.name).c_str(), buffer, sizeof(buffer)))
+			{
+				*str = buffer;
+			}
+		}
+		break;
+
+		case PropType::WString:
+		case PropType::Texture:
+		{
+			std::wstring* wstr = static_cast<std::wstring*>(prop.data);
+			std::string str(wstr->begin(), wstr->end());
+			char buffer[256];
+			strcpy_s(buffer, str.c_str());
+			if (ImGui::InputText(("##" + prop.name).c_str(), buffer, sizeof(buffer)))
+			{
+				*wstr = std::wstring(buffer, buffer + strlen(buffer));
+			}
+		}
+		break;
+
+		case PropType::Asset:
+		{
+			uint32* pAssetID = static_cast<uint32*>(prop.data);
+			uint32 currentID = (pAssetID != nullptr) ? *pAssetID : 0;
+
+			std::string previewName = "None (Select SO Asset)";
+			const auto& allAssets = DataManager::GetInstance()->GetAllAssets();
+			auto it = allAssets.find(currentID);
+			if (it != allAssets.end() && it->second != nullptr)
+			{
+				previewName = it->second->GetAssetName() + " (ID: " + std::to_string(currentID) + ")";
+			}
+
+			ImGui::SetNextItemWidth(-1.0f);
+			if (ImGui::BeginCombo(("##" + prop.name + "_SOCombo").c_str(), previewName.c_str()))
+			{
+				if (ImGui::Selectable("None (0)", currentID == 0))
+				{
+					if (pAssetID) *pAssetID = 0;
+				}
+
+				for (const auto& [id, pAsset] : allAssets)
+				{
+					if (!pAsset) continue;
+					std::string label = pAsset->GetAssetName() + " (ID: " + std::to_string(id) + ")";
+					bool isSelected = (currentID == id);
+					if (ImGui::Selectable(label.c_str(), isSelected))
+					{
+						if (pAssetID) *pAssetID = id;
+					}
+
+					if (isSelected)
+					{
+						ImGui::SetItemDefaultFocus();
+					}
+				}
+				ImGui::EndCombo();
+			}
+		}
+		break;
+		}
+
+		ImGui::NextColumn();
+		ImGui::PopID();
+	}
+
+	ImGui::Columns(1);
+	ImGui::Spacing();
+	ImGui::Separator();
+	ImGui::Spacing();
+
+	if (SkillSO* pSkillSO = dynamic_cast<SkillSO*>(pAsset))
+	{
+		ImGui::TextColored(ImVec4(0.9f, 0.7f, 0.2f, 1.0f), "[ Skill Data Configuration ]");
+		ImGui::Spacing();
+
+		ESkillCategory cat = pSkillSO->GetCategory();
+		const char* categories[] = { "Projectile", "Aura", "GroundArea" };
+		int currentCat = static_cast<int>(cat);
+		if (ImGui::Combo("Skill Category", &currentCat, categories, 3))
+		{
+			pSkillSO->SetCategory(static_cast<ESkillCategory>(currentCat));
+		}
+		ImGui::Spacing();
+
+		auto& levelTable = pSkillSO->GetMutableLevelTable();
+		std::string headerLabel = "Levels Container (" + std::to_string(levelTable.size()) + " Levels)";
+		if (ImGui::TreeNode(headerLabel.c_str()))
+		{
+			int removeIdx = -1;
+			for (size_t i = 0; i < levelTable.size(); ++i)
+			{
+				SkillLevelData& data = levelTable[i];
+				std::string treeLabel = "Level " + std::to_string(data.level) + " (" + data.description + ")";
+				ImGui::PushID(static_cast<int>(i));
+
+				if (ImGui::TreeNode(treeLabel.c_str()))
+				{
+					char descBuf[256];
+					strcpy_s(descBuf, data.description.c_str());
+					if (ImGui::InputText("Description", descBuf, sizeof(descBuf)))
+					{
+						data.description = descBuf;
+					}
+
+					ImGui::DragFloat("Damage", &data.damage, 1.0f, 0.0f, 10000.0f, "%.1f");
+					ImGui::DragFloat("Cooldown", &data.cooldown, 0.05f, 0.05f, 60.0f, "%.2f s");
+					ImGui::DragFloat("Speed", &data.speed, 10.0f, 0.0f, 5000.0f, "%.0f");
+					ImGui::DragFloat("Range", &data.range, 10.0f, 10.0f, 5000.0f, "%.0f px");
+					ImGui::DragFloat("Duration", &data.duration, 0.05f, 0.0f, 60.0f, "%.2f s");
+					ImGui::DragInt("Penetration Count", &data.penetrationCount, 1, 1, 999);
+					ImGui::DragInt("Projectile Count", &data.projectileCount, 1, 1, 50);
+
+					if (ImGui::Button("Delete Level"))
+					{
+						removeIdx = static_cast<int>(i);
+					}
+					ImGui::TreePop();
+				}
+				ImGui::PopID();
+			}
+
+			if (removeIdx != -1 && levelTable.size() > 1)
+			{
+				levelTable.erase(levelTable.begin() + removeIdx);
+				for (size_t i = 0; i < levelTable.size(); ++i)
+				{
+					levelTable[i].level = static_cast<int32>(i + 1);
+				}
+			}
+
+			if (ImGui::Button("+ Add Level"))
+			{
+				SkillLevelData newLvl;
+				newLvl.level = static_cast<int32>(levelTable.size() + 1);
+				if (!levelTable.empty())
+				{
+					newLvl = levelTable.back();
+					newLvl.level = static_cast<int32>(levelTable.size() + 1);
+					newLvl.damage += 10.0f;
+				}
+				levelTable.push_back(newLvl);
+			}
+			ImGui::TreePop();
+		}
+
+		ImGui::Spacing();
+		ImGui::Separator();
+		ImGui::Spacing();
+	}
+
+	if (ImGui::Button("Save Asset (.asset)", ImVec2(-1.0f, 30.0f)))
+	{
+		DataManager::GetInstance()->SaveAssetFile(pAsset);
+	}
+
+	ImGui::PopID();
 }
 
 void InspectorPanel::DrawHeader(GameObject* pObj)
@@ -59,7 +393,7 @@ void InspectorPanel::DrawHeader(GameObject* pObj)
 }
 
 // 퍼블릭 ImGui API 전용 좌측 정렬(Left-Aligned) DragFloat 위젯 (드래그 + 더블클릭 직접 입력 지원)
-static bool LeftDragFloat(const char* label, float* v, float v_speed = 0.1f, const char* format = "%.3f")
+static bool LeftDragFloat(const char* label, float* v, float v_speed, const char* format)
 {
 	ImGui::PushID(label);
 	ImGuiID id = ImGui::GetID("##LeftDragField");
@@ -139,7 +473,7 @@ static bool LeftDragFloat(const char* label, float* v, float v_speed = 0.1f, con
 }
 
 // 퍼블릭 ImGui API 전용 좌측 정렬 DragInt 위젯
-static bool LeftDragInt(const char* label, int* v, float v_speed = 1.0f)
+static bool LeftDragInt(const char* label, int* v, float v_speed)
 {
 	float fVal = static_cast<float>(*v);
 	bool changed = LeftDragFloat(label, &fVal, v_speed, "%.0f");
@@ -220,7 +554,7 @@ void InspectorPanel::DrawComponents(GameObject* pObj)
 		bool isEnabled = comp->IsEnabled();
 		if (ImGui::Checkbox("##IsEnabled", &isEnabled))
 		{
-			comp->SetEnabled(isEnabled);
+			comp->SetEnable(isEnabled);
 		}
 		ImGui::SameLine();
 
@@ -269,67 +603,130 @@ void InspectorPanel::DrawComponents(GameObject* pObj)
 					break;
 
 				case PropType::String:
+				{
+					std::string* str = static_cast<std::string*>(prop.data);
+					char buffer[256];
+					strcpy_s(buffer, str->c_str());
+					if (ImGui::InputText(("##" + prop.name).c_str(), buffer, sizeof(buffer)))
 					{
-						std::string* str = static_cast<std::string*>(prop.data);
-						char buffer[256];
-						strcpy_s(buffer, str->c_str());
-						if (ImGui::InputText(("##" + prop.name).c_str(), buffer, sizeof(buffer)))
-						{
-							*str = buffer;
-						}
+						*str = buffer;
 					}
-					break;
+				}
+				break;
 
 				case PropType::WString:
+				{
+					std::wstring* wstr = static_cast<std::wstring*>(prop.data);
+					std::string str(wstr->begin(), wstr->end());
+					char buffer[256];
+					strcpy_s(buffer, str.c_str());
+					if (ImGui::InputText(("##" + prop.name).c_str(), buffer, sizeof(buffer)))
 					{
-						std::wstring* wstr = static_cast<std::wstring*>(prop.data);
-						std::string str(wstr->begin(), wstr->end());
-						char buffer[256];
-						strcpy_s(buffer, str.c_str());
-						if (ImGui::InputText(("##" + prop.name).c_str(), buffer, sizeof(buffer)))
-						{
-							*wstr = std::wstring(buffer, buffer + strlen(buffer));
-						}
+						*wstr = std::wstring(buffer, buffer + strlen(buffer));
 					}
-					break;
+				}
+				break;
 
 				case PropType::Vector2:
-					{
-						Vector2* vec = static_cast<Vector2*>(prop.data);
-						float itemW = (ImGui::GetContentRegionAvail().x - 30.0f) * 0.5f;
-						if (itemW < 35.0f) itemW = 35.0f;
+				{
+					Vector2* vec = static_cast<Vector2*>(prop.data);
+					float itemW = (ImGui::GetContentRegionAvail().x - 30.0f) * 0.5f;
+					if (itemW < 35.0f) itemW = 35.0f;
 
-						ImGui::Text("X"); ImGui::SameLine();
-						ImGui::SetNextItemWidth(itemW);
-						LeftDragFloat(("##" + prop.name + "X").c_str(), &vec->x, 0.1f, "%.3f");
-						ImGui::SameLine();
-						ImGui::Text("Y"); ImGui::SameLine();
-						ImGui::SetNextItemWidth(itemW);
-						LeftDragFloat(("##" + prop.name + "Y").c_str(), &vec->y, 0.1f, "%.3f");
-					}
-					break;
+					ImGui::Text("X"); ImGui::SameLine();
+					ImGui::SetNextItemWidth(itemW);
+					LeftDragFloat(("##" + prop.name + "X").c_str(), &vec->x, 0.1f, "%.3f");
+					ImGui::SameLine();
+					ImGui::Text("Y"); ImGui::SameLine();
+					ImGui::SetNextItemWidth(itemW);
+					LeftDragFloat(("##" + prop.name + "Y").c_str(), &vec->y, 0.1f, "%.3f");
+				}
+				break;
+
+				case PropType::Point2F:
+				{
+					D2D1_POINT_2F* pt = static_cast<D2D1_POINT_2F*>(prop.data);
+					float itemW = (ImGui::GetContentRegionAvail().x - 30.0f) * 0.5f;
+					if (itemW < 35.0f) itemW = 35.0f;
+
+					ImGui::Text("X"); ImGui::SameLine();
+					ImGui::SetNextItemWidth(itemW);
+					LeftDragFloat(("##" + prop.name + "X").c_str(), &pt->x, 0.01f, "%.3f");
+					ImGui::SameLine();
+					ImGui::Text("Y"); ImGui::SameLine();
+					ImGui::SetNextItemWidth(itemW);
+					LeftDragFloat(("##" + prop.name + "Y").c_str(), &pt->y, 0.01f, "%.3f");
+				}
+				break;
 
 				case PropType::Color:
+				{
+					D2D1_COLOR_F* color = static_cast<D2D1_COLOR_F*>(prop.data);
+					float colVals[4] = { color->r, color->g, color->b, color->a };
+					if (ImGui::ColorEdit4(("##" + prop.name).c_str(), colVals))
 					{
-						D2D1_COLOR_F* color = static_cast<D2D1_COLOR_F*>(prop.data);
-						float colVals[4] = { color->r, color->g, color->b, color->a };
-						if (ImGui::ColorEdit4(("##" + prop.name).c_str(), colVals))
-						{
-							color->r = colVals[0]; color->g = colVals[1];
-							color->b = colVals[2]; color->a = colVals[3];
-						}
+						color->r = colVals[0]; color->g = colVals[1];
+						color->b = colVals[2]; color->a = colVals[3];
 					}
-					break;
+				}
+				break;
 
+				case PropType::Rect:
+				{
+					D2D1_RECT_F* rect = static_cast<D2D1_RECT_F*>(prop.data);
+					float itemW = (ImGui::GetContentRegionAvail().x - 40.0f) * 0.25f;
+					if (itemW < 25.0f) itemW = 25.0f;
+
+					ImGui::Text("L"); ImGui::SameLine();
+					ImGui::SetNextItemWidth(itemW);
+					LeftDragFloat(("##" + prop.name + "L").c_str(), &rect->left, 1.0f, "%.1f");
+					ImGui::SameLine();
+
+					ImGui::Text("T"); ImGui::SameLine();
+					ImGui::SetNextItemWidth(itemW);
+					LeftDragFloat(("##" + prop.name + "T").c_str(), &rect->top, 1.0f, "%.1f");
+					ImGui::SameLine();
+
+					ImGui::Text("R"); ImGui::SameLine();
+					ImGui::SetNextItemWidth(itemW);
+					LeftDragFloat(("##" + prop.name + "R").c_str(), &rect->right, 1.0f, "%.1f");
+					ImGui::SameLine();
+
+					ImGui::Text("B"); ImGui::SameLine();
+					ImGui::SetNextItemWidth(itemW);
+					LeftDragFloat(("##" + prop.name + "B").c_str(), &rect->bottom, 1.0f, "%.1f");
+				}
+				break;
 
 				case PropType::Texture:
 				{
 					std::wstring* wKey = static_cast<std::wstring*>(prop.data);
 					std::string keyStr(wKey->begin(), wKey->end());
 
-					ID3D11ShaderResourceView* pSRV = ResourceManager::GetInstance()->GetTextureSRV(*wKey);
-					if (pSRV) ImGui::Image((ImTextureID)pSRV, ImVec2(35.0f, 35.0f));
-					else ImGui::Button("No Image", ImVec2(35.0f, 35.0f));
+					const Sprite* pPreviewSprite = ResourceManager::GetInstance()->GetSprite(*wKey);
+					bool bRenderedPreview = false;
+
+					if (pPreviewSprite != nullptr && pPreviewSprite->pTexture != nullptr)
+					{
+						ID3D11ShaderResourceView* pSRV = ResourceManager::GetInstance()->GetTextureSRV(pPreviewSprite->pTexture);
+						if (pSRV != nullptr)
+						{
+							D2D1_SIZE_F texSz = pPreviewSprite->pTexture->GetSize();
+							if (texSz.width > 0.0f && texSz.height > 0.0f)
+							{
+								ImVec2 uv0(pPreviewSprite->srcRect.left / texSz.width, pPreviewSprite->srcRect.top / texSz.height);
+								ImVec2 uv1(pPreviewSprite->srcRect.right / texSz.width, pPreviewSprite->srcRect.bottom / texSz.height);
+
+								ImGui::Image((ImTextureID)pSRV, ImVec2(35.0f, 35.0f), uv0, uv1);
+								bRenderedPreview = true;
+							}
+						}
+					}
+
+					if (!bRenderedPreview)
+					{
+						ImGui::Button("No Image", ImVec2(35.0f, 35.0f));
+					}
 					ImGui::SameLine();
 
 					std::string btnLabel = keyStr.empty() ? "Select..." : keyStr;
@@ -337,26 +734,37 @@ void InspectorPanel::DrawComponents(GameObject* pObj)
 					{
 						ImGui::OpenPopup("TexturePickerPopup");
 					}
-
 					ImGui::SameLine();
 					if (ImGui::Button("Set Native Size"))
 					{
-						if (RenderComponent* renderComp = dynamic_cast<RenderComponent*>(comp))
+						if (SpriteRendererComponent* spriteComp = dynamic_cast<SpriteRendererComponent*>(comp))
 						{
-							renderComp->SetNativeSize();
+							spriteComp->SetNativeSize();
+						}
+						else if (UIImageComponent* uiImg = dynamic_cast<UIImageComponent*>(comp))
+						{
+							uiImg->SetNativeSize();
 						}
 					}
 					if (ImGui::BeginPopup("TexturePickerPopup"))
 					{
-						auto loadedTextureKeys = ResourceManager::GetInstance()->GetLoadedTextureKeys();
-						for (const auto& keyName : loadedTextureKeys)
+						auto loadedSpriteKeys = ResourceManager::GetInstance()->GetLoadedSpriteKeys();
+						for (const auto& keyName : loadedSpriteKeys)
 						{
 							if (ImGui::Selectable(keyName.c_str()))
 							{
 								*wKey = std::wstring(keyName.begin(), keyName.end());
-								if (RenderComponent* renderComp = dynamic_cast<RenderComponent*>(comp))
+								if (SpriteRendererComponent* spriteComp = dynamic_cast<SpriteRendererComponent*>(comp))
 								{
-									renderComp->SetTextureKey(*wKey);
+									spriteComp->SetSpriteKey(*wKey);
+								}
+								else if (UIImageComponent* uiImg = dynamic_cast<UIImageComponent*>(comp))
+								{
+									uiImg->SetTextureKey(*wKey);
+								}
+								else if (UIPanelComponent* uiPanel = dynamic_cast<UIPanelComponent*>(comp))
+								{
+									uiPanel->SetTextureKey(*wKey);
 								}
 							}
 						}
@@ -364,33 +772,97 @@ void InspectorPanel::DrawComponents(GameObject* pObj)
 					}
 				}
 				break;
+
 				case PropType::StringVector:
+				{
+					auto* vec = static_cast<std::vector<std::string>*>(prop.data);
+					std::string headerText = prop.name + " (" + std::to_string(vec->size()) + ")";
+					if (ImGui::TreeNode(headerText.c_str()))
 					{
-						auto* vec = static_cast<std::vector<std::string>*>(prop.data);
-						std::string headerText = prop.name + " (" + std::to_string(vec->size()) + ")";
-						if (ImGui::TreeNode(headerText.c_str()))
+						int removeIdx = -1;
+						for (size_t i = 0; i < vec->size(); ++i)
 						{
-							int removeIdx = -1;
-							for (size_t i = 0; i < vec->size(); ++i)
+							ImGui::PushID(static_cast<int>(i));
+							char buf[256];
+							strcpy_s(buf, (*vec)[i].c_str());
+							ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - 30.0f);
+							if (ImGui::InputText(("Element " + std::to_string(i)).c_str(), buf, sizeof(buf)))
 							{
-								ImGui::PushID(static_cast<int>(i));
-								char buf[256];
-								strcpy_s(buf, (*vec)[i].c_str());
-								ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - 30.0f);
-								if (ImGui::InputText(("Element " + std::to_string(i)).c_str(), buf, sizeof(buf)))
-								{
-									(*vec)[i] = buf;
-								}
-								ImGui::SameLine();
-								if (ImGui::Button("-", ImVec2(20, 20))) removeIdx = static_cast<int>(i);
-								ImGui::PopID();
+								(*vec)[i] = buf;
 							}
-							if (removeIdx != -1) vec->erase(vec->begin() + removeIdx);
-							if (ImGui::Button("+ Add Element")) vec->push_back("");
-							ImGui::TreePop();
+							ImGui::SameLine();
+							if (ImGui::Button("-", ImVec2(20, 20))) removeIdx = static_cast<int>(i);
+							ImGui::PopID();
 						}
+						if (removeIdx != -1) vec->erase(vec->begin() + removeIdx);
+						if (ImGui::Button("+ Add Element")) vec->push_back("");
+						ImGui::TreePop();
 					}
-					break;
+				}
+				break;
+
+				case PropType::ObjectRef:
+				{
+					GameObject* pTargetObj = prop.getTargetGameObject ? prop.getTargetGameObject(prop.data) : nullptr;
+					std::string labelStr = (pTargetObj != nullptr) ? pTargetObj->GetName() + " (" + prop.name + ")" : "None (Drag & Drop GameObject Here)";
+
+					ImGui::Button(labelStr.c_str(), ImVec2(ImGui::GetContentRegionAvail().x, 25.0f));
+
+					if (ImGui::BeginDragDropTarget())
+					{
+						if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("HIERARCHY_REORDER_OBJ"))
+						{
+							GameObject* pDroppedObj = *(GameObject**)payload->Data;
+							if (pDroppedObj && prop.resolver)
+							{
+								prop.resolver(pDroppedObj, prop.data);
+							}
+						}
+						ImGui::EndDragDropTarget();
+					}
+				}
+				break;
+
+				case PropType::Asset:
+				{
+					uint32* pAssetID = static_cast<uint32*>(prop.data);
+					uint32 currentID = (pAssetID != nullptr) ? *pAssetID : 0;
+
+					std::string previewName = "None (Select SO Asset)";
+					const auto& allAssets = DataManager::GetInstance()->GetAllAssets();
+					auto it = allAssets.find(currentID);
+					if (it != allAssets.end() && it->second != nullptr)
+					{
+						previewName = it->second->GetAssetName() + " (ID: " + std::to_string(currentID) + ")";
+					}
+
+					ImGui::SetNextItemWidth(-1.0f);
+					if (ImGui::BeginCombo(("##" + prop.name + "_Combo").c_str(), previewName.c_str()))
+					{
+						if (ImGui::Selectable("None (0)", currentID == 0))
+						{
+							if (pAssetID) *pAssetID = 0;
+						}
+
+						for (const auto& [id, pAsset] : allAssets)
+						{
+							if (!pAsset) continue;
+							std::string label = pAsset->GetAssetName() + " (ID: " + std::to_string(id) + ")";
+							bool isSelected = (currentID == id);
+							if (ImGui::Selectable(label.c_str(), isSelected))
+							{
+								if (pAssetID) *pAssetID = id;
+							}
+
+							if (isSelected)
+							{
+								ImGui::SetItemDefaultFocus();
+							}
+						}
+						ImGui::EndCombo();
+					}
+				}
+				break;
 				}
 
 				ImGui::NextColumn();

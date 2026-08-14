@@ -1,4 +1,4 @@
-#include "Engine/Core/pch.h"
+﻿#include "Engine/Core/pch.h"
 #include "TimeManager.h"
 
 bool TimeManager::Initialize()

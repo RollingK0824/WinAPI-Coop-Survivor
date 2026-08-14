@@ -1,0 +1,84 @@
+{
+    "Name": "PlayerPrefab",
+    "InstanceID": 55,
+    "IsActive": true,
+    "Components": [
+        {
+            "Type": "TransformComponent",
+            "Data": {
+                "IsEnabled": true,
+                "Position": {
+                    "x": 0.0,
+                    "y": 0.0
+                },
+                "Rotation": 0.0,
+                "Scale": {
+                    "x": 1.0,
+                    "y": 1.0
+                }
+            }
+        },
+        {
+            "Type": "SpriteRendererComponent",
+            "Data": {
+                "IsEnabled": true,
+                "RenderType": 0,
+                "ZOrder": 100,
+                "Opacity": 1.0,
+                "Color": {
+                    "r": 1.0,
+                    "g": 1.0,
+                    "b": 1.0,
+                    "a": 1.0
+                },
+                "SpriteKey": "Imeldat/Imeldat.png",
+                "Size": {
+                    "x": 320.0,
+                    "y": 340.0
+                },
+                "Pivot": {
+                    "x": 0.5,
+                    "y": 0.5
+                },
+                "Offset": {
+                    "x": 0.0,
+                    "y": 0.0
+                },
+                "FlipX": false,
+                "FlipY": false
+            }
+        },
+        {
+            "Type": "BoxColliderComponent",
+            "Data": {
+                "IsEnabled": true,
+                "Offset": {
+                    "x": 0.0,
+                    "y": 0.0
+                },
+                "Density": 1.0,
+                "IsSensor": false,
+                "BodyType": 2,
+                "FixedRotation": true,
+                "CategoryBits": 1,
+                "MaskBits": -1,
+                "Size": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
+            }
+        },
+        {
+            "Type": "Player",
+            "Data": {
+                "IsEnabled": true
+            }
+        },
+        {
+            "Type": "SkillComponent",
+            "Data": {
+                "IsEnabled": true
+            }
+        }
+    ]
+}

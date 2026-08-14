@@ -7,7 +7,7 @@ namespace EngineKey
 	{
 		constexpr std::string_view ResourceList = "Resources/Json/ResourceList.json";
 		constexpr std::string_view CharacterTexture = "Resources/Texture/Character.json";
-		constexpr std::string_view DefaultScene = "Resources/Json/DefaultScene.json";
+		constexpr std::string_view DefaultScene = "Resources/Scenes/Title.scene";
 	}
 
 	namespace Document
@@ -28,7 +28,7 @@ namespace EngineKey
 	{
 		constexpr std::string_view Trnasform = "TransformComponent";
 		constexpr std::string_view Render = "RenderComponent";
-		constexpr std::string_view sprite = "SpriteComponent";
+		constexpr std::string_view SpriteRenderer = "SpriteRendererComponent";
 		constexpr std::string_view Animator = "AnimatorComponent";
 		constexpr std::string_view BoxCollider = "BoxColliderComponent";
 		constexpr std::string_view CircleCollider = "CircleColliderComponent";
@@ -75,12 +75,27 @@ namespace EngineKey
 		constexpr std::string_view Enemy = "Enemy";
 		constexpr std::string_view Bullet = "Bullet";
 		constexpr std::string_view Effect = "Effect";
+		constexpr std::string_view TitleSceneController = "TitleSceneController";
+		constexpr std::string_view InGameSceneController = "InGameSceneController";
+		constexpr std::string_view NetworkController = "NetworkController";
+		constexpr std::string_view LocalController = "LocalController";
+		constexpr std::string_view Controller = "Controller";
+		constexpr std::string_view InGameManager = "InGameManager";
+		constexpr std::string_view Monster = "Monster";
+		constexpr std::string_view MonsterSpawner = "MonsterSpawner";
+		constexpr std::string_view ProjectileComponent = "ProjectileComponent";
+		constexpr std::string_view SkillComponent = "SkillComponent";
+		constexpr std::string_view AuraComponent = "AuraComponent";
+		constexpr std::string_view AoEComponent = "AoEComponent";
+		constexpr std::string_view ExpGem = "ExpGem";
+	}
+
+	namespace ScriptableObject
+	{
+		constexpr std::string_view MonsterSO = "MonsterSO";
+		constexpr std::string_view SkillSO = "SkillSO";
 	}
 }
-
-#define INTRO_SCENE "IntroScene"
-#define MOVE_LEFT "MoveLeft"
-#define MOVE_RIGHT "MoveRight"
 
 struct EngineTime
 {
@@ -95,3 +110,19 @@ enum class DisplayMode
 	Borderless,
 	Fullscreen
 };
+
+namespace PhysicsLayer
+{
+	enum Category : uint32
+	{
+		None       = 0,
+		Default    = 1 << 0, // 0x0001
+		Player     = 1 << 1, // 0x0002
+		Monster    = 1 << 2, // 0x0004
+		Projectile = 1 << 3, // 0x0008
+		Wall       = 1 << 4, // 0x0010
+		Item       = 1 << 5, // 0x0020
+
+		All        = 0xFFFFFFFF
+	};
+}

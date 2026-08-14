@@ -1,158 +1,180 @@
-#include "Engine/Core/pch.h"
+﻿#include "Engine/Core/pch.h"
 #include "AnimatorComponent.h"
 #include "Engine/Core/ComponentRegister.h"
 #include "Engine/Manager/ResourceManager.h"
 #include "Engine/Framework/GameObject.h"
-#include "Engine/Framework/Components/Render/RenderComponent.h"
+#include "Engine/Framework/Components/Render/SpriteRendererComponent.h"
 
 static ComponentRegistrar<AnimatorComponent> registrar(EngineKey::Component::Animator.data());
 
-AnimatorComponent::AnimatorComponent(GameObject* owner, TransformComponent* transform) : ScriptComponent(owner, transform) 
+AnimatorComponent::AnimatorComponent(GameObject* owner, TransformComponent* transform)
+	: ScriptComponent(owner, transform)
 {
-    ExposeVariable("Is Playing", &m_bIsPlaying);
-    ExposeVariable("Current Frame Idx", &m_CurrentFrameIdx);
-    ExposeVariable("Accumulated Time", &m_AccTime);
+	ExposeVariable("IsPlaying", &m_bIsPlaying);
+	ExposeVariable("CurrentFrameIdx", &m_CurrentFrameIdx);
+	ExposeVariable("AccumulatedTime", &m_AccTime);
+	ExposeVariable("ClipKeys", &m_vClipKeys);
+	ExposeVariable("DefaultPlay", &m_defaultPlayClip);
 }
 
-AnimatorComponent::AnimatorComponent(const AnimatorComponent& other) 
-    : ScriptComponent(other)
+void AnimatorComponent::EnsureClipsLoaded() const
 {
-    this->m_bIsPlaying = other.m_bIsPlaying;
-    this->m_CurrentFrameIdx = other.m_CurrentFrameIdx;
-    this->m_AccTime = other.m_AccTime;
+	if (m_MapClips.empty() && !m_vClipKeys.empty())
+	{
+		for (const auto& clipKey : m_vClipKeys)
+		{
+			std::wstring wClipKey(clipKey.begin(), clipKey.end());
+			const AnimationClip* pResClip = ResourceManager::GetInstance()->GetAnimationClip(wClipKey);
+			if (pResClip != nullptr)
+			{
+				m_MapClips[wClipKey] = *pResClip;
+			}
+		}
+	}
 
-    this->m_MapClips = other.m_MapClips;
-
-    if (other.m_pCurrentClip != nullptr)
-    {
-        this->m_pCurrentClip = &this->m_MapClips[other.m_pCurrentClip->name];
-    }
-    else
-    {
-        this->m_pCurrentClip = nullptr;
-    }
-
-    this->m_pRenderComp = nullptr;
+	if (m_currentClipName.empty() && !m_defaultPlayClip.empty())
+	{
+		m_currentClipName = std::wstring(m_defaultPlayClip.begin(), m_defaultPlayClip.end());
+	}
 }
 
 void AnimatorComponent::Awake()
 {
-	m_pRenderComp = gameObject.GetComponent<RenderComponent>();
+	EnsureClipsLoaded();
+	m_pSpriteRenderer = gameObject.GetComponent<SpriteRendererComponent>();
 
-    if (m_pRenderComp != nullptr && m_bIsPlaying && m_pCurrentClip != nullptr)
-    {
-        if (m_CurrentFrameIdx < m_pCurrentClip->frames.size())
-        {
-            const Sprite& currentFrame = m_pCurrentClip->frames[m_CurrentFrameIdx];
-            m_pRenderComp->SetAsSprite(currentFrame);
-        }
-    }
+	AnimationClip* pCurrentClip = GetCurrentClip();
+	if (m_pSpriteRenderer.IsValid() && pCurrentClip != nullptr && !pCurrentClip->frames.empty())
+	{
+		if (m_CurrentFrameIdx < static_cast<int>(pCurrentClip->frames.size()))
+		{
+			const Sprite& currentFrame = pCurrentClip->frames[m_CurrentFrameIdx];
+			m_pSpriteRenderer->SetAsSprite(currentFrame);
+		}
+	}
+}
+
+void AnimatorComponent::OnEnable()
+{
+	if (!m_pSpriteRenderer.IsValid())
+	{
+		m_pSpriteRenderer = gameObject.GetComponent<SpriteRendererComponent>();
+	}
+
+	AnimationClip* pCurrentClip = GetCurrentClip();
+	if (pCurrentClip == nullptr && !m_defaultPlayClip.empty())
+	{
+		std::wstring wDefaultPlay(m_defaultPlayClip.begin(), m_defaultPlayClip.end());
+		Play(wDefaultPlay);
+		pCurrentClip = GetCurrentClip();
+	}
+	else if (pCurrentClip != nullptr)
+	{
+		m_bIsPlaying = true;
+	}
+
+	if (m_pSpriteRenderer.IsValid() && pCurrentClip != nullptr && !pCurrentClip->frames.empty())
+	{
+		if (m_CurrentFrameIdx >= static_cast<int>(pCurrentClip->frames.size()))
+		{
+			m_CurrentFrameIdx = 0;
+		}
+		const Sprite& currentFrame = pCurrentClip->frames[m_CurrentFrameIdx];
+		m_pSpriteRenderer->SetAsSprite(currentFrame);
+	}
+}
+
+void AnimatorComponent::OnDisable()
+{
 }
 
 void AnimatorComponent::Update(float dt)
 {
-    //if (!m_bIsPlaying || m_pCurrentClip == nullptr || m_pRenderComp == nullptr) return;
+	AnimationClip* pCurrentClip = GetCurrentClip();
+	if (!m_bIsPlaying || pCurrentClip == nullptr || pCurrentClip->frames.empty()) return;
 
-    //m_AccTime += dt;
+	if (!m_pSpriteRenderer.IsValid())
+	{
+		m_pSpriteRenderer = gameObject.GetComponent<SpriteRendererComponent>();
+		if (!m_pSpriteRenderer.IsValid()) return;
+	}
 
-    //if (m_AccTime >= m_pCurrentClip->frameRate)
-    //{
-    //    m_AccTime -= m_pCurrentClip->frameRate;
-    //    m_CurrentFrameIdx++;
+	m_AccTime += dt;
 
-    //    if (m_CurrentFrameIdx >= m_pCurrentClip->frames.size())
-    //    {
-    //        if (m_pCurrentClip->bIsLoop)
-    //        {
-    //            m_CurrentFrameIdx = 0;
-    //        }
-    //        else
-    //        {
-    //            m_CurrentFrameIdx = static_cast<int>(m_pCurrentClip->frames.size()) - 1;
-    //            m_bIsPlaying = false;
-    //            // TODO : 애니메이션 종료 동작 추가
-    //        }
-    //    }
+	if (m_AccTime >= pCurrentClip->frameRate)
+	{
+		m_AccTime -= pCurrentClip->frameRate;
+		m_CurrentFrameIdx++;
 
-    //    const Sprite& currentFrame = m_pCurrentClip->frames[m_CurrentFrameIdx];
-    //    m_pRenderComp->SetAsSprite(currentFrame);
-    //}
+		if (m_CurrentFrameIdx >= static_cast<int>(pCurrentClip->frames.size()))
+		{
+			if (pCurrentClip->bIsLoop)
+			{
+				m_CurrentFrameIdx = 0;
+			}
+			else
+			{
+				m_CurrentFrameIdx = static_cast<int>(pCurrentClip->frames.size()) - 1;
+				m_bIsPlaying = false;
+			}
+		}
+
+		const Sprite& currentFrame = pCurrentClip->frames[m_CurrentFrameIdx];
+		m_pSpriteRenderer->SetAsSprite(currentFrame);
+	}
 }
 
 void AnimatorComponent::AddClip(const AnimationClip& clip)
 {
-    m_MapClips[clip.name] = clip;
+	m_MapClips[clip.name] = clip;
 }
 
 void AnimatorComponent::Play(const std::wstring& clipName)
 {
-    auto it = m_MapClips.find(clipName);
-    if (it == m_MapClips.end()) return;
-    if (m_pCurrentClip == &it->second && m_bIsPlaying) return;
+	EnsureClipsLoaded();
+	auto it = m_MapClips.find(clipName);
+	if (it == m_MapClips.end()) return;
 
-    m_pCurrentClip = &it->second;
-    m_CurrentFrameIdx = 0;
-    m_AccTime = 0.0f;
-    m_bIsPlaying = true;
+	m_currentClipName = clipName;
+	m_CurrentFrameIdx = 0;
+	m_AccTime = 0.0f;
+	m_bIsPlaying = true;
 
-    if (m_pRenderComp)
-    {
-        const Sprite& currentFrame = m_pCurrentClip->frames[m_CurrentFrameIdx];
-        m_pRenderComp->SetAsSprite(currentFrame);
-    }
+	if (!m_pSpriteRenderer.IsValid())
+	{
+		m_pSpriteRenderer = gameObject.GetComponent<SpriteRendererComponent>();
+	}
+
+	AnimationClip* pCurrentClip = &it->second;
+	if (m_pSpriteRenderer.IsValid() && pCurrentClip && !pCurrentClip->frames.empty())
+	{
+		const Sprite& currentFrame = pCurrentClip->frames[m_CurrentFrameIdx];
+		m_pSpriteRenderer->SetAsSprite(currentFrame);
+	}
 }
 
 void AnimatorComponent::Stop()
 {
-    m_bIsPlaying = false;
+	m_bIsPlaying = false;
 }
 
-void AnimatorComponent::Serialize(json& outJson) const
+void AnimatorComponent::PostDeserialize(Scene* pScene)
 {
-    ScriptComponent::Serialize(outJson);
+	ScriptComponent::PostDeserialize(pScene);
 
-    json clipKeysArray = json::array();
-
-    for (const auto& pair : m_MapClips)
-    {
-        std::wstring wKey = pair.first;
-        std::string strKey(wKey.begin(), wKey.end());
-
-        clipKeysArray.push_back(strKey);
-    }
-    outJson["ClipKeys"] = clipKeysArray;
-
-    if (m_pCurrentClip != nullptr)
-    {
-        std::wstring wName = m_pCurrentClip->name;
-        std::string strName(wName.begin(), wName.end());
-
-        outJson["DefaultPlay"] = strName;
-    }
-}
-
-void AnimatorComponent::Deserialize(const json& inJson)
-{
-    ScriptComponent::Deserialize(inJson);
-
-    if (inJson.contains("ClipKeys"))
-    {
-        for (const auto& keyJson : inJson["ClipKeys"])
-        {
-            std::string clipKey = keyJson.get<std::string>();
-            std::wstring wClipKey(clipKey.begin(), clipKey.end());
-            const AnimationClip* pResClip = ResourceManager::GetInstance()->GetAnimationClip(wClipKey);
-            if (pResClip != nullptr)
-            {
-                m_MapClips[wClipKey] = *pResClip;
-            }
-        }
-    }
-
-    if (inJson.contains("DefaultPlay"))
-    {
-        std::string defaultPlayStr = inJson["DefaultPlay"].get<std::string>();
-        std::wstring wDefaultPlay(defaultPlayStr.begin(), defaultPlayStr.end());
-        Play(wDefaultPlay);
-    }
+	m_MapClips.clear();
+	for (const auto& clipKey : m_vClipKeys)
+	{
+		std::wstring wClipKey(clipKey.begin(), clipKey.end());
+		const AnimationClip* pResClip = ResourceManager::GetInstance()->GetAnimationClip(wClipKey);
+		if (pResClip != nullptr)
+		{
+			m_MapClips[wClipKey] = *pResClip;
+		}
+	}
+	if (!m_defaultPlayClip.empty())
+	{
+		std::wstring wDefaultPlay(m_defaultPlayClip.begin(), m_defaultPlayClip.end());
+		Play(wDefaultPlay);
+	}
 }
