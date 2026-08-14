@@ -13,11 +13,13 @@
 #include "Engine/Framework/Components/Physics/ColliderComponent.h"
 #include "Engine/Manager/DebugManager.h"
 #include "Game/Player/Player.h"
+#include "Game/Monster/Monster.h"
 #include "Game/Monster/MonsterSpawner.h"
 #include "Game/Skill/SkillComponent.h"
 #include "Game/Item/ExpGem.h"
 #include "Engine/Framework/Components/UI/UIImageComponent.h"
 #include "Engine/Framework/Components/UI/UITextComponent.h"
+#include "Game/Player/NetworkController.h"
 
 InGameManager* InGameManager::s_instance = nullptr;
 
@@ -136,10 +138,87 @@ void InGameManager::Start()
 				this->SpawnPlayer(welcome->assignedNetID, true, { startX, 0.0f });
 			});
 
+		net->RegisterPacketHandler(PacketType::MONSTER_SNAPSHOT,
+			[this](const PacketHeader* packet, const sockaddr_in& sender) {
+				int size = packet->size;
+				if (size < static_cast<int>(sizeof(MonsterSnapshotPacket))) return;
+
+				const MonsterSnapshotPacket* snapshot = reinterpret_cast<const MonsterSnapshotPacket*>(packet);
+
+				size_t expectedSize = sizeof(MonsterSnapshotPacket);
+				if (snapshot->monsterCount > 1)
+					expectedSize += (snapshot->monsterCount - 1) * sizeof(MonsterSnapshotData);
+				if (size < static_cast<int>(expectedSize)) return;
+
+				// MonsterSpawner 탐색
+				MonsterSpawner* spawner = nullptr;
+				Scene* pScene = gameObject.GetOwnerScene();
+				if (pScene)
+				{
+					for (auto* obj : pScene->GetGameObjects())
+					{
+						if (obj && obj->IsActive())
+						{
+							spawner = obj->GetComponent<MonsterSpawner>();
+							if (spawner) break;
+						}
+					}
+				}
+
+				for (uint16 i = 0; i < snapshot->monsterCount; ++i)
+				{
+					uint16 monsterNetID = snapshot->monsters[i].monsterNetID;
+					Vector2 targetPos   = snapshot->monsters[i].pos;
+
+					Monster* pMonster = nullptr;
+					if (spawner)
+					{
+						pMonster = spawner->GetMonsterByNetID(monsterNetID);
+						if (!pMonster)
+						{
+							pMonster = spawner->SpawnMonsterClient(monsterNetID, targetPos);
+						}
+						else
+						{
+							// 컬링 후 재진입 등 거리 차이가 큰 경우 즉시 위치 세팅(Snap)하여 대각선 고속 이동/텔레포트 방지
+							float dist = Vector2::Distance(pMonster->transform.GetPosition(), targetPos);
+							if (dist > 150.0f)
+							{
+								pMonster->transform.SetPosition(targetPos);
+							}
+						}
+					}
+
+					if (pMonster)
+					{
+						NetworkIdentity* netId = pMonster->gameObject.GetComponent<NetworkIdentity>();
+						if (netId) netId->SetInterpolationTarget(targetPos, 0.08f);
+					}
+				}
+			});
+
 		net->RegisterPacketHandler(PacketType::MONSTER_KILL,
 			[this](const PacketHeader* packet, const sockaddr_in& sender) {
 				auto killPkt = reinterpret_cast<const MonsterKillPacket*>(packet);
 				this->SpawnExpGem(killPkt->dropItemPos, 10);
+
+				// Client 몬스터 Despawn 처리
+				Scene* pScene = gameObject.GetOwnerScene();
+				if (pScene)
+				{
+					for (auto* obj : pScene->GetGameObjects())
+					{
+						if (obj && obj->IsActive())
+						{
+							auto* spawner = obj->GetComponent<MonsterSpawner>();
+							if (spawner)
+							{
+								spawner->DespawnMonsterByNetID(killPkt->monsterNetID);
+								break;
+							}
+						}
+					}
+				}
 			});
 
 		net->RegisterPacketHandler(PacketType::TEAM_EXP_SYNC,
@@ -188,8 +267,14 @@ void InGameManager::Start()
 					this->SpawnPlayer(clientNetID, false, inputPkt->pos);
 				}
 
-				NetworkManager::GetInstance()->UpdateInterpolationTarget(
-					clientNetID, inputPkt->pos.x, inputPkt->pos.y, inputPkt->angle);
+				GameObject* obj = NetworkManager::GetInstance()->GetNetworkObject(clientNetID);
+				if (obj) {
+					NetworkIdentity* netId = obj->GetComponent<NetworkIdentity>();
+					if (netId) netId->SetInterpolationTarget({ inputPkt->pos.x, inputPkt->pos.y }, 0.033f);
+
+					NetworkController* netCtrl = obj->GetComponent<NetworkController>();
+					if (netCtrl) netCtrl->SetVelocity(inputPkt->vel);
+				}
 			});
 	}
 
@@ -221,10 +306,28 @@ void InGameManager::Start()
 			{
 				const EntitySyncData& entity = syncPkt->entities[i];
 
-				if (!NetworkManager::GetInstance()->GetNetworkObject(entity.netID))
+				GameObject* obj = NetworkManager::GetInstance()->GetNetworkObject(entity.netID);
+				if (!obj)
 				{
 					bool isLocal = (entity.netID == myID);
 					this->SpawnPlayer(entity.netID, isLocal, entity.pos);
+					obj = NetworkManager::GetInstance()->GetNetworkObject(entity.netID);
+				}
+
+				if (obj)
+				{
+					if (auto* player = obj->GetComponent<Player>())
+					{
+						player->SyncHP(entity.hp);
+					}
+
+					if (entity.netID != myID)
+					{
+						if (auto* netId = obj->GetComponent<NetworkIdentity>())
+						{
+							netId->SetInterpolationTarget({ entity.pos.x, entity.pos.y }, 0.033f);
+						}
+					}
 				}
 			}
 		});
@@ -284,6 +387,73 @@ void InGameManager::Update(float dt)
 
 	NetworkManager* net = NetworkManager::GetInstance();
 	if (!net->IsConnected()) return;
+}
+
+void InGameManager::FixedUpdate(float fixedDt)
+{
+	NetworkManager* net = NetworkManager::GetInstance();
+	if (!net->IsConnected() || net->GetRole() != NetRole::HOST) return;
+
+	BroadcastPlayerEntityState();
+}
+
+void InGameManager::BroadcastPlayerEntityState()
+{
+	NetworkManager* net = NetworkManager::GetInstance();
+	Scene* scene = gameObject.GetOwnerScene();
+	if (!scene) return;
+
+	EntityStateSyncPacket syncPacket;
+	syncPacket.header.type = PacketType::ENTITY_STATE_SYNC;
+	syncPacket.header.size = sizeof(EntityStateSyncPacket);
+	syncPacket.header.tick = net->GetCurrentTick();
+	syncPacket.entityCount = 0;
+
+	for (auto* obj : scene->GetGameObjects())
+	{
+		if (obj && obj->IsActive())
+		{
+			NetworkIdentity* netIdComp = obj->GetComponent<NetworkIdentity>();
+			// 몬스터 제외, 플레이어 객체만 ENTITY_STATE_SYNC로 동기화 (NetID < 1000)
+			if (netIdComp && netIdComp->GetNetID() > 0 && netIdComp->GetNetID() < 1000)
+			{
+				int idx = syncPacket.entityCount;
+				if (idx >= 32) break;
+
+				syncPacket.entities[idx].netID = netIdComp->GetNetID();
+
+				ColliderComponent* pCollider = obj->GetComponent<ColliderComponent>();
+				if (pCollider && b2Body_IsValid(pCollider->GetBodyId()))
+				{
+					b2Vec2 pos = b2Body_GetPosition(pCollider->GetBodyId());
+					b2Vec2 vel = b2Body_GetLinearVelocity(pCollider->GetBodyId());
+					float angle = b2Rot_GetAngle(b2Body_GetRotation(pCollider->GetBodyId()));
+
+					syncPacket.entities[idx].pos = Vector2(MeterToPixel(pos.x), MeterToPixel(pos.y));
+					syncPacket.entities[idx].vel = Vector2(MeterToPixel(vel.x), MeterToPixel(vel.y));
+					syncPacket.entities[idx].angle = angle;
+				}
+				else
+				{
+					TransformComponent* transform = &obj->transform;
+					syncPacket.entities[idx].pos = transform->GetPosition();
+					syncPacket.entities[idx].vel = Vector2(0.0f, 0.0f);
+					syncPacket.entities[idx].angle = transform->GetRotation().angle;
+				}
+
+				Player* pPlayer = obj->GetComponent<Player>();
+				syncPacket.entities[idx].hp = pPlayer ? pPlayer->GetCurrentHP() : 100.0f;
+
+				syncPacket.entityCount++;
+			}
+		}
+	}
+
+	if (syncPacket.entityCount > 0)
+	{
+		int packetSize = sizeof(PacketHeader) + sizeof(int) + sizeof(EntitySyncData) * syncPacket.entityCount;
+		net->SendPacket(&syncPacket, packetSize);
+	}
 }
 
 void InGameManager::SortedPlayerCache()

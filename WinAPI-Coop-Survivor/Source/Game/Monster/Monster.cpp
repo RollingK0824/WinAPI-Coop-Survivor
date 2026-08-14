@@ -12,6 +12,7 @@
 #include "Game/Monster/MonsterSpawner.h"
 #include "Game/Manager/InGameManager.h"
 #include "Engine/Network/NetworkManager.h"
+#include "Engine/Framework/Components/Network/NetworkIdentity.h"
 #include "Engine/Framework/Components/Render/SpriteRendererComponent.h"
 
 static ComponentRegistrar<Monster> registrar(EngineKey::CustomComponent::Monster.data());
@@ -48,11 +49,24 @@ void Monster::OnEnable()
 	if (m_pCollider.IsValid())
 	{
 		m_pCollider->SetFilter(PhysicsLayer::Monster, PhysicsLayer::All);
-	}
 
-	if (m_pCollider.IsValid() && b2Body_IsValid(m_pCollider->GetBodyId()))
-	{
-		b2Body_SetLinearVelocity(m_pCollider->GetBodyId(), { 0.0f, 0.0f });
+		if (b2Body_IsValid(m_pCollider->GetBodyId()))
+		{
+			NetRole role = NetworkManager::GetInstance()->GetRole();
+			if (role == NetRole::CLIENT)
+			{
+				b2Body_SetType(m_pCollider->GetBodyId(), b2_kinematicBody);
+				m_pCollider->m_bIsSensor = true;
+				m_pCollider->RebuildShape();
+			}
+			else
+			{
+				b2Body_SetType(m_pCollider->GetBodyId(), b2_dynamicBody);
+				m_pCollider->m_bIsSensor = false;
+				m_pCollider->RebuildShape();
+			}
+			b2Body_SetLinearVelocity(m_pCollider->GetBodyId(), { 0.0f, 0.0f });
+		}
 	}
 }
 
@@ -95,6 +109,20 @@ void Monster::Init(uint32 spawnSeqId, MonsterSO* monsterData, const Vector2& spa
 
 	if (m_pCollider.IsValid() && b2Body_IsValid(m_pCollider->GetBodyId()))
 	{
+		NetRole role = NetworkManager::GetInstance()->GetRole();
+		if (role == NetRole::CLIENT)
+		{
+			b2Body_SetType(m_pCollider->GetBodyId(), b2_kinematicBody);
+			m_pCollider->m_bIsSensor = true;
+			m_pCollider->RebuildShape();
+		}
+		else
+		{
+			b2Body_SetType(m_pCollider->GetBodyId(), b2_dynamicBody);
+			m_pCollider->m_bIsSensor = false;
+			m_pCollider->RebuildShape();
+		}
+
 		b2Vec2 b2SpawnPos = { PixelToMeter(spawnPos.x), PixelToMeter(spawnPos.y) };
 		b2Body_SetTransform(m_pCollider->GetBodyId(), b2SpawnPos, b2Rot_identity);
 		b2Body_SetLinearVelocity(m_pCollider->GetBodyId(), { 0.0f, 0.0f });
@@ -111,7 +139,7 @@ void Monster::SetSpawner(MonsterSpawner* spawner)
 	m_pSpawner = spawner;
 }
 
-void Monster::FixedUpdate(float fixedDt)
+void Monster::Update(float dt)
 {
 	if (m_state == EMonsterState::Dead || !gameObject.IsActive())
 		return;
@@ -120,7 +148,8 @@ void Monster::FixedUpdate(float fixedDt)
 	if (role == NetRole::CLIENT)
 	{
 		Vector2 lerpPos;
-		if (NetworkManager::GetInstance()->GetInterpolatedPosition(m_netID, lerpPos))
+		NetworkIdentity* netId = gameObject.GetComponent<NetworkIdentity>();
+		if (netId && netId->GetInterpolatedPosition(lerpPos))
 		{
 			Vector2 currentPos = transform.GetPosition();
 			Vector2 moveDir = lerpPos - currentPos;
@@ -143,8 +172,17 @@ void Monster::FixedUpdate(float fixedDt)
 				}
 			}
 		}
-		return;
 	}
+}
+
+void Monster::FixedUpdate(float fixedDt)
+{
+	if (m_state == EMonsterState::Dead || !gameObject.IsActive())
+		return;
+
+	NetRole role = NetworkManager::GetInstance()->GetRole();
+	if (role == NetRole::CLIENT)
+		return;
 
 	UpdateTargetSearch(fixedDt);
 	UpdateAI(fixedDt);
@@ -250,6 +288,9 @@ void Monster::MoveTowardsTarget(float fixedDt)
 void Monster::TakeDamage(float damage, GameObject* pAttacker)
 {
 	if (m_state == EMonsterState::Dead) return;
+
+	NetRole role = NetworkManager::GetInstance()->GetRole();
+	if (role == NetRole::CLIENT) return;
 
 	m_currentHP -= damage;
 	if (m_currentHP <= 0.0f)

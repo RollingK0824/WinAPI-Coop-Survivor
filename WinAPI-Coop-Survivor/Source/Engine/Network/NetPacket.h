@@ -21,7 +21,7 @@ enum class PacketType : uint8 {
 struct PacketHeader {
 	PacketType type;
 	uint16 size;
-	uint32 sequenceNumber;
+	uint32 tick; // 패킷 생성 시점의 고정 Tick 카운터
 };
 
 struct WelcomePacket {
@@ -43,6 +43,7 @@ struct EntitySyncData {
 	Vector2 pos;
 	Vector2 vel;
 	float angle;
+	float hp;
 };
 
 struct HeartbeatPacket
@@ -96,7 +97,6 @@ struct MonsterSnapshotData
 struct MonsterSnapshotPacket
 {
 	PacketHeader header;
-	uint32 timestamp;
 	uint16 monsterCount;
 	MonsterSnapshotData monsters[1];
 };
