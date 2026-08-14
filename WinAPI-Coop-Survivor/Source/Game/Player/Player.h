@@ -31,6 +31,12 @@ public:
 	float GetMaxHP() const { return m_maxHP; }
 	float GetHPRatio() const { return (m_maxHP > 0.0f) ? (m_currentHP / m_maxHP) : 0.0f; }
 
+	void SyncHP(float hp)
+	{
+		m_currentHP = hp;
+		if (m_currentHP <= 0.0f) m_currentHP = 0.0f;
+	}
+
 private:
 	void CreateTestHPBar();
 	void UpdateHPBar();

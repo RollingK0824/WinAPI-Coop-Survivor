@@ -1,8 +1,9 @@
-﻿#pragma once
+#pragma once
 #include "Controller.h"
 #include "Engine/Core/ObserverPtr.h"
 
 class Player;
+class ColliderComponent;
 
 class NetworkController : public Controller {
 public:
@@ -18,8 +19,12 @@ public:
     virtual void Start() override;
     virtual void Update(float dt) override;
 
+    void SetVelocity(const Vector2& vel) { m_velocity = vel; }
+
 private:
     ObserverPtr<Player> m_pPlayer;
     ObserverPtr<ColliderComponent> m_pCollider;
+
+    Vector2 m_velocity{ 0.0f,0.0f };
     uint32 m_NetID = 0;
 };

@@ -30,11 +30,11 @@ void Player::Start()
 
 	m_pCollider = gameObject.GetComponent<ColliderComponent>();
 
-	// Sensor(Trigger)로 설정: 몬스터와 물리 밀림 없이 OnCollision 이벤트만 수신
 	if (m_pCollider.IsValid())
 	{
-		m_pCollider->m_bIsSensor = true;
-		m_pCollider->SetFilter(PhysicsLayer::Player, PhysicsLayer::All);
+		m_pCollider->m_bIsSensor = false;
+		m_pCollider->m_density = 1000.0f; // 몬스터 대비 압도적인 밀도/질량으로 몬스터를 밀치고 이동
+		m_pCollider->SetFilter(PhysicsLayer::Player, PhysicsLayer::All & ~PhysicsLayer::Player); // Player간 충돌 비활성화
 		m_pCollider->RebuildShape();
 	}
 
@@ -51,7 +51,7 @@ void Player::Start()
 
 		if (m_pCollider.IsValid() && b2Body_IsValid(m_pCollider->GetBodyId()))
 		{
-			b2Body_SetType(m_pCollider->GetBodyId(), b2_kinematicBody);
+			b2Body_SetType(m_pCollider->GetBodyId(), b2_dynamicBody);
 		}
 	}
 
@@ -66,20 +66,26 @@ void Player::Update(float dt)
 	}
 	else if (!IsDead())
 	{
-		// 몬스터 무리 접촉 피해 검사 (무적 시간 0.3초마다 정확히 1회만 피해 적용)
-		Vector2 myPos = transform.GetPosition();
-		float hitRadius = 24.0f; // 플레이어 피격 판정 반경
+		NetRole role = NetworkManager::GetInstance()->GetRole();
+		NetworkIdentity* netId = gameObject.GetComponent<NetworkIdentity>();
 
-		auto colliders = PhysicsManager::GetInstance()->OverlapAABB(myPos, hitRadius, PhysicsLayer::Monster);
-		for (auto* pCol : colliders)
+		// Host 또는 내 로컬 로컬 소유 플레이어(Prediction)만 피격 검사 수행
+		if (role != NetRole::CLIENT || (netId && netId->HasAuthority()))
 		{
-			if (!pCol || !pCol->IsEnabled() || !pCol->gameObject.IsActive()) continue;
+			Vector2 myPos = transform.GetPosition();
+			float hitRadius = 24.0f; // 플레이어 피격 판정 반경
 
-			Monster* pMonster = pCol->gameObject.GetComponent<Monster>();
-			if (pMonster && !pMonster->IsDead())
+			auto colliders = PhysicsManager::GetInstance()->OverlapAABB(myPos, hitRadius, PhysicsLayer::Monster);
+			for (auto* pCol : colliders)
 			{
-				TakeDamage(pMonster->GetAttackDamage());
-				break; // 1회 피격 후 무적시간(iFrame) 재설정되므로 바로 탈출
+				if (!pCol || !pCol->IsEnabled() || !pCol->gameObject.IsActive()) continue;
+
+				Monster* pMonster = pCol->gameObject.GetComponent<Monster>();
+				if (pMonster && !pMonster->IsDead())
+				{
+					TakeDamage(pMonster->GetAttackDamage());
+					break; // 1회 피격 후 무적시간(iFrame) 재설정되므로 바로 탈출
+				}
 			}
 		}
 	}
@@ -118,6 +124,7 @@ void Player::UpdateExpGemMagnet(float dt)
 				mgr->AddTeamExp(static_cast<float>(pGem->GetExpAmount()));
 			}
 
+			// 보석 소멸(Despawn)은 Client 로컬 화면에서도 흡수 제거 연출을 위해 실행
 			pGem->Despawn();
 			continue;
 		}
@@ -169,6 +176,11 @@ void Player::OnCollision(ColliderComponent* other)
 	if (m_iFrameTimer > 0.0f) return;
 	if (IsDead()) return;
 
+	NetRole role = NetworkManager::GetInstance()->GetRole();
+	NetworkIdentity* netId = gameObject.GetComponent<NetworkIdentity>();
+
+	if (role == NetRole::CLIENT && netId && !netId->HasAuthority()) return;
+
 	Monster* pMonster = other->gameObject.GetComponent<Monster>();
 	if (!pMonster) return;
 	if (pMonster->IsDead()) return;
@@ -179,6 +191,12 @@ void Player::OnCollision(ColliderComponent* other)
 void Player::TakeDamage(float damage, GameObject* pAttacker)
 {
 	if (IsDead()) return;
+
+	NetRole role = NetworkManager::GetInstance()->GetRole();
+	NetworkIdentity* netId = gameObject.GetComponent<NetworkIdentity>();
+
+	// Client에서 남의 원격 플레이어 HP를 함부로 깎지 못하도록 차단
+	if (role == NetRole::CLIENT && netId && !netId->HasAuthority()) return;
 
 	m_currentHP -= damage;
 	if (m_currentHP <= 0.0f)
