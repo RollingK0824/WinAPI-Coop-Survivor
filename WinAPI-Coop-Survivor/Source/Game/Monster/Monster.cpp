@@ -49,11 +49,24 @@ void Monster::OnEnable()
 	if (m_pCollider.IsValid())
 	{
 		m_pCollider->SetFilter(PhysicsLayer::Monster, PhysicsLayer::All);
-	}
 
-	if (m_pCollider.IsValid() && b2Body_IsValid(m_pCollider->GetBodyId()))
-	{
-		b2Body_SetLinearVelocity(m_pCollider->GetBodyId(), { 0.0f, 0.0f });
+		if (b2Body_IsValid(m_pCollider->GetBodyId()))
+		{
+			NetRole role = NetworkManager::GetInstance()->GetRole();
+			if (role == NetRole::CLIENT)
+			{
+				b2Body_SetType(m_pCollider->GetBodyId(), b2_kinematicBody);
+				m_pCollider->m_bIsSensor = true;
+				m_pCollider->RebuildShape();
+			}
+			else
+			{
+				b2Body_SetType(m_pCollider->GetBodyId(), b2_dynamicBody);
+				m_pCollider->m_bIsSensor = false;
+				m_pCollider->RebuildShape();
+			}
+			b2Body_SetLinearVelocity(m_pCollider->GetBodyId(), { 0.0f, 0.0f });
+		}
 	}
 }
 
@@ -96,6 +109,20 @@ void Monster::Init(uint32 spawnSeqId, MonsterSO* monsterData, const Vector2& spa
 
 	if (m_pCollider.IsValid() && b2Body_IsValid(m_pCollider->GetBodyId()))
 	{
+		NetRole role = NetworkManager::GetInstance()->GetRole();
+		if (role == NetRole::CLIENT)
+		{
+			b2Body_SetType(m_pCollider->GetBodyId(), b2_kinematicBody);
+			m_pCollider->m_bIsSensor = true;
+			m_pCollider->RebuildShape();
+		}
+		else
+		{
+			b2Body_SetType(m_pCollider->GetBodyId(), b2_dynamicBody);
+			m_pCollider->m_bIsSensor = false;
+			m_pCollider->RebuildShape();
+		}
+
 		b2Vec2 b2SpawnPos = { PixelToMeter(spawnPos.x), PixelToMeter(spawnPos.y) };
 		b2Body_SetTransform(m_pCollider->GetBodyId(), b2SpawnPos, b2Rot_identity);
 		b2Body_SetLinearVelocity(m_pCollider->GetBodyId(), { 0.0f, 0.0f });
@@ -261,6 +288,9 @@ void Monster::MoveTowardsTarget(float fixedDt)
 void Monster::TakeDamage(float damage, GameObject* pAttacker)
 {
 	if (m_state == EMonsterState::Dead) return;
+
+	NetRole role = NetworkManager::GetInstance()->GetRole();
+	if (role == NetRole::CLIENT) return;
 
 	m_currentHP -= damage;
 	if (m_currentHP <= 0.0f)
