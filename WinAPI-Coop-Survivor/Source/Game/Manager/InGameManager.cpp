@@ -19,6 +19,7 @@
 #include "Game/Item/ExpGem.h"
 #include "Engine/Framework/Components/UI/UIImageComponent.h"
 #include "Engine/Framework/Components/UI/UITextComponent.h"
+#include "Game/Player/NetworkController.h"
 
 InGameManager* InGameManager::s_instance = nullptr;
 
@@ -270,6 +271,9 @@ void InGameManager::Start()
 				if (obj) {
 					NetworkIdentity* netId = obj->GetComponent<NetworkIdentity>();
 					if (netId) netId->SetInterpolationTarget({ inputPkt->pos.x, inputPkt->pos.y }, 0.033f);
+
+					NetworkController* netCtrl = obj->GetComponent<NetworkController>();
+					if (netCtrl) netCtrl->SetVelocity(inputPkt->vel);
 				}
 			});
 	}
@@ -310,11 +314,19 @@ void InGameManager::Start()
 					obj = NetworkManager::GetInstance()->GetNetworkObject(entity.netID);
 				}
 
-				if (entity.netID != myID && obj)
+				if (obj)
 				{
-					if (auto* netId = obj->GetComponent<NetworkIdentity>())
+					if (auto* player = obj->GetComponent<Player>())
 					{
-						netId->SetInterpolationTarget({ entity.pos.x, entity.pos.y }, 0.033f);
+						player->SyncHP(entity.hp);
+					}
+
+					if (entity.netID != myID)
+					{
+						if (auto* netId = obj->GetComponent<NetworkIdentity>())
+						{
+							netId->SetInterpolationTarget({ entity.pos.x, entity.pos.y }, 0.033f);
+						}
 					}
 				}
 			}
@@ -375,6 +387,73 @@ void InGameManager::Update(float dt)
 
 	NetworkManager* net = NetworkManager::GetInstance();
 	if (!net->IsConnected()) return;
+}
+
+void InGameManager::FixedUpdate(float fixedDt)
+{
+	NetworkManager* net = NetworkManager::GetInstance();
+	if (!net->IsConnected() || net->GetRole() != NetRole::HOST) return;
+
+	BroadcastPlayerEntityState();
+}
+
+void InGameManager::BroadcastPlayerEntityState()
+{
+	NetworkManager* net = NetworkManager::GetInstance();
+	Scene* scene = gameObject.GetOwnerScene();
+	if (!scene) return;
+
+	EntityStateSyncPacket syncPacket;
+	syncPacket.header.type = PacketType::ENTITY_STATE_SYNC;
+	syncPacket.header.size = sizeof(EntityStateSyncPacket);
+	syncPacket.header.tick = net->GetCurrentTick();
+	syncPacket.entityCount = 0;
+
+	for (auto* obj : scene->GetGameObjects())
+	{
+		if (obj && obj->IsActive())
+		{
+			NetworkIdentity* netIdComp = obj->GetComponent<NetworkIdentity>();
+			// 몬스터 제외, 플레이어 객체만 ENTITY_STATE_SYNC로 동기화 (NetID < 1000)
+			if (netIdComp && netIdComp->GetNetID() > 0 && netIdComp->GetNetID() < 1000)
+			{
+				int idx = syncPacket.entityCount;
+				if (idx >= 32) break;
+
+				syncPacket.entities[idx].netID = netIdComp->GetNetID();
+
+				ColliderComponent* pCollider = obj->GetComponent<ColliderComponent>();
+				if (pCollider && b2Body_IsValid(pCollider->GetBodyId()))
+				{
+					b2Vec2 pos = b2Body_GetPosition(pCollider->GetBodyId());
+					b2Vec2 vel = b2Body_GetLinearVelocity(pCollider->GetBodyId());
+					float angle = b2Rot_GetAngle(b2Body_GetRotation(pCollider->GetBodyId()));
+
+					syncPacket.entities[idx].pos = Vector2(MeterToPixel(pos.x), MeterToPixel(pos.y));
+					syncPacket.entities[idx].vel = Vector2(MeterToPixel(vel.x), MeterToPixel(vel.y));
+					syncPacket.entities[idx].angle = angle;
+				}
+				else
+				{
+					TransformComponent* transform = &obj->transform;
+					syncPacket.entities[idx].pos = transform->GetPosition();
+					syncPacket.entities[idx].vel = Vector2(0.0f, 0.0f);
+					syncPacket.entities[idx].angle = transform->GetRotation().angle;
+				}
+
+				Player* pPlayer = obj->GetComponent<Player>();
+				syncPacket.entities[idx].hp = pPlayer ? pPlayer->GetCurrentHP() : 100.0f;
+
+				syncPacket.entityCount++;
+			}
+		}
+	}
+
+	if (syncPacket.entityCount > 0)
+	{
+		int packetSize = sizeof(PacketHeader) + sizeof(int) + sizeof(EntitySyncData) * syncPacket.entityCount;
+		net->SendPacket(&syncPacket, packetSize);
+	}
 }
 
 void InGameManager::SortedPlayerCache()

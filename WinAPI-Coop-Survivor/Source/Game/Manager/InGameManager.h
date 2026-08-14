@@ -22,7 +22,10 @@ public:
 	
 	virtual void Start() override;
 	virtual void Update(float dt) override;
+	virtual void FixedUpdate(float fixedDt) override;
 	virtual void OnDestroy() override;
+
+	void BroadcastPlayerEntityState();
 
 	void SortedPlayerCache();
 	const std::vector<GameObject*>& GetPlayers() const { return m_vCachedPlayer; }
