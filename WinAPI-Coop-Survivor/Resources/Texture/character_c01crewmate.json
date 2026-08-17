@@ -1,0 +1,120 @@
+{
+  "frames": [
+    {
+      "filename": "C01Crewmate_01.png",
+      "frame": {
+        "x": 28,
+        "y": 1,
+        "w": 25,
+        "h": 26
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 25,
+        "h": 26
+      },
+      "sourceSize": {
+        "w": 25,
+        "h": 26
+      }
+    },
+    {
+      "filename": "C01Crewmate_02.png",
+      "frame": {
+        "x": 1,
+        "y": 1,
+        "w": 25,
+        "h": 27
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 25,
+        "h": 27
+      },
+      "sourceSize": {
+        "w": 25,
+        "h": 27
+      }
+    },
+    {
+      "filename": "C01Crewmate_03.png",
+      "frame": {
+        "x": 28,
+        "y": 29,
+        "w": 25,
+        "h": 26
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 25,
+        "h": 26
+      },
+      "sourceSize": {
+        "w": 25,
+        "h": 26
+      }
+    },
+    {
+      "filename": "C01Crewmate_04.png",
+      "frame": {
+        "x": 1,
+        "y": 30,
+        "w": 25,
+        "h": 27
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 25,
+        "h": 27
+      },
+      "sourceSize": {
+        "w": 25,
+        "h": 27
+      }
+    }
+  ],
+  "meta": {
+    "app": "https://www.codeandweb.com/texturepacker",
+    "version": "1.0",
+    "image": "character_c01crewmate.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 64,
+      "h": 64
+    },
+    "scale": "1",
+    "custom_clips": [
+      {
+        "name": "C01Crewmate_Run",
+        "frameDuration": 1.0,
+        "isLoop": true,
+        "frames": [
+          "C01Crewmate_02.png",
+          "C01Crewmate_03.png",
+          "C01Crewmate_04.png",
+          "C01Crewmate_03.png"
+        ]
+      },
+      {
+        "name": "C01Crewmate_Idle",
+        "frameDuration": 0.1,
+        "isLoop": false,
+        "frames": [
+          "C01Crewmate_01.png"
+        ]
+      }
+    ]
+  }
+}

@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Engine/Framework/Components/Core/ScriptComponent.h"
 #include "Engine/Renderer/Sprite.h"
 #include "Engine/Core/ObserverPtr.h"
@@ -22,35 +22,35 @@ public:
 	void AddClip(const AnimationClip& clip);
 	void Play(const std::wstring& clipName);
 	void Stop();
+
+	void SetSpeed(float speed) { m_Speed = speed; }
+	float GetSpeed() const { return m_Speed; }
+
 	bool IsFinished() const
 	{
-		const AnimationClip* pClip = GetCurrentClip();
-		return !m_bIsPlaying 
-			&& pClip != nullptr 
-			&& !pClip->bIsLoop;
+		return !m_bIsPlaying
+			&& m_pCurrentClip != nullptr
+			&& !m_pCurrentClip->bIsLoop;
 	}
 
-	void EnsureClipsLoaded() const;
+	void EnsureClipsLoaded();
 
-	AnimationClip* GetCurrentClip() const
-	{
-		EnsureClipsLoaded();
-		if (m_currentClipName.empty()) return nullptr;
-		auto it = m_MapClips.find(m_currentClipName);
-		return (it != m_MapClips.end()) ? const_cast<AnimationClip*>(&it->second) : nullptr;
-	}
+	AnimationClip* GetCurrentClip() const { return m_pCurrentClip; }
 
 	virtual std::string_view GetComponentType() const override { return EngineKey::Component::Animator; }
 
 private:
 	ObserverPtr<SpriteRendererComponent> m_pSpriteRenderer = nullptr;
 
-	mutable std::unordered_map<std::wstring, AnimationClip> m_MapClips;
+	std::unordered_map<std::wstring, AnimationClip> m_MapClips;
+	AnimationClip* m_pCurrentClip = nullptr;
+
 	std::vector<std::string> m_vClipKeys;
 	std::string m_defaultPlayClip = "";
-	mutable std::wstring m_currentClipName = L"";
+	std::wstring m_currentClipName = L"";
 
 	int m_CurrentFrameIdx = 0;
 	float m_AccTime = 0.0f;
+	float m_Speed = 1.0f;
 	bool m_bIsPlaying = false;
 };
