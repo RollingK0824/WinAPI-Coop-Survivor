@@ -1,4 +1,4 @@
-#include "Engine/Core/pch.h"
+﻿#include "Engine/Core/pch.h"
 #include "InspectorPanel.h"
 #include "Engine/Editor/EditorSystem.h"
 #include "Engine/Manager/JsonSerializer.h"
@@ -16,6 +16,336 @@
 
 static bool LeftDragFloat(const char* label, float* v, float v_speed = 0.1f, const char* format = "%.3f");
 static bool LeftDragInt(const char* label, int* v, float v_speed = 1.0f);
+
+static bool DrawTexturePickerWithSearch(const std::string& propName, std::wstring* wKey, Component* comp = nullptr)
+{
+	std::string keyStr = "";
+	for (wchar_t wc : *wKey) keyStr += static_cast<char>(wc);
+
+	const Sprite* pPreviewSprite = ResourceManager::GetInstance()->GetSprite(*wKey);
+	bool bRenderedPreview = false;
+
+	if (pPreviewSprite != nullptr && pPreviewSprite->pTexture != nullptr)
+	{
+		ID3D11ShaderResourceView* pSRV = ResourceManager::GetInstance()->GetTextureSRV(pPreviewSprite->pTexture);
+		if (pSRV != nullptr)
+		{
+			D2D1_SIZE_F texSz = pPreviewSprite->pTexture->GetSize();
+			if (texSz.width > 0.0f && texSz.height > 0.0f)
+			{
+				ImVec2 uv0(pPreviewSprite->srcRect.left / texSz.width, pPreviewSprite->srcRect.top / texSz.height);
+				ImVec2 uv1(pPreviewSprite->srcRect.right / texSz.width, pPreviewSprite->srcRect.bottom / texSz.height);
+
+				ImGui::Image((ImTextureID)pSRV, ImVec2(35.0f, 35.0f), uv0, uv1);
+				bRenderedPreview = true;
+			}
+		}
+	}
+
+	if (!bRenderedPreview)
+	{
+		ImGui::Button("No Image", ImVec2(35.0f, 35.0f));
+	}
+	ImGui::SameLine();
+
+	std::string btnLabel = keyStr.empty() ? "Select..." : keyStr;
+	std::string popupId = "TexturePickerPopup_" + propName;
+	if (ImGui::Button(btnLabel.c_str(), ImVec2(120.0f, 25.0f)))
+	{
+		ImGui::OpenPopup(popupId.c_str());
+	}
+
+	if (comp != nullptr)
+	{
+		ImGui::SameLine();
+		if (ImGui::Button("Set Native Size"))
+		{
+			if (SpriteRendererComponent* spriteComp = dynamic_cast<SpriteRendererComponent*>(comp))
+			{
+				spriteComp->SetNativeSize();
+			}
+			else if (UIImageComponent* uiImg = dynamic_cast<UIImageComponent*>(comp))
+			{
+				uiImg->SetNativeSize();
+			}
+		}
+	}
+
+	bool bChanged = false;
+	if (ImGui::BeginPopup(popupId.c_str()))
+	{
+		static char spriteSearchBuf[128] = "";
+		if (ImGui::IsWindowAppearing())
+		{
+			spriteSearchBuf[0] = '\0';
+			ImGui::SetKeyboardFocusHere();
+		}
+
+		ImGui::SetNextItemWidth(-1.0f);
+		ImGui::InputTextWithHint("##SpriteSearch", "Search sprite...", spriteSearchBuf, IM_ARRAYSIZE(spriteSearchBuf));
+		ImGui::Separator();
+
+		std::string filterStr = spriteSearchBuf;
+		std::transform(filterStr.begin(), filterStr.end(), filterStr.begin(), ::tolower);
+
+		ImGui::BeginChild("SpriteListChild", ImVec2(320.0f, 300.0f), false);
+		auto loadedSpriteKeys = ResourceManager::GetInstance()->GetLoadedSpriteKeys();
+		for (const auto& keyName : loadedSpriteKeys)
+		{
+			if (!filterStr.empty())
+			{
+				std::string lowerKey = keyName;
+				std::transform(lowerKey.begin(), lowerKey.end(), lowerKey.begin(), ::tolower);
+				if (lowerKey.find(filterStr) == std::string::npos)
+					continue;
+			}
+
+			if (ImGui::Selectable(keyName.c_str()))
+			{
+				*wKey = std::wstring(keyName.begin(), keyName.end());
+				bChanged = true;
+				if (comp != nullptr)
+				{
+					if (SpriteRendererComponent* spriteComp = dynamic_cast<SpriteRendererComponent*>(comp))
+					{
+						spriteComp->SetSpriteKey(*wKey);
+					}
+					else if (UIImageComponent* uiImg = dynamic_cast<UIImageComponent*>(comp))
+					{
+						uiImg->SetTextureKey(*wKey);
+					}
+					else if (UIPanelComponent* uiPanel = dynamic_cast<UIPanelComponent*>(comp))
+					{
+						uiPanel->SetTextureKey(*wKey);
+					}
+				}
+				ImGui::CloseCurrentPopup();
+			}
+		}
+		ImGui::EndChild();
+		ImGui::EndPopup();
+	}
+	return bChanged;
+}
+
+static bool DrawAnimClipPickerPopup(const char* popupId, std::string* currentVal)
+{
+	bool bChanged = false;
+	if (ImGui::BeginPopup(popupId))
+	{
+		static char animSearchBuf[128] = "";
+		if (ImGui::IsWindowAppearing())
+		{
+			animSearchBuf[0] = '\0';
+			ImGui::SetKeyboardFocusHere();
+		}
+
+		ImGui::SetNextItemWidth(-1.0f);
+		ImGui::InputTextWithHint("##AnimSearch", "Search animation...", animSearchBuf, IM_ARRAYSIZE(animSearchBuf));
+		ImGui::Separator();
+
+		std::string filterStr = animSearchBuf;
+		std::transform(filterStr.begin(), filterStr.end(), filterStr.begin(), ::tolower);
+
+		ImGui::BeginChild("AnimListChild", ImVec2(300.0f, 250.0f), false);
+		auto animKeys = ResourceManager::GetInstance()->GetLoadedAnimationClipKeys();
+
+		if (animKeys.empty())
+		{
+			ImGui::TextDisabled("No animation clips loaded.");
+		}
+
+		if (ImGui::Selectable("None (Empty)", currentVal->empty()))
+		{
+			*currentVal = "";
+			bChanged = true;
+			ImGui::CloseCurrentPopup();
+		}
+
+		for (const auto& animKey : animKeys)
+		{
+			if (!filterStr.empty())
+			{
+				std::string lowerKey = animKey;
+				std::transform(lowerKey.begin(), lowerKey.end(), lowerKey.begin(), ::tolower);
+				if (lowerKey.find(filterStr) == std::string::npos)
+					continue;
+			}
+
+			bool isSelected = (*currentVal == animKey);
+			if (ImGui::Selectable(animKey.c_str(), isSelected))
+			{
+				*currentVal = animKey;
+				bChanged = true;
+				ImGui::CloseCurrentPopup();
+			}
+		}
+		ImGui::EndChild();
+
+		ImGui::Separator();
+		char manualBuf[256];
+		strcpy_s(manualBuf, currentVal->c_str());
+		ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - 55.0f);
+		if (ImGui::InputText("##ManualAnimKey", manualBuf, sizeof(manualBuf), ImGuiInputTextFlags_EnterReturnsTrue))
+		{
+			*currentVal = manualBuf;
+			bChanged = true;
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Set"))
+		{
+			*currentVal = manualBuf;
+			bChanged = true;
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::EndPopup();
+	}
+	return bChanged;
+}
+
+static void DrawStringVectorInspector(const ExposedProperty& prop)
+{
+	auto* vec = static_cast<std::vector<std::string>*>(prop.data);
+	std::string headerText = prop.name + " (" + std::to_string(vec->size()) + ")";
+	if (ImGui::TreeNode(headerText.c_str()))
+	{
+		int removeIdx = -1;
+		bool bIsClipKeys = (prop.name == "ClipKeys" || prop.name.find("Clip") != std::string::npos || prop.name.find("Anim") != std::string::npos);
+
+		for (size_t i = 0; i < vec->size(); ++i)
+		{
+			ImGui::PushID(static_cast<int>(i));
+
+			if (bIsClipKeys)
+			{
+				std::string elemVal = (*vec)[i];
+				std::string btnLabel = elemVal.empty() ? "Select Clip..." : elemVal;
+
+				float availW = ImGui::GetContentRegionAvail().x;
+				std::string popupId = "AnimClipPickerPopup_" + std::to_string(i);
+				if (ImGui::Button((btnLabel + "##ClipBtn").c_str(), ImVec2(availW - 30.0f, 0.0f)))
+				{
+					ImGui::OpenPopup(popupId.c_str());
+				}
+
+				DrawAnimClipPickerPopup(popupId.c_str(), &(*vec)[i]);
+
+				ImGui::SameLine();
+				if (ImGui::Button("-", ImVec2(20, 20))) removeIdx = static_cast<int>(i);
+			}
+			else
+			{
+				char buf[256];
+				strcpy_s(buf, (*vec)[i].c_str());
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - 30.0f);
+				if (ImGui::InputText(("Element " + std::to_string(i)).c_str(), buf, sizeof(buf)))
+				{
+					(*vec)[i] = buf;
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("-", ImVec2(20, 20))) removeIdx = static_cast<int>(i);
+			}
+
+			ImGui::PopID();
+		}
+		if (removeIdx != -1) vec->erase(vec->begin() + removeIdx);
+		if (ImGui::Button("+ Add Element")) vec->push_back("");
+		ImGui::TreePop();
+	}
+}
+
+static void DrawStringInspector(const ExposedProperty& prop)
+{
+	std::string* str = static_cast<std::string*>(prop.data);
+	bool bIsClip = (prop.name == "DefaultPlay" || prop.name.find("Clip") != std::string::npos || prop.name.find("Anim") != std::string::npos);
+
+	if (bIsClip)
+	{
+		std::string btnLabel = str->empty() ? "Select Default Clip..." : *str;
+		float availW = ImGui::GetContentRegionAvail().x;
+		std::string popupId = "AnimClipPickerSinglePopup_" + prop.name;
+		if (ImGui::Button((btnLabel + "##ClipSingleBtn").c_str(), ImVec2(availW, 0.0f)))
+		{
+			ImGui::OpenPopup(popupId.c_str());
+		}
+
+		DrawAnimClipPickerPopup(popupId.c_str(), str);
+	}
+	else
+	{
+		char buffer[256];
+		strcpy_s(buffer, str->c_str());
+		if (ImGui::InputText(("##" + prop.name).c_str(), buffer, sizeof(buffer)))
+		{
+			*str = buffer;
+		}
+	}
+}
+
+static void DrawAssetComboWithSearch(const ExposedProperty& prop)
+{
+	uint32* pAssetID = static_cast<uint32*>(prop.data);
+	uint32 currentID = (pAssetID != nullptr) ? *pAssetID : 0;
+
+	std::string previewName = "None (Select SO Asset)";
+	const auto& allAssets = DataManager::GetInstance()->GetAllAssets();
+	auto it = allAssets.find(currentID);
+	if (it != allAssets.end() && it->second != nullptr)
+	{
+		previewName = it->second->GetAssetName() + " (ID: " + std::to_string(currentID) + ")";
+	}
+
+	ImGui::SetNextItemWidth(-1.0f);
+	std::string comboId = "##" + prop.name + "_Combo";
+	if (ImGui::BeginCombo(comboId.c_str(), previewName.c_str()))
+	{
+		static char assetSearchBuf[128] = "";
+		if (ImGui::IsWindowAppearing())
+		{
+			assetSearchBuf[0] = '\0';
+			ImGui::SetKeyboardFocusHere();
+		}
+
+		ImGui::SetNextItemWidth(-1.0f);
+		ImGui::InputTextWithHint("##AssetSearch", "Search asset...", assetSearchBuf, IM_ARRAYSIZE(assetSearchBuf));
+		ImGui::Separator();
+
+		std::string filterStr = assetSearchBuf;
+		std::transform(filterStr.begin(), filterStr.end(), filterStr.begin(), ::tolower);
+
+		if (ImGui::Selectable("None (0)", currentID == 0))
+		{
+			if (pAssetID) *pAssetID = 0;
+		}
+
+		for (const auto& [id, pAsset] : allAssets)
+		{
+			if (!pAsset) continue;
+			std::string label = pAsset->GetAssetName() + " (ID: " + std::to_string(id) + ")";
+			if (!filterStr.empty())
+			{
+				std::string lowerLabel = label;
+				std::transform(lowerLabel.begin(), lowerLabel.end(), lowerLabel.begin(), ::tolower);
+				if (lowerLabel.find(filterStr) == std::string::npos)
+					continue;
+			}
+
+			bool isSelected = (currentID == id);
+			if (ImGui::Selectable(label.c_str(), isSelected))
+			{
+				if (pAssetID) *pAssetID = id;
+			}
+
+			if (isSelected)
+			{
+				ImGui::SetItemDefaultFocus();
+			}
+		}
+		ImGui::EndCombo();
+	}
+}
 
 void InspectorPanel::Initialize()
 {
@@ -179,47 +509,14 @@ void InspectorPanel::DrawScriptableObjectData()
 		break;
 
 		case PropType::StringVector:
-		{
-			auto* vec = static_cast<std::vector<std::string>*>(prop.data);
-			std::string headerText = prop.name + " (" + std::to_string(vec->size()) + ")";
-			if (ImGui::TreeNode(headerText.c_str()))
-			{
-				int removeIdx = -1;
-				for (size_t i = 0; i < vec->size(); ++i)
-				{
-					ImGui::PushID(static_cast<int>(i));
-					char buf[256];
-					strcpy_s(buf, (*vec)[i].c_str());
-					ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - 30.0f);
-					if (ImGui::InputText(("Element " + std::to_string(i)).c_str(), buf, sizeof(buf)))
-					{
-						(*vec)[i] = buf;
-					}
-					ImGui::SameLine();
-					if (ImGui::Button("-", ImVec2(20, 20))) removeIdx = static_cast<int>(i);
-					ImGui::PopID();
-				}
-				if (removeIdx != -1) vec->erase(vec->begin() + removeIdx);
-				if (ImGui::Button("+ Add Element")) vec->push_back("");
-				ImGui::TreePop();
-			}
-		}
-		break;
+			DrawStringVectorInspector(prop);
+			break;
 
 		case PropType::String:
-		{
-			std::string* str = static_cast<std::string*>(prop.data);
-			char buffer[256];
-			strcpy_s(buffer, str->c_str());
-			if (ImGui::InputText(("##" + prop.name).c_str(), buffer, sizeof(buffer)))
-			{
-				*str = buffer;
-			}
-		}
-		break;
+			DrawStringInspector(prop);
+			break;
 
 		case PropType::WString:
-		case PropType::Texture:
 		{
 			std::wstring* wstr = static_cast<std::wstring*>(prop.data);
 			std::string str(wstr->begin(), wstr->end());
@@ -232,46 +529,16 @@ void InspectorPanel::DrawScriptableObjectData()
 		}
 		break;
 
-		case PropType::Asset:
+		case PropType::Texture:
 		{
-			uint32* pAssetID = static_cast<uint32*>(prop.data);
-			uint32 currentID = (pAssetID != nullptr) ? *pAssetID : 0;
-
-			std::string previewName = "None (Select SO Asset)";
-			const auto& allAssets = DataManager::GetInstance()->GetAllAssets();
-			auto it = allAssets.find(currentID);
-			if (it != allAssets.end() && it->second != nullptr)
-			{
-				previewName = it->second->GetAssetName() + " (ID: " + std::to_string(currentID) + ")";
-			}
-
-			ImGui::SetNextItemWidth(-1.0f);
-			if (ImGui::BeginCombo(("##" + prop.name + "_SOCombo").c_str(), previewName.c_str()))
-			{
-				if (ImGui::Selectable("None (0)", currentID == 0))
-				{
-					if (pAssetID) *pAssetID = 0;
-				}
-
-				for (const auto& [id, pAsset] : allAssets)
-				{
-					if (!pAsset) continue;
-					std::string label = pAsset->GetAssetName() + " (ID: " + std::to_string(id) + ")";
-					bool isSelected = (currentID == id);
-					if (ImGui::Selectable(label.c_str(), isSelected))
-					{
-						if (pAssetID) *pAssetID = id;
-					}
-
-					if (isSelected)
-					{
-						ImGui::SetItemDefaultFocus();
-					}
-				}
-				ImGui::EndCombo();
-			}
+			std::wstring* wstr = static_cast<std::wstring*>(prop.data);
+			DrawTexturePickerWithSearch(prop.name, wstr, nullptr);
 		}
 		break;
+
+		case PropType::Asset:
+			DrawAssetComboWithSearch(prop);
+			break;
 		}
 
 		ImGui::NextColumn();
@@ -550,7 +817,6 @@ void InspectorPanel::DrawComponents(GameObject* pObj)
 
 		ImGui::PushID(comp);
 
-		// Enable/Disable 체크박스
 		bool isEnabled = comp->IsEnabled();
 		if (ImGui::Checkbox("##IsEnabled", &isEnabled))
 		{
@@ -558,10 +824,8 @@ void InspectorPanel::DrawComponents(GameObject* pObj)
 		}
 		ImGui::SameLine();
 
-		// Component Header
 		bool open = ImGui::CollapsingHeader(comp->GetComponentType().data(), ImGuiTreeNodeFlags_DefaultOpen);
 
-		// 우클릭 Remove Component 팝업
 		if (ImGui::BeginPopupContextItem(comp->GetComponentType().data()))
 		{
 			if (ImGui::MenuItem("Remove Component"))
@@ -603,16 +867,8 @@ void InspectorPanel::DrawComponents(GameObject* pObj)
 					break;
 
 				case PropType::String:
-				{
-					std::string* str = static_cast<std::string*>(prop.data);
-					char buffer[256];
-					strcpy_s(buffer, str->c_str());
-					if (ImGui::InputText(("##" + prop.name).c_str(), buffer, sizeof(buffer)))
-					{
-						*str = buffer;
-					}
-				}
-				break;
+					DrawStringInspector(prop);
+					break;
 
 				case PropType::WString:
 				{
@@ -701,105 +957,13 @@ void InspectorPanel::DrawComponents(GameObject* pObj)
 				case PropType::Texture:
 				{
 					std::wstring* wKey = static_cast<std::wstring*>(prop.data);
-					std::string keyStr(wKey->begin(), wKey->end());
-
-					const Sprite* pPreviewSprite = ResourceManager::GetInstance()->GetSprite(*wKey);
-					bool bRenderedPreview = false;
-
-					if (pPreviewSprite != nullptr && pPreviewSprite->pTexture != nullptr)
-					{
-						ID3D11ShaderResourceView* pSRV = ResourceManager::GetInstance()->GetTextureSRV(pPreviewSprite->pTexture);
-						if (pSRV != nullptr)
-						{
-							D2D1_SIZE_F texSz = pPreviewSprite->pTexture->GetSize();
-							if (texSz.width > 0.0f && texSz.height > 0.0f)
-							{
-								ImVec2 uv0(pPreviewSprite->srcRect.left / texSz.width, pPreviewSprite->srcRect.top / texSz.height);
-								ImVec2 uv1(pPreviewSprite->srcRect.right / texSz.width, pPreviewSprite->srcRect.bottom / texSz.height);
-
-								ImGui::Image((ImTextureID)pSRV, ImVec2(35.0f, 35.0f), uv0, uv1);
-								bRenderedPreview = true;
-							}
-						}
-					}
-
-					if (!bRenderedPreview)
-					{
-						ImGui::Button("No Image", ImVec2(35.0f, 35.0f));
-					}
-					ImGui::SameLine();
-
-					std::string btnLabel = keyStr.empty() ? "Select..." : keyStr;
-					if (ImGui::Button(btnLabel.c_str(), ImVec2(100.0f, 25.0f)))
-					{
-						ImGui::OpenPopup("TexturePickerPopup");
-					}
-					ImGui::SameLine();
-					if (ImGui::Button("Set Native Size"))
-					{
-						if (SpriteRendererComponent* spriteComp = dynamic_cast<SpriteRendererComponent*>(comp))
-						{
-							spriteComp->SetNativeSize();
-						}
-						else if (UIImageComponent* uiImg = dynamic_cast<UIImageComponent*>(comp))
-						{
-							uiImg->SetNativeSize();
-						}
-					}
-					if (ImGui::BeginPopup("TexturePickerPopup"))
-					{
-						auto loadedSpriteKeys = ResourceManager::GetInstance()->GetLoadedSpriteKeys();
-						for (const auto& keyName : loadedSpriteKeys)
-						{
-							if (ImGui::Selectable(keyName.c_str()))
-							{
-								*wKey = std::wstring(keyName.begin(), keyName.end());
-								if (SpriteRendererComponent* spriteComp = dynamic_cast<SpriteRendererComponent*>(comp))
-								{
-									spriteComp->SetSpriteKey(*wKey);
-								}
-								else if (UIImageComponent* uiImg = dynamic_cast<UIImageComponent*>(comp))
-								{
-									uiImg->SetTextureKey(*wKey);
-								}
-								else if (UIPanelComponent* uiPanel = dynamic_cast<UIPanelComponent*>(comp))
-								{
-									uiPanel->SetTextureKey(*wKey);
-								}
-							}
-						}
-						ImGui::EndPopup();
-					}
+					DrawTexturePickerWithSearch(prop.name, wKey, comp);
 				}
 				break;
 
 				case PropType::StringVector:
-				{
-					auto* vec = static_cast<std::vector<std::string>*>(prop.data);
-					std::string headerText = prop.name + " (" + std::to_string(vec->size()) + ")";
-					if (ImGui::TreeNode(headerText.c_str()))
-					{
-						int removeIdx = -1;
-						for (size_t i = 0; i < vec->size(); ++i)
-						{
-							ImGui::PushID(static_cast<int>(i));
-							char buf[256];
-							strcpy_s(buf, (*vec)[i].c_str());
-							ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - 30.0f);
-							if (ImGui::InputText(("Element " + std::to_string(i)).c_str(), buf, sizeof(buf)))
-							{
-								(*vec)[i] = buf;
-							}
-							ImGui::SameLine();
-							if (ImGui::Button("-", ImVec2(20, 20))) removeIdx = static_cast<int>(i);
-							ImGui::PopID();
-						}
-						if (removeIdx != -1) vec->erase(vec->begin() + removeIdx);
-						if (ImGui::Button("+ Add Element")) vec->push_back("");
-						ImGui::TreePop();
-					}
-				}
-				break;
+					DrawStringVectorInspector(prop);
+					break;
 
 				case PropType::ObjectRef:
 				{
@@ -824,45 +988,8 @@ void InspectorPanel::DrawComponents(GameObject* pObj)
 				break;
 
 				case PropType::Asset:
-				{
-					uint32* pAssetID = static_cast<uint32*>(prop.data);
-					uint32 currentID = (pAssetID != nullptr) ? *pAssetID : 0;
-
-					std::string previewName = "None (Select SO Asset)";
-					const auto& allAssets = DataManager::GetInstance()->GetAllAssets();
-					auto it = allAssets.find(currentID);
-					if (it != allAssets.end() && it->second != nullptr)
-					{
-						previewName = it->second->GetAssetName() + " (ID: " + std::to_string(currentID) + ")";
-					}
-
-					ImGui::SetNextItemWidth(-1.0f);
-					if (ImGui::BeginCombo(("##" + prop.name + "_Combo").c_str(), previewName.c_str()))
-					{
-						if (ImGui::Selectable("None (0)", currentID == 0))
-						{
-							if (pAssetID) *pAssetID = 0;
-						}
-
-						for (const auto& [id, pAsset] : allAssets)
-						{
-							if (!pAsset) continue;
-							std::string label = pAsset->GetAssetName() + " (ID: " + std::to_string(id) + ")";
-							bool isSelected = (currentID == id);
-							if (ImGui::Selectable(label.c_str(), isSelected))
-							{
-								if (pAssetID) *pAssetID = id;
-							}
-
-							if (isSelected)
-							{
-								ImGui::SetItemDefaultFocus();
-							}
-						}
-						ImGui::EndCombo();
-					}
-				}
-				break;
+					DrawAssetComboWithSearch(prop);
+					break;
 				}
 
 				ImGui::NextColumn();
@@ -894,10 +1021,32 @@ void InspectorPanel::DrawAddComponentButton(GameObject* pObj)
 
 	if (ImGui::BeginPopup("AddComponentPopup"))
 	{
+		static char compSearchBuf[128] = "";
+		if (ImGui::IsWindowAppearing())
+		{
+			compSearchBuf[0] = '\0';
+			ImGui::SetKeyboardFocusHere();
+		}
+
+		ImGui::SetNextItemWidth(-1.0f);
+		ImGui::InputTextWithHint("##CompSearch", "Search component...", compSearchBuf, IM_ARRAYSIZE(compSearchBuf));
+		ImGui::Separator();
+
+		std::string filterStr = compSearchBuf;
+		std::transform(filterStr.begin(), filterStr.end(), filterStr.begin(), ::tolower);
+
 		auto compNames = JsonSerializer::GetRegisteredComponentNames();
 		for (const auto& name : compNames)
 		{
 			if (name == EngineKey::Component::Trnasform) continue;
+
+			if (!filterStr.empty())
+			{
+				std::string lowerName = name;
+				std::transform(lowerName.begin(), lowerName.end(), lowerName.begin(), ::tolower);
+				if (lowerName.find(filterStr) == std::string::npos)
+					continue;
+			}
 
 			if (ImGui::MenuItem(name.c_str()))
 			{
