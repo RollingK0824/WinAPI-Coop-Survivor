@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <string>
 #include <vector>
 #include <d2d1.h>
@@ -19,6 +19,6 @@ struct AnimationClip
 	ID2D1Bitmap* pTexture = nullptr;
 
 	std::vector<Sprite> frames;
-	float frameRate = 0.1f;
+	float frameDuration = 0.1f;
 	bool bIsLoop = true;
 };

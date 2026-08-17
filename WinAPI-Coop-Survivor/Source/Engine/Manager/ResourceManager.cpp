@@ -1,4 +1,4 @@
-﻿#include "Engine/Core/pch.h"
+#include "Engine/Core/pch.h"
 #include "ResourceManager.h"
 #include "FileSystem.h"
 #include "Engine/Core/Define.h"
@@ -221,7 +221,10 @@ bool ResourceManager::LoadSpriteAtlas(const std::string& jsonPath, const std::ws
 			AnimationClip clip;
 			std::string clipName = clipData["name"].get<std::string>();
 			clip.name = std::wstring(clipName.begin(), clipName.end());
-			clip.frameRate = clipData["frameRate"].get<float>();
+			if (clipData.contains("frameDuration"))
+				clip.frameDuration = clipData["frameDuration"].get<float>();
+			else if (clipData.contains("frameRate"))
+				clip.frameDuration = clipData["frameRate"].get<float>();
 			clip.bIsLoop = clipData["isLoop"].get<bool>();
 
 			for (const auto& fNameJson : clipData["frames"])

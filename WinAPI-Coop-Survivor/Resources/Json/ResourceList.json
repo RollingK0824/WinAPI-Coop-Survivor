@@ -29,6 +29,21 @@
       "Key": "Effect.png",
       "Path": "Resources/Texture/Effect.png",
       "AtlasPath": "Resources/Texture/Effect.json"
+    },
+    {
+      "Key": "enemies.png",
+      "Path": "Resources/Texture/enemies.png",
+      "AtlasPath": "Resources/Texture/enemies.json"
+    },
+    {
+      "Key": "vfx.png",
+      "Path": "Resources/Texture/vfx.png",
+      "AtlasPath": "Resources/Texture/vfx.json"
+    },
+    {
+      "Key": "character_c01crewmate.png",
+      "Path": "Resources/Texture/character_c01crewmate.png",
+      "AtlasPath": "Resources/Texture/character_c01crewmate.json"
     }
   ]
 }

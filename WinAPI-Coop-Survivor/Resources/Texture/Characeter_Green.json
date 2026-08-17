@@ -141,13 +141,13 @@
     "custom_clips": [
       {
         "name": "Green_Player_Run",
-        "frameRate": 0.1,
+        "frameDuration": 0.1,
         "isLoop": true,
         "frames": [ "Character0.png", "Character1.png", "Character2.png", "Character3.png", "Character4.png" ]
       },
       {
         "name": "Green_Player_Die",
-        "frameRate": 1,
+        "frameDuration": 1,
         "isLoop": false,
         "frames": [ "Character5.png" ]
       }
