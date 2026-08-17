@@ -34,6 +34,7 @@ public:
 
 	std::vector<std::string> GetLoadedTextureKeys() const;
 	std::vector<std::string> GetLoadedSpriteKeys() const;
+	std::vector<std::string> GetLoadedAnimationClipKeys() const;
 private:
 	ResourceManager() = default;
 	virtual ~ResourceManager() = default;

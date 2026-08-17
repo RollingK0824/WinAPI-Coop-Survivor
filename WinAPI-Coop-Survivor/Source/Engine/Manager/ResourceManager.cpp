@@ -1,4 +1,4 @@
-#include "Engine/Core/pch.h"
+﻿#include "Engine/Core/pch.h"
 #include "ResourceManager.h"
 #include "FileSystem.h"
 #include "Engine/Core/Define.h"
@@ -41,9 +41,7 @@ ID2D1Bitmap* ResourceManager::LoadTexture(const std::wstring& key, const std::ws
 	if (FAILED(m_pWICFactory->CreateFormatConverter(&pConverter))) { pSource->Release(); pDecoder->Release(); return nullptr; }
 	if (SUCCEEDED(pConverter->Initialize(pSource, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, nullptr, 0.0, WICBitmapPaletteTypeCustom)))
 	{
-		// 1. Direct2D Bitmap 생성
 		pRenderTarget->CreateBitmapFromWicBitmap(pConverter, nullptr, &pBitmap);
-		// 2. ★ ImGui용 DX11 Texture2D & SRV 동시 생성 ★
 		UINT width = 0, height = 0;
 		pConverter->GetSize(&width, &height);
 		std::vector<BYTE> pixels(width * height * 4);
@@ -329,7 +327,6 @@ std::vector<std::string> ResourceManager::GetLoadedSpriteKeys() const
 	std::vector<std::string> keys;
 	std::set<std::string> atlasPrefixes;
 
-	// 1차 패스: 서브 스프라이트를 가지는 아틀라스 접두사 추출 (예: "Characeter_Green", "tilemap_packed")
 	for (const auto& pair : m_spritePool)
 	{
 		std::string keyStr(pair.first.begin(), pair.first.end());
@@ -342,7 +339,6 @@ std::vector<std::string> ResourceManager::GetLoadedSpriteKeys() const
 
 	std::set<std::string> uniqueKeys;
 
-	// 2차 패스: 슬라이스된 서브 스프라이트 키 수집 (AtlasName/FrameName)
 	for (const auto& pair : m_spritePool)
 	{
 		std::string keyStr(pair.first.begin(), pair.first.end());
@@ -352,7 +348,6 @@ std::vector<std::string> ResourceManager::GetLoadedSpriteKeys() const
 		}
 	}
 
-	// 3차 패스: 아틀라스가 아닌 단일 정적 텍스처 수집 (introBG.png 등)
 	for (const auto& pair : m_texturePool)
 	{
 		std::string keyStr(pair.first.begin(), pair.first.end());
@@ -369,6 +364,18 @@ std::vector<std::string> ResourceManager::GetLoadedSpriteKeys() const
 	for (const auto& k : uniqueKeys)
 	{
 		keys.push_back(k);
+	}
+	return keys;
+}
+
+std::vector<std::string> ResourceManager::GetLoadedAnimationClipKeys() const
+{
+	std::vector<std::string> keys;
+	keys.reserve(m_MapClips.size());
+	for (const auto& pair : m_MapClips)
+	{
+		std::string keyStr(pair.first.begin(), pair.first.end());
+		keys.push_back(keyStr);
 	}
 	return keys;
 }
