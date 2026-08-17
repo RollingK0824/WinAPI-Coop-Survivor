@@ -12,6 +12,7 @@
 #include "Engine/Framework/Components/Physics/ColliderComponent.h"
 #include "Engine/Framework/Components/Physics/CircleCollider.h"
 #include "Game/Monster/Monster.h"
+#include "Game/Player/Player.h"
 #include "Game/Manager/InGameManager.h"
 #include "Game/Skill/ProjectileComponent.h"
 #include "Game/Skill/AuraComponent.h"
@@ -26,6 +27,8 @@ SkillComponent::SkillComponent(GameObject* owner, TransformComponent* transform)
 
 void SkillComponent::Start()
 {
+	m_pPlayer = gameObject.GetComponent<Player>();
+
 	if (m_skills.empty())
 	{
 		AddSkill(m_defaultSkillID);
@@ -176,30 +179,63 @@ void SkillComponent::CastSkill(SkillInstance& instance)
 void SkillComponent::CastProjectileSkill(const SkillInstance& instance, const SkillLevelData& data, GameObject* pTargetMonster)
 {
 	Vector2 myPos = transform.GetPosition();
-	Vector2 baseDir = { 1.0f, 0.0f };
-
-	if (pTargetMonster != nullptr)
+	Vector2 facingDir = { 1.0f, 0.0f };
+	if (m_pPlayer.IsValid())
 	{
-		Vector2 targetPos = pTargetMonster->transform.GetPosition();
-		baseDir = (targetPos - myPos).GetNormalized();
+		facingDir = m_pPlayer->GetFacingDirection();
+	}
+
+	Vector2 baseDir = facingDir;
+	if (data.aimType == EAimType::NearestEnemy)
+	{
+		if (pTargetMonster != nullptr)
+		{
+			Vector2 targetPos = pTargetMonster->transform.GetPosition();
+			baseDir = (targetPos - myPos).GetNormalized();
+		}
+	}
+	else if (data.aimType == EAimType::FixedAngle)
+	{
+		float rad = DegreeToRadian(data.fixedAngleDeg);
+		baseDir = { cosf(rad), sinf(rad) };
 	}
 
 	int32 count = (std::max)(1, data.projectileCount);
-	float totalSpreadAngle = (count > 1) ? 30.0f : 0.0f;
-	float startAngle = -totalSpreadAngle / 2.0f;
-	float angleStep = (count > 1) ? (totalSpreadAngle / (count - 1)) : 0.0f;
+	float spreadAngle = data.spreadAngle;
 
-	float baseRad = atan2f(baseDir.y, baseDir.x);
 	std::string poolKey = instance.pSO->GetPrefabKey();
 	if (poolKey.empty() || poolKey == "DefaultProjectile" || !PoolManager::GetInstance()->HasPool(poolKey))
 	{
 		poolKey = "GenericProjectilePrefab";
 	}
 
+	if (count == 2 && spreadAngle >= 179.0f)
+	{
+		Vector2 dirs[2] = { baseDir, -baseDir };
+		for (int32 i = 0; i < 2; ++i)
+		{
+			GameObject* pProjObj = PoolManager::GetInstance()->Spawn<GameObject>(poolKey);
+			if (!pProjObj) continue;
+			pProjObj->transform.SetPosition(myPos.x, myPos.y);
+
+			ProjectileComponent* pProj = pProjObj->GetComponent<ProjectileComponent>();
+			if (pProj)
+			{
+				pProj->Init(dirs[i], data, instance.pSO.get(), &gameObject, poolKey);
+			}
+		}
+		return;
+	}
+
+	float baseRad = atan2f(baseDir.y, baseDir.x);
+	float totalSpreadRad = DegreeToRadian(spreadAngle);
+	float startAngle = (count > 1) ? (-totalSpreadRad / 2.0f) : 0.0f;
+	float angleStep = (count > 1) ? (totalSpreadRad / (count - 1)) : 0.0f;
+
 	for (int32 i = 0; i < count; ++i)
 	{
-		float offsetDeg = startAngle + i * angleStep;
-		float finalRad = baseRad + DegreeToRadian(offsetDeg);
+		float offsetRad = startAngle + i * angleStep;
+		float finalRad = baseRad + offsetRad;
 		Vector2 fireDir = { cosf(finalRad), sinf(finalRad) };
 
 		GameObject* pProjObj = PoolManager::GetInstance()->Spawn<GameObject>(poolKey);
@@ -251,10 +287,11 @@ void SkillComponent::CastAuraSkill(const SkillInstance& instance, const SkillLev
 
 void SkillComponent::CastGroundAreaSkill(const SkillInstance& instance, const SkillLevelData& data, GameObject* pTargetMonster)
 {
-	Vector2 spawnPos = transform.GetPosition();
-	if (pTargetMonster != nullptr)
+	Vector2 myPos = transform.GetPosition();
+	Vector2 facingDir = { 1.0f, 0.0f };
+	if (m_pPlayer.IsValid())
 	{
-		spawnPos = pTargetMonster->transform.GetPosition();
+		facingDir = m_pPlayer->GetFacingDirection();
 	}
 
 	std::string poolKey = instance.pSO->GetPrefabKey();
@@ -263,20 +300,88 @@ void SkillComponent::CastGroundAreaSkill(const SkillInstance& instance, const Sk
 		poolKey = "GenericAoEPrefab";
 	}
 
-	GameObject* pAoEObj = PoolManager::GetInstance()->Spawn<GameObject>(poolKey);
-	if (!pAoEObj)
+	float offsetDistance = (data.range > 0.0f) ? (data.range * 0.6f) : 80.0f;
+	int32 count = (std::max)(1, data.projectileCount);
+	float spreadAngle = data.spreadAngle;
+
+	std::vector<Vector2> spawnPositions;
+
+	if (data.aimType == EAimType::NearestEnemy)
 	{
-		std::cout << "[SkillComponent] Error: Failed to spawn AoE prefab from pool: " << poolKey << std::endl;
-		return;
+		if (pTargetMonster != nullptr)
+		{
+			spawnPositions.push_back(pTargetMonster->transform.GetPosition());
+		}
+		else
+		{
+			spawnPositions.push_back(myPos + facingDir * offsetDistance);
+		}
+	}
+	else if (data.aimType == EAimType::OwnerFacing)
+	{
+		if (count == 2 && spreadAngle >= 179.0f)
+		{
+			spawnPositions.push_back(myPos + facingDir * offsetDistance);
+			spawnPositions.push_back(myPos - facingDir * offsetDistance);
+		}
+		else
+		{
+			float baseRad = atan2f(facingDir.y, facingDir.x);
+			float totalSpreadRad = DegreeToRadian(spreadAngle);
+			float startAngle = (count > 1) ? (-totalSpreadRad / 2.0f) : 0.0f;
+			float angleStep = (count > 1) ? (totalSpreadRad / (count - 1)) : 0.0f;
+
+			for (int32 i = 0; i < count; ++i)
+			{
+				float finalRad = baseRad + startAngle + i * angleStep;
+				Vector2 dir = { cosf(finalRad), sinf(finalRad) };
+				spawnPositions.push_back(myPos + dir * offsetDistance);
+			}
+		}
+	}
+	else if (data.aimType == EAimType::FixedAngle)
+	{
+		float baseRad = DegreeToRadian(data.fixedAngleDeg);
+		Vector2 fixedDir = { cosf(baseRad), sinf(baseRad) };
+
+		if (count == 2 && spreadAngle >= 179.0f)
+		{
+			spawnPositions.push_back(myPos + fixedDir * offsetDistance);
+			spawnPositions.push_back(myPos - fixedDir * offsetDistance);
+		}
+		else
+		{
+			float totalSpreadRad = DegreeToRadian(spreadAngle);
+			float startAngle = (count > 1) ? (-totalSpreadRad / 2.0f) : 0.0f;
+			float angleStep = (count > 1) ? (totalSpreadRad / (count - 1)) : 0.0f;
+
+			for (int32 i = 0; i < count; ++i)
+			{
+				float finalRad = baseRad + startAngle + i * angleStep;
+				Vector2 dir = { cosf(finalRad), sinf(finalRad) };
+				spawnPositions.push_back(myPos + dir * offsetDistance);
+			}
+		}
 	}
 
-	AoEComponent* pAoE = pAoEObj->GetComponent<AoEComponent>();
-	if (!pAoE)
+	for (const Vector2& spawnPos : spawnPositions)
 	{
-		std::cout << "[SkillComponent] Error: Prefab missing AoEComponent: " << poolKey << std::endl;
-		return;
-	}
+		GameObject* pAoEObj = PoolManager::GetInstance()->Spawn<GameObject>(poolKey);
+		if (!pAoEObj)
+		{
+			std::cout << "[SkillComponent] Error: Failed to spawn AoE prefab from pool: " << poolKey << std::endl;
+			continue;
+		}
 
-	pAoEObj->transform.SetPosition(spawnPos);
-	pAoE->Init(data, instance.pSO.get(), &gameObject, poolKey);
+		pAoEObj->transform.SetPosition(spawnPos);
+
+		AoEComponent* pAoE = pAoEObj->GetComponent<AoEComponent>();
+		if (!pAoE)
+		{
+			std::cout << "[SkillComponent] Error: Prefab missing AoEComponent: " << poolKey << std::endl;
+			continue;
+		}
+
+		pAoE->Init(data, instance.pSO.get(), &gameObject, poolKey);
+	}
 }

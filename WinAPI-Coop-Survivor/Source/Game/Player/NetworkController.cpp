@@ -29,6 +29,10 @@ void NetworkController::Update(float dt) {
             Vector2 currentPos = { MeterToPixel(currentB2Pos.x), MeterToPixel(currentB2Pos.y) };
 
             Vector2 finalVel = m_velocity;
+            if (m_pPlayer.IsValid() && m_velocity.LengthSquared() > 0.0001f)
+            {
+                m_pPlayer->SetFacingDirection(m_velocity);
+            }
 
             if (netId && netId->GetInterpolatedPosition(interpolatedPos)) {
                 Vector2 posError = interpolatedPos - currentPos;

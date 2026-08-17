@@ -30,6 +30,11 @@ struct Vector2
 		return Vector2(x - other.x, y - other.y);
 	}
 
+	Vector2 operator-() const
+	{
+		return Vector2(-x, -y);
+	}
+
 	Vector2 operator*(float value) const
 	{
 		return Vector2(x * value, y * value);
