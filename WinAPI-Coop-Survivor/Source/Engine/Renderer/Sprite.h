@@ -11,6 +11,7 @@ struct Sprite
 	D2D1_POINT_2F offset;
 	float originalWidth = 0.0f;
 	float originalHeight = 0.0f;
+	D2D1_RECT_F border = { 0.0f, 0.0f, 0.0f, 0.0f };
 };
 
 struct AnimationClip

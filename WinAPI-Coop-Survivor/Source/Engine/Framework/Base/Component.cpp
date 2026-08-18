@@ -1,4 +1,4 @@
-﻿#include "Engine/Core/pch.h"
+#include "Engine/Core/pch.h"
 #include "Component.h"
 #include "Engine/Framework/GameObject.h"
 #include "Engine/Framework/Scene.h"
@@ -209,6 +209,13 @@ void Component::Deserialize(const json& inJson)
 				if (pVal->contains("top")) rect->top = (*pVal)["top"].get<float>();
 				if (pVal->contains("right")) rect->right = (*pVal)["right"].get<float>();
 				if (pVal->contains("bottom")) rect->bottom = (*pVal)["bottom"].get<float>();
+			}
+			else if (pVal->is_array() && pVal->size() >= 4)
+			{
+				rect->left = (*pVal)[0].get<float>();
+				rect->top = (*pVal)[1].get<float>();
+				rect->right = (*pVal)[2].get<float>();
+				rect->bottom = (*pVal)[3].get<float>();
 			}
 		}
 		break;

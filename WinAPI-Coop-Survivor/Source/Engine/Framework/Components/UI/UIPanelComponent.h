@@ -1,4 +1,4 @@
-﻿// Source/Engine/Framework/Components/UI/UIPanelComponent.h
+// Source/Engine/Framework/Components/UI/UIPanelComponent.h
 #pragma once
 #include "Engine/Framework/Components/Core/RenderComponent.h"
 #include "Engine/Renderer/Sprite.h"
@@ -17,6 +17,9 @@ public:
 	void SetTextureKey(const std::wstring& textureKey) { SetSpriteKey(textureKey); }
 	void SetSize(Vector2 size) { m_size = size; }
 	void SetRenderBackground(bool bRender) { m_bRenderBackground = bRender; }
+	void SetBorder(const D2D1_RECT_F& border) { m_RenderCommand.bitmap.sprite.border = border; }
+	void SetBorder(float left, float top, float right, float bottom) { m_RenderCommand.bitmap.sprite.border = D2D1::RectF(left, top, right, bottom); }
+	const D2D1_RECT_F& GetBorder() const { return m_RenderCommand.bitmap.sprite.border; }
 
 	Vector2 GetSize() const { return m_size; }
 	const std::wstring& GetTextureKey() const { return m_spriteKey; }

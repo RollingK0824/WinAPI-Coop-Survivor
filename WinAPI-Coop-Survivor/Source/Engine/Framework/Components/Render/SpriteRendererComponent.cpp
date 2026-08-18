@@ -1,4 +1,4 @@
-﻿#include "Engine/Core/pch.h"
+#include "Engine/Core/pch.h"
 #include "SpriteRendererComponent.h"
 #include "Engine/Core/ComponentRegister.h"
 #include "Engine/Manager/ResourceManager.h"
@@ -14,6 +14,7 @@ SpriteRendererComponent::SpriteRendererComponent(GameObject* owner, TransformCom
 	ExposeVariable("Size", &m_size);
 	ExposeVariable("Pivot", &m_RenderCommand.bitmap.sprite.pivot);
 	ExposeVariable("Offset", &m_RenderCommand.bitmap.sprite.offset);
+	ExposeVariable("Border", &m_RenderCommand.bitmap.sprite.border);
 	ExposeVariable("FlipX", &m_RenderCommand.bitmap.flipX);
 	ExposeVariable("FlipY", &m_RenderCommand.bitmap.flipY);
 }
@@ -57,6 +58,7 @@ void SpriteRendererComponent::SetSpriteKey(const std::wstring& spriteKey)
 	{
 		D2D1_POINT_2F oldPivot = m_RenderCommand.bitmap.sprite.pivot;
 		D2D1_POINT_2F oldOffset = m_RenderCommand.bitmap.sprite.offset;
+		D2D1_RECT_F oldBorder = m_RenderCommand.bitmap.sprite.border;
 
 		SetAsSprite(*pSprite);
 
@@ -67,6 +69,10 @@ void SpriteRendererComponent::SetSpriteKey(const std::wstring& spriteKey)
 		if (oldOffset.x != 0.0f || oldOffset.y != 0.0f)
 		{
 			m_RenderCommand.bitmap.sprite.offset = oldOffset;
+		}
+		if (oldBorder.left != 0.0f || oldBorder.top != 0.0f || oldBorder.right != 0.0f || oldBorder.bottom != 0.0f)
+		{
+			m_RenderCommand.bitmap.sprite.border = oldBorder;
 		}
 	}
 }
