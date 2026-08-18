@@ -1,0 +1,53 @@
+{
+    "Name": "JoinPopupPrefab",
+    "IsActive": true,
+    "Components": [
+        {
+            "Type": "TransformComponent",
+            "Data": {
+                "IsEnabled": true,
+                "Position": {
+                    "x": 960.0,
+                    "y": 540.0
+                },
+                "Rotation": 0.0,
+                "Scale": {
+                    "x": 1.0,
+                    "y": 1.0
+                }
+            }
+        },
+        {
+            "Type": "UIImageComponent",
+            "Data": {
+                "IsEnabled": true,
+                "RenderType": 256,
+                "ZOrder": 9990,
+                "Opacity": 0.95,
+                "Color": {
+                    "r": 0.1,
+                    "g": 0.1,
+                    "b": 0.15,
+                    "a": 0.95
+                },
+                "Size": {
+                    "x": 450.0,
+                    "y": 300.0
+                },
+                "IsUI": true
+            }
+        },
+        {
+            "Type": "UIPanelComponent",
+            "Data": {
+                "IsEnabled": true
+            }
+        },
+        {
+            "Type": "JoinPopupController",
+            "Data": {
+                "IsEnabled": true
+            }
+        }
+    ]
+}

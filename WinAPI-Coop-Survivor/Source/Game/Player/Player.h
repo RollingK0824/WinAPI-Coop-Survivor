@@ -46,6 +46,21 @@ public:
 		if (m_currentHP <= 0.0f) m_currentHP = 0.0f;
 	}
 
+	void Heal(float amount)
+	{
+		m_currentHP += amount;
+		if (m_currentHP > m_maxHP) m_currentHP = m_maxHP;
+		UpdateHPBar();
+	}
+
+	void IncreaseMaxHP(float amount)
+	{
+		m_maxHP += amount;
+		m_currentHP += amount;
+		UpdateHPBar();
+	}
+
+
 private:
 	void CreateTestHPBar();
 	void UpdateHPBar();

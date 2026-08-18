@@ -1,4 +1,4 @@
-﻿#include "Engine/Core/pch.h"
+#include "Engine/Core/pch.h"
 #include "InputManager.h"
 #include "Engine/Core/GameApp.h"
 #include "Engine/Renderer/GraphicManager.h"
@@ -26,7 +26,12 @@ void InputManager::Release()
 
 void InputManager::Update(float dt)
 {
+	m_vInputChars = m_vPendingInputChars;
+	m_vPendingInputChars.clear();
+
 	HWND hWnd = GameApp::GetInstance()->GetWindowHandle();
+
+
 	bool isForeground = (GetForegroundWindow() == hWnd);
 	ImGuiIO* io = (ImGui::GetCurrentContext() != nullptr) ? &ImGui::GetIO() : nullptr;
 

@@ -1,4 +1,4 @@
-﻿#include "Engine/Core/pch.h"
+#include "Engine/Core/pch.h"
 #include "Engine/Core/Define.h"
 #include "GameApp.h"
 #include "Engine/Core/EventBus.h"
@@ -193,6 +193,13 @@ void GameApp::RegisterManagers()
 
 LRESULT CALLBACK GameApp::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	if (message == WM_CHAR)
+	{
+		wchar_t ch = static_cast<wchar_t>(wParam);
+		InputManager::GetInstance()->OnCharInput(ch);
+	}
+
+
 	if (ImGui::GetCurrentContext() != nullptr)
 	{
 		if (ImGui_ImplWin32_WndProcHandler(hWnd, message, wParam, lParam))
@@ -213,6 +220,7 @@ LRESULT CALLBACK GameApp::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 		}
 		return 0;
 	}
+
 
 	return DefWindowProcW(hWnd, message, wParam, lParam);
 }

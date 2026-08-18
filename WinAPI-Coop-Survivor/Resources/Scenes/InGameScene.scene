@@ -285,6 +285,130 @@
                     }
                 }
             ]
+        },
+        {
+            "Name": "TeamEXPBar_BG",
+            "InstanceID": 101,
+            "IsActive": true,
+            "Components": [
+                {
+                    "Type": "TransformComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Position": {
+                            "x": 710.0,
+                            "y": 15.0
+                        },
+                        "Rotation": 0.0,
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        }
+                    }
+                },
+                {
+                    "Type": "UIImageComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "RenderType": 256,
+                        "ZOrder": 900,
+                        "Opacity": 0.85,
+                        "Color": {
+                            "r": 0.1,
+                            "g": 0.1,
+                            "b": 0.15,
+                            "a": 0.85
+                        },
+                        "Size": {
+                            "x": 500.0,
+                            "y": 16.0
+                        },
+                        "IsUI": true
+                    }
+                }
+            ]
+        },
+        {
+            "Name": "TeamEXPBar_Fill",
+            "InstanceID": 102,
+            "IsActive": true,
+            "Components": [
+                {
+                    "Type": "TransformComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Position": {
+                            "x": 710.0,
+                            "y": 15.0
+                        },
+                        "Rotation": 0.0,
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        }
+                    }
+                },
+                {
+                    "Type": "UIImageComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "RenderType": 256,
+                        "ZOrder": 901,
+                        "Opacity": 1.0,
+                        "Color": {
+                            "r": 0.2,
+                            "g": 0.85,
+                            "b": 1.0,
+                            "a": 1.0
+                        },
+                        "Size": {
+                            "x": 500.0,
+                            "y": 16.0
+                        },
+                        "FillAmount": 0.0,
+                        "IsUI": true
+                    }
+                }
+            ]
+        },
+        {
+            "Name": "TeamEXP_Text",
+            "InstanceID": 103,
+            "IsActive": true,
+            "Components": [
+                {
+                    "Type": "TransformComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Position": {
+                            "x": 890.0,
+                            "y": 13.0
+                        },
+                        "Rotation": 0.0,
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        }
+                    }
+                },
+                {
+                    "Type": "UITextComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "RenderType": 257,
+                        "ZOrder": 902,
+                        "Opacity": 1.0,
+                        "Color": {
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 1.0,
+                            "a": 1.0
+                        },
+                        "Text": "LV.1 (0 / 100)",
+                        "FontSize": 13.0
+                    }
+                }
+            ]
         }
     ]
-}
+}

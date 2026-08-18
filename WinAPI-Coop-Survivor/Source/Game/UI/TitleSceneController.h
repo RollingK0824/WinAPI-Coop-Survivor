@@ -1,12 +1,17 @@
-﻿#pragma once
+#pragma once
 #include "Engine/Framework/Components/Core/ScriptComponent.h"
+#include <string>
 
 class UIButtonComponent;
+class HostPopupController;
+class JoinPopupController;
+class ErrorPopupController;
 
 class TitleSceneController : public ScriptComponent
 {
 public:
 	CLONEABLE_COMPONENT(TitleSceneController)
+
 	TitleSceneController(GameObject* owner, TransformComponent* transform);
 	virtual ~TitleSceneController() override = default;
 
@@ -21,8 +26,16 @@ public:
 	UIButtonComponent* join_Btn = nullptr;
 	UIButtonComponent* exit_Btn = nullptr;
 
+	HostPopupController* hostPopup_Ctrl = nullptr;
+	JoinPopupController* joinPopup_Ctrl = nullptr;
+	ErrorPopupController* errorPopup_Ctrl = nullptr;
+
 private:
 	void OnClickHostBtn();
 	void OnClickJoinBtn();
 	void OnClickExitBtn();
+
+	void ShowHostPopup();
+	void ShowJoinPopup();
+	void ShowErrorPopup(const std::wstring& message);
 };
