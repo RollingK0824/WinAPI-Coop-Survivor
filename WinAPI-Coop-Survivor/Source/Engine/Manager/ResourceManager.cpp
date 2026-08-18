@@ -201,6 +201,24 @@ bool ResourceManager::LoadSpriteAtlas(const std::string& jsonPath, const std::ws
 
 		sp.pivot = D2D1::Point2F(0.5f, 0.5f);
 
+		if (f.contains("border"))
+		{
+			if (f["border"].is_array() && f["border"].size() >= 4)
+			{
+				sp.border.left = f["border"][0].get<float>();
+				sp.border.top = f["border"][1].get<float>();
+				sp.border.right = f["border"][2].get<float>();
+				sp.border.bottom = f["border"][3].get<float>();
+			}
+			else if (f["border"].is_object())
+			{
+				sp.border.left = f["border"].value("left", 0.0f);
+				sp.border.top = f["border"].value("top", 0.0f);
+				sp.border.right = f["border"].value("right", 0.0f);
+				sp.border.bottom = f["border"].value("bottom", 0.0f);
+			}
+		}
+
 		tempSprites[filename] = sp;
 
 		std::wstring wSpriteKey(filename.begin(), filename.end());

@@ -44,6 +44,11 @@
       "Key": "character_c01crewmate.png",
       "Path": "Resources/Texture/character_c01crewmate.png",
       "AtlasPath": "Resources/Texture/character_c01crewmate.json"
+    },
+    {
+      "Key": "ui.png",
+      "Path": "Resources/Texture/ui.png",
+      "AtlasPath": "Resources/Texture/ui.json"
     }
   ]
 }

@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Engine/Core/Singleton.h"
 #include "Engine/Renderer/RenderCommand.h"
 #include "Engine/Framework/Base/ISystem.h"
@@ -15,6 +15,7 @@ public:
 	virtual void Render() override;
 
 	virtual void DrawBitmap(ID2D1RenderTarget* pRT, const RenderCommand& cmd);
+	void DrawNineSliceBitmap(ID2D1RenderTarget* pRT, const RenderCommand& cmd, const D2D1_RECT_F& destRect, const D2D1_RECT_F& border);
 	virtual void DrawTextString(ID2D1RenderTarget* pRT, const RenderCommand& cmd, ID2D1SolidColorBrush* pBrush);
 	virtual void DrawRect(ID2D1RenderTarget* pRT, const RenderCommand& cmd, ID2D1SolidColorBrush* pBrush);
 

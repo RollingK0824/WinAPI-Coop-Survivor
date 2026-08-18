@@ -1,4 +1,4 @@
-﻿// Source/Engine/Framework/Components/UI/UIPanelComponent.cpp
+// Source/Engine/Framework/Components/UI/UIPanelComponent.cpp
 #include "Engine/Core/pch.h"
 #include "UIPanelComponent.h"
 #include "Engine/Core/ComponentRegister.h"
@@ -16,6 +16,7 @@ UIPanelComponent::UIPanelComponent(GameObject* owner, TransformComponent* transf
 
 	ExposeTexture("SpriteKey", &m_spriteKey);
 	ExposeVariable("Size", &m_size);
+	ExposeVariable("Border", &m_RenderCommand.bitmap.sprite.border);
 	ExposeVariable("RenderBackground", &m_bRenderBackground);
 }
 
@@ -25,9 +26,16 @@ void UIPanelComponent::SetSpriteKey(const std::wstring& spriteKey)
 	const Sprite* pSprite = ResourceManager::GetInstance()->GetSprite(spriteKey);
 	if (pSprite != nullptr && pSprite->pTexture != nullptr)
 	{
+		D2D1_RECT_F oldBorder = m_RenderCommand.bitmap.sprite.border;
+
 		m_RenderCommand.type = RenderType::BITMAP;
 		m_RenderCommand.isUI = true;
 		m_RenderCommand.bitmap.sprite = *pSprite;
+
+		if (oldBorder.left != 0.0f || oldBorder.top != 0.0f || oldBorder.right != 0.0f || oldBorder.bottom != 0.0f)
+		{
+			m_RenderCommand.bitmap.sprite.border = oldBorder;
+		}
 	}
 	else
 	{
