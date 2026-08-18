@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Engine/Framework/Base/ScriptableObject.h"
 
 enum class ESkillCategory : uint8
@@ -6,6 +6,13 @@ enum class ESkillCategory : uint8
 	Projectile = 0,
 	Aura,
 	GroundArea
+};
+
+enum class EAimType : uint8
+{
+	NearestEnemy = 0, // 인접 적 자동 조준 / 적 발 밑 스폰
+	OwnerFacing,      // 소유자(플레이어) 바라보는/이동 방향 (8방향 / 채찍 전방)
+	FixedAngle        // 정해진 고정 각도 (좌우 / 십자 등)
 };
 
 struct SkillLevelData
@@ -19,6 +26,10 @@ struct SkillLevelData
 	float duration = 0.5f;
 	int32 penetrationCount = 1;
 	int32 projectileCount = 1;
+
+	EAimType aimType = EAimType::NearestEnemy;
+	float spreadAngle = 30.0f;
+	float fixedAngleDeg = 0.0f;
 };
 
 class SkillSO : public ScriptableObject
@@ -52,6 +63,10 @@ public:
 	const SkillLevelData& GetLevelData(int32 level) const;
 	int32 GetMaxLevel() const { return m_levelTable.empty() ? 1 : static_cast<int32>(m_levelTable.size()); }
 
+	EAimType GetAimType() const { return GetLevelData(1).aimType; }
+	float GetSpreadAngle() const { return GetLevelData(1).spreadAngle; }
+	float GetFixedAngleDeg() const { return GetLevelData(1).fixedAngleDeg; }
+
 	float GetCooldown() const { return GetLevelData(1).cooldown; }
 	float GetDamage() const { return GetLevelData(1).damage; }
 	float GetSpeed() const { return GetLevelData(1).speed; }
@@ -75,6 +90,10 @@ private:
 	float m_duration = 0.5f;
 	int32 m_penetrationCount = 1;
 	int32 m_projectileCount = 1;
+
+	EAimType m_aimType = EAimType::NearestEnemy;
+	float m_spreadAngle = 30.0f;
+	float m_fixedAngleDeg = 0.0f;
 
 	std::vector<SkillLevelData> m_levelTable;
 	static SkillLevelData s_dummyLevelData;

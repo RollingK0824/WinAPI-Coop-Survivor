@@ -27,6 +27,15 @@ public:
 	void SetSpeed(float speed) { m_Speed = speed; }
 	float GetSpeed() const { return m_Speed; }
 
+	Vector2 GetFacingDirection() const { return m_facingDir; }
+	void SetFacingDirection(const Vector2& dir)
+	{
+		if (dir.LengthSquared() > 0.0001f)
+		{
+			m_facingDir = dir.GetNormalized();
+		}
+	}
+
 	float GetCurrentHP() const { return m_currentHP; }
 	float GetMaxHP() const { return m_maxHP; }
 	float GetHPRatio() const { return (m_maxHP > 0.0f) ? (m_currentHP / m_maxHP) : 0.0f; }
@@ -44,6 +53,7 @@ private:
 
 private:
 	float m_Speed = 500.0f;
+	Vector2 m_facingDir = { 1.0f, 0.0f };
 	ObserverPtr<ColliderComponent> m_pCollider;
 
 	float m_maxHP = 100.0f;

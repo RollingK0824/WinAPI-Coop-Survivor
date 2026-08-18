@@ -1,4 +1,4 @@
-﻿#include "Engine/Core/pch.h"
+#include "Engine/Core/pch.h"
 #include "SkillSO.h"
 #include "Engine/Core/Define.h"
 #include "Engine/Core/ScriptableObjectRegister.h"
@@ -21,6 +21,9 @@ SkillSO::SkillSO()
 	ExposeVariable("Duration", &m_duration);
 	ExposeVariable("PenetrationCount", &m_penetrationCount);
 	ExposeVariable("ProjectileCount", &m_projectileCount);
+	ExposeVariable("AimType", reinterpret_cast<uint8*>(&m_aimType));
+	ExposeVariable("SpreadAngle", &m_spreadAngle);
+	ExposeVariable("FixedAngleDeg", &m_fixedAngleDeg);
 	ExposeVariable("PrefabKey", &m_prefabKey);
 	ExposeTexture("SpriteKey", &m_spriteKey);
 	ExposeVariable("EffectKey", &m_effectKey);
@@ -39,6 +42,9 @@ SkillSO::SkillSO()
 		lvl.duration = m_duration;
 		lvl.penetrationCount = m_penetrationCount;
 		lvl.projectileCount = m_projectileCount;
+		lvl.aimType = m_aimType;
+		lvl.spreadAngle = m_spreadAngle;
+		lvl.fixedAngleDeg = m_fixedAngleDeg;
 		m_levelTable.push_back(lvl);
 	}
 }
@@ -56,6 +62,9 @@ const SkillLevelData& SkillSO::GetLevelData(int32 level) const
 		s_dummyLevelData.duration = m_duration;
 		s_dummyLevelData.penetrationCount = m_penetrationCount;
 		s_dummyLevelData.projectileCount = m_projectileCount;
+		s_dummyLevelData.aimType = m_aimType;
+		s_dummyLevelData.spreadAngle = m_spreadAngle;
+		s_dummyLevelData.fixedAngleDeg = m_fixedAngleDeg;
 		return s_dummyLevelData;
 	}
 
@@ -101,6 +110,9 @@ void SkillSO::OnLoadFromJson(const json& j)
 	if (j.contains("Duration")) m_duration = j["Duration"].get<float>();
 	if (j.contains("PenetrationCount")) m_penetrationCount = j["PenetrationCount"].get<int32>();
 	if (j.contains("ProjectileCount")) m_projectileCount = j["ProjectileCount"].get<int32>();
+	if (j.contains("AimType")) m_aimType = static_cast<EAimType>(j["AimType"].get<uint8>());
+	if (j.contains("SpreadAngle")) m_spreadAngle = j["SpreadAngle"].get<float>();
+	if (j.contains("FixedAngleDeg")) m_fixedAngleDeg = j["FixedAngleDeg"].get<float>();
 	if (j.contains("PrefabKey")) m_prefabKey = j["PrefabKey"].get<std::string>();
 	if (j.contains("EffectKey")) m_effectKey = j["EffectKey"].get<std::string>();
 	if (j.contains("SpriteKey"))
@@ -115,6 +127,10 @@ void SkillSO::OnLoadFromJson(const json& j)
 		for (const auto& item : j["Levels"])
 		{
 			SkillLevelData data;
+			data.aimType = m_aimType;
+			data.spreadAngle = m_spreadAngle;
+			data.fixedAngleDeg = m_fixedAngleDeg;
+
 			if (item.contains("Level")) data.level = item["Level"].get<int32>();
 			if (item.contains("Description")) data.description = item["Description"].get<std::string>();
 			if (item.contains("Damage")) data.damage = item["Damage"].get<float>();
@@ -124,6 +140,9 @@ void SkillSO::OnLoadFromJson(const json& j)
 			if (item.contains("Duration")) data.duration = item["Duration"].get<float>();
 			if (item.contains("PenetrationCount")) data.penetrationCount = item["PenetrationCount"].get<int32>();
 			if (item.contains("ProjectileCount")) data.projectileCount = item["ProjectileCount"].get<int32>();
+			if (item.contains("AimType")) data.aimType = static_cast<EAimType>(item["AimType"].get<uint8>());
+			if (item.contains("SpreadAngle")) data.spreadAngle = item["SpreadAngle"].get<float>();
+			if (item.contains("FixedAngleDeg")) data.fixedAngleDeg = item["FixedAngleDeg"].get<float>();
 
 			m_levelTable.push_back(data);
 		}
@@ -144,6 +163,9 @@ void SkillSO::OnSaveToJson(json& j) const
 	j["Duration"] = m_duration;
 	j["PenetrationCount"] = m_penetrationCount;
 	j["ProjectileCount"] = m_projectileCount;
+	j["AimType"] = static_cast<uint8>(m_aimType);
+	j["SpreadAngle"] = m_spreadAngle;
+	j["FixedAngleDeg"] = m_fixedAngleDeg;
 	j["PrefabKey"] = m_prefabKey;
 
 	std::string spriteStr(m_spriteKey.begin(), m_spriteKey.end());
@@ -163,6 +185,9 @@ void SkillSO::OnSaveToJson(json& j) const
 		lvlJson["Duration"] = data.duration;
 		lvlJson["PenetrationCount"] = data.penetrationCount;
 		lvlJson["ProjectileCount"] = data.projectileCount;
+		lvlJson["AimType"] = static_cast<uint8>(data.aimType);
+		lvlJson["SpreadAngle"] = data.spreadAngle;
+		lvlJson["FixedAngleDeg"] = data.fixedAngleDeg;
 		levelsArray.push_back(lvlJson);
 	}
 	j["Levels"] = levelsArray;

@@ -78,6 +78,11 @@ void LocalController::Move(float dt) {
     if (ActionManager::GetInstance()->GetActionPress("MoveRight"))
         targetVelocity.x += m_pPlayer->GetSpeed();
 
+    if (targetVelocity.LengthSquared() > 0.0001f && m_pPlayer.IsValid())
+    {
+        m_pPlayer->SetFacingDirection(targetVelocity);
+    }
+
     b2Vec2 b2Velocity = { PixelToMeter(targetVelocity.x), PixelToMeter(targetVelocity.y) };
     b2Body_SetLinearVelocity(m_pCollider->GetBodyId(), b2Velocity);
 

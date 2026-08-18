@@ -1,8 +1,10 @@
-﻿#pragma once
+#pragma once
 #include "Engine/Framework/Components/Core/ScriptComponent.h"
+#include "Engine/Core/ObserverPtr.h"
 #include "Game/Skill/SkillSO.h"
 
 class GameObject;
+class Player;
 
 struct SkillInstance
 {
@@ -53,4 +55,5 @@ private:
 private:
 	int32 m_defaultSkillID = 301;
 	std::vector<SkillInstance> m_skills;
+	ObserverPtr<Player> m_pPlayer;
 };

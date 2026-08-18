@@ -33,6 +33,8 @@ private:
 	float m_range = 120.0f;
 	float m_duration = 0.5f;
 	float m_lifeTimer = 0.0f;
+	float m_tickInterval = 0.0f; // 0 이하: 단발 폭발/채찍, > 0: 지속 장판(Multi-Tick)
+	float m_tickTimer = 0.0f;
 	bool m_hasAppliedDamage = false;
 
 	std::string m_poolKey = "GenericAoEPrefab";

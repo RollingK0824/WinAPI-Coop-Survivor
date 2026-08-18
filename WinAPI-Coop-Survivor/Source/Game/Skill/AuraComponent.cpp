@@ -49,7 +49,7 @@ void AuraComponent::FixedUpdate(float fixedDt)
 	m_tickTimer += fixedDt;
 	if (m_tickTimer >= m_tickInterval)
 	{
-		m_tickTimer = 0.0f;
+		m_tickTimer -= m_tickInterval;
 		ApplyAreaDamage();
 	}
 

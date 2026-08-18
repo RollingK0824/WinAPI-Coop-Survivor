@@ -21,7 +21,9 @@ void AoEComponent::Init(const SkillLevelData& data, const SkillSO* pSO, GameObje
 {
 	m_damage = data.damage;
 	m_range = data.range;
-	m_duration = (data.duration > 0.0f) ? data.duration : 0.5f;
+	m_duration = (data.duration > 0.0f) ? data.duration : 0.15f;
+	m_tickInterval = (data.cooldown > 0.0f && data.duration > data.cooldown) ? data.cooldown : 0.0f;
+	m_tickTimer = m_tickInterval;
 	m_lifeTimer = 0.0f;
 	m_hasAppliedDamage = false;
 	m_pAttacker = attacker;
@@ -40,10 +42,22 @@ void AoEComponent::FixedUpdate(float fixedDt)
 {
 	if (!gameObject.IsActive()) return;
 
-	if (!m_hasAppliedDamage)
+	if (m_tickInterval <= 0.0f)
 	{
-		m_hasAppliedDamage = true;
-		ApplyExplosionDamage();
+		if (!m_hasAppliedDamage)
+		{
+			m_hasAppliedDamage = true;
+			ApplyExplosionDamage();
+		}
+	}
+	else
+	{
+		m_tickTimer += fixedDt;
+		if (m_tickTimer >= m_tickInterval)
+		{
+			m_tickTimer -= m_tickInterval;
+			ApplyExplosionDamage();
+		}
 	}
 
 	m_lifeTimer += fixedDt;
