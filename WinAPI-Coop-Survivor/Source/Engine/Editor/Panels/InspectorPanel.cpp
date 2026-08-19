@@ -1,4 +1,4 @@
-﻿#include "Engine/Core/pch.h"
+#include "Engine/Core/pch.h"
 #include "InspectorPanel.h"
 #include "Engine/Editor/EditorSystem.h"
 #include "Engine/Manager/JsonSerializer.h"
@@ -372,6 +372,9 @@ void InspectorPanel::Initialize()
 
 void InspectorPanel::Release()
 {
+	m_bIsLocked = false;
+	m_pLockedObject = nullptr;
+	m_pLockedSO = nullptr;
 	GUISystem::GetInstance()->UnRegisterPanel(this);
 }
 
@@ -381,20 +384,57 @@ void InspectorPanel::OnDrawGUI()
 	GameObject* pSelectedObj = EditorSystem::GetInstance()->GetSelectedObject();
 	ScriptableObject* pSelectedSO = EditorSystem::GetInstance()->GetSelectedScriptableObject();
 
-	if (pSelectedObj)
+	if (!m_bIsLocked)
 	{
-		if (pSelectedObj->IsDead())
+		m_pLockedObject = pSelectedObj;
+		m_pLockedSO = pSelectedSO;
+	}
+	else
+	{
+		if (m_pLockedObject && m_pLockedObject->IsDead())
+		{
+			m_bIsLocked = false;
+			m_pLockedObject = pSelectedObj;
+			m_pLockedSO = pSelectedSO;
+		}
+	}
+
+	GameObject* pTargetObj = m_bIsLocked ? m_pLockedObject : pSelectedObj;
+	ScriptableObject* pTargetSO = m_bIsLocked ? m_pLockedSO : pSelectedSO;
+
+	if (pTargetObj || pTargetSO)
+	{
+		float availW = ImGui::GetContentRegionAvail().x;
+		ImGui::SameLine(availW - 60.0f);
+		if (ImGui::Checkbox(m_bIsLocked ? "Locked" : "Lock", &m_bIsLocked))
+		{
+			if (m_bIsLocked)
+			{
+				m_pLockedObject = pSelectedObj;
+				m_pLockedSO = pSelectedSO;
+			}
+		}
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::SetTooltip(m_bIsLocked ? "Inspector is Locked (Selection changes will not affect Inspector)" : "Lock Inspector to current object");
+		}
+	}
+
+	if (pTargetObj)
+	{
+		if (pTargetObj->IsDead())
 		{
 			EditorSystem::GetInstance()->SetSelectedObject(nullptr);
+			m_pLockedObject = nullptr;
 			ImGui::End();
 			return;
 		}
-		DrawHeader(pSelectedObj);
-		DrawTransform(pSelectedObj);
-		DrawComponents(pSelectedObj);
-		DrawAddComponentButton(pSelectedObj);
+		DrawHeader(pTargetObj);
+		DrawTransform(pTargetObj);
+		DrawComponents(pTargetObj);
+		DrawAddComponentButton(pTargetObj);
 	}
-	else if (pSelectedSO)
+	else if (pTargetSO)
 	{
 		DrawScriptableObjectData();
 	}
@@ -408,7 +448,7 @@ void InspectorPanel::OnDrawGUI()
 
 void InspectorPanel::DrawScriptableObjectData()
 {
-	ScriptableObject* pAsset = EditorSystem::GetInstance()->GetSelectedScriptableObject();
+	ScriptableObject* pAsset = m_bIsLocked && m_pLockedSO ? m_pLockedSO : EditorSystem::GetInstance()->GetSelectedScriptableObject();
 	if (!pAsset) return;
 
 	ImGui::PushID(pAsset);
@@ -978,7 +1018,7 @@ void InspectorPanel::DrawComponents(GameObject* pObj)
 
 					if (ImGui::BeginDragDropTarget())
 					{
-						if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("HIERARCHY_REORDER_OBJ"))
+						if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("HIERARCHY_GO"))
 						{
 							GameObject* pDroppedObj = *(GameObject**)payload->Data;
 							if (pDroppedObj && prop.resolver)

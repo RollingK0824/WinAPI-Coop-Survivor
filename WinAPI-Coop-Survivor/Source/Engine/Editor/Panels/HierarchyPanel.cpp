@@ -1,4 +1,4 @@
-﻿#include "Engine/Core/pch.h"
+#include "Engine/Core/pch.h"
 #include "HierarchyPanel.h"
 #include "Engine/Editor/EditorSystem.h"
 #include "Engine/Manager/SceneManager.h"
@@ -69,7 +69,7 @@ void HierarchyPanel::DrawGameObjectNode(Scene* pActiveScene, GameObject* pObj)
 
     bool nodeOpen = ImGui::TreeNodeEx(pObj->GetName().c_str(), flags);
 
-    if (ImGui::IsItemClicked())
+    if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Left) && !ImGui::IsItemToggledOpen() && ImGui::GetDragDropPayload() == nullptr)
     {
         EditorSystem::GetInstance()->SetSelectedObject(pObj);
     }
