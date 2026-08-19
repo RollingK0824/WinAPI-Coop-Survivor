@@ -43,7 +43,6 @@ void TitleSceneController::Start()
 		exit_Btn->SetOnClick([this]() { OnClickExitBtn(); });
 	}
 
-	// 씬 내 사전 배치된 컨트롤러 바인딩 백업
 	if (pScene)
 	{
 		if (!hostPopup_Ctrl)
@@ -71,7 +70,6 @@ void TitleSceneController::Start()
 		}
 	}
 
-	// 네트워크 연결 결과 콜백 등록 (Room Full 또는 접속 실패 시 에러 팝업 표시)
 	NetworkManager::GetInstance()->SetOnConnResultCallback([this](ConnResultCode code) {
 		if (code == ConnResultCode::ROOM_FULL)
 		{

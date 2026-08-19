@@ -28,7 +28,6 @@ SkillSO::SkillSO()
 	ExposeTexture("SpriteKey", &m_spriteKey);
 	ExposeVariable("EffectKey", &m_effectKey);
 
-	// 기본 5개 레벨 테이블 데이터 초기화 (push_back 방식)
 	m_levelTable.clear();
 	for (int i = 0; i < 5; ++i)
 	{

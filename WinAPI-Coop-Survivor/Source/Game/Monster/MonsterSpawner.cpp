@@ -74,10 +74,8 @@ void MonsterSpawner::FixedUpdate(float fixedDt)
 {
 	NetRole role = NetworkManager::GetInstance()->GetRole();
 
-	// Client는 Host 스냅샷 전용이므로 독자적인 웨이브 스폰을 실행하지 않음!
 	if (role == NetRole::CLIENT) return;
 
-	// Host 전용: 15Hz (66ms) 주기로 Client별 공간 컬링 스냅샷 패킷 발송
 	if (role == NetRole::HOST)
 	{
 		m_snapshotTimer += fixedDt;
@@ -122,7 +120,6 @@ void MonsterSpawner::FixedUpdate(float fixedDt)
 					Vector2 monsterPos = pMonster->transform.GetPosition();
 					float distSq = Vector2::DistanceSquared(monsterPos, clientPos);
 
-					// 화면 외곽(1920x1080 반경) 950px Culling
 					if (distSq <= 950.0f * 950.0f)
 					{
 						culledMonsters.push_back({ netID, monsterPos });
@@ -131,7 +128,6 @@ void MonsterSpawner::FixedUpdate(float fixedDt)
 
 				if (culledMonsters.empty()) continue;
 
-				// UDP MTU (1472B) 제한 준수를 위해 100마리 단위 청크 분할 발송
 				const size_t MAX_PER_PACKET = 100;
 				size_t totalMonsters = culledMonsters.size();
 				size_t offset = 0;
@@ -275,7 +271,6 @@ void MonsterSpawner::DespawnMonster(GameObject* pMonsterObj)
 	{
 		uint16 netID = pMonsterComp->GetNetID();
 		m_activeMonsterMap.erase(netID);
-		// NetworkIdentity가 GameObject와 함께 소멸하므로 별도 보간 정리 불필요
 	}
 
 	pMonsterObj->SetActive(false);

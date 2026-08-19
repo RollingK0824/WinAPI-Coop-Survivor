@@ -4,6 +4,7 @@
 #include "Engine/Framework/GameObject.h"
 #include "Engine/Framework/Components/Core/TransformComponent.h"
 #include "Engine/Framework/Components/Physics/ColliderComponent.h"
+#include "Engine/Framework/Components/Physics/RigidBodyComponent.h"
 
 bool PhysicsManager::Initialize()
 {
@@ -34,28 +35,13 @@ void PhysicsManager::FixedUpdate(float fixedDt)
 
 	ProcessContanctEvents();
 
-	for (auto* pCollider : m_vColliders)
+	for (auto* pRigidBody : m_vRigidBodies)
 	{
-		if (pCollider == nullptr || !pCollider->IsEnabled())continue;
+		if (pRigidBody == nullptr || !pRigidBody->IsEnabled()) continue;
+		if (!pRigidBody->gameObject.IsActiveInHierarchy()) continue;
+		if (pRigidBody->GetBodyType() == b2_staticBody) continue;
 
-		GameObject* pOwner = &pCollider->gameObject;
-		if (pOwner == nullptr || !pOwner->IsActive()) continue;
-
-		if (pCollider->GetBodyType() == b2_staticBody) continue;
-
-		b2BodyId bodyId = pCollider->GetBodyId();
-		if (!b2Body_IsValid(bodyId))continue;
-
-		b2Vec2 b2Pos = b2Body_GetPosition(bodyId);
-		b2Rot b2Rot = b2Body_GetRotation(bodyId);
-
-		TransformComponent* pTransform = &pOwner->transform;
-		if (pTransform != nullptr)
-		{
-			pTransform->SetPosition(MeterToPixel(b2Pos.x), MeterToPixel(b2Pos.y));
-			float angleRadian = b2Rot_GetAngle(b2Rot);
-			pTransform->SetRotation(RadianToDegree(angleRadian));
-		}
+		pRigidBody->SyncTransformFromBody();
 	}
 }
 
@@ -118,49 +104,111 @@ void PhysicsManager::DestoryBody(b2BodyId bodyId)
 	}
 }
 
+void PhysicsManager::RegisterRigidBody(RigidBodyComponent* pRigidBody)
+{
+	if (pRigidBody == nullptr) return;
+	if (b2Body_IsValid(pRigidBody->GetBodyId())) return;
+
+	TransformComponent* pTf = &pRigidBody->transform;
+
+	b2BodyDef bodyDef = b2DefaultBodyDef();
+	bodyDef.type          = pRigidBody->GetBodyType();
+	bodyDef.fixedRotation = pRigidBody->IsFixedRotation();
+	bodyDef.position      = { PixelToMeter(pTf->GetWorldPosition().x), PixelToMeter(pTf->GetWorldPosition().y) };
+	bodyDef.rotation      = b2MakeRot(DegreeToRadian(pTf->GetWorldRotation()));
+	bodyDef.userData      = pRigidBody;
+
+	bool shouldBeActive = pRigidBody->gameObject.IsActiveInHierarchy() && pRigidBody->IsEnabled();
+	bodyDef.isEnabled = shouldBeActive;
+
+	b2BodyId bodyId = CreateBody(&bodyDef);
+	pRigidBody->m_bodyId = bodyId;
+
+	if (!shouldBeActive)
+		b2Body_Disable(bodyId);
+
+	m_vRigidBodies.push_back(pRigidBody);
+}
+
+void PhysicsManager::UnRegisterRigidBody(RigidBodyComponent* pRigidBody)
+{
+	if (pRigidBody == nullptr) return;
+
+	if (b2Body_IsValid(pRigidBody->m_bodyId))
+	{
+		b2DestroyBody(pRigidBody->m_bodyId);
+		pRigidBody->m_bodyId = b2_nullBodyId;
+	}
+
+	auto it = std::find(m_vRigidBodies.begin(), m_vRigidBodies.end(), pRigidBody);
+	if (it != m_vRigidBodies.end())
+		m_vRigidBodies.erase(it);
+}
+
 void PhysicsManager::RegisterCollider(ColliderComponent* pCollider)
 {
 	if (pCollider == nullptr) return;
 
-	if (b2Body_IsValid(pCollider->GetBodyId())) return;
+	RigidBodyComponent* pRigidBody = pCollider->gameObject.GetComponentInParent<RigidBodyComponent>();
+	if (pRigidBody == nullptr)
+		pRigidBody = pCollider->gameObject.GetComponent<RigidBodyComponent>();
 
-	TransformComponent* pTransform = &pCollider->transform;
-	if (pTransform == nullptr) return;
+	b2BodyId bodyId = b2_nullBodyId;
 
-	b2BodyDef bodyDef = b2DefaultBodyDef();
-	bodyDef.type = pCollider->GetBodyType();
-	bodyDef.fixedRotation = pCollider->IsFixedRotation();
-
-	bodyDef.position = b2Vec2{ PixelToMeter(pTransform->GetPosition().x), PixelToMeter(pTransform->GetPosition().y) };
-	bodyDef.rotation = b2MakeRot(pTransform->GetRotation().angle);
-
-	bodyDef.userData = pCollider;
-
-	// Set isEnabled on BodyDef directly to prevent 1-frame overlap impulse during body creation
-	bool shouldBeActive = pCollider->gameObject.IsActive() && pCollider->IsEnabled();
-	bodyDef.isEnabled = shouldBeActive;
-
-	b2BodyId bodyId = CreateBody(&bodyDef);
-	pCollider->SetBodyId(bodyId);
-
-	if (!shouldBeActive)
+	if (pRigidBody != nullptr && b2Body_IsValid(pRigidBody->GetBodyId()))
 	{
-		b2Body_Disable(bodyId);
+		bodyId = pRigidBody->GetBodyId();
+		pCollider->SetBodyId(bodyId);
+		pCollider->SetAttachedToRigidBody(true);
+	}
+	else
+	{
+		pCollider->SetAttachedToRigidBody(false);
+		if (b2Body_IsValid(pCollider->GetBodyId())) return;
+
+		TransformComponent* pTf = &pCollider->transform;
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.type          = pCollider->GetBodyType();
+		bodyDef.fixedRotation = pCollider->IsFixedRotation();
+		bodyDef.position      = { PixelToMeter(pTf->GetWorldPosition().x), PixelToMeter(pTf->GetWorldPosition().y) };
+		bodyDef.rotation      = b2MakeRot(DegreeToRadian(pTf->GetWorldRotation()));
+		bodyDef.userData      = pCollider;
+
+		bool shouldBeActive = pCollider->gameObject.IsActiveInHierarchy() && pCollider->IsEnabled();
+		bodyDef.isEnabled = shouldBeActive;
+
+		bodyId = CreateBody(&bodyDef);
+		pCollider->SetBodyId(bodyId);
+
+		if (!shouldBeActive)
+			b2Body_Disable(bodyId);
 	}
 
 	pCollider->SetPhysicsVectorIndex(m_vColliders.size());
 	m_vColliders.push_back(pCollider);
+	pCollider->RebuildShape();
 }
 
 void PhysicsManager::UnRegisterCollider(ColliderComponent* pCollider)
 {
 	if (pCollider == nullptr) return;
 
-	if (b2Body_IsValid(pCollider->GetBodyId()))
+	if (b2Shape_IsValid(pCollider->GetShapeId()))
 	{
-		b2DestroyBody(pCollider->GetBodyId());
-		pCollider->SetBodyId(b2_nullBodyId);
+		b2DestroyShape(pCollider->GetShapeId(), false);
+		pCollider->SetShapeId(b2_nullShapeId);
 	}
+
+	if (!pCollider->IsAttachedToRigidBody())
+	{
+		if (b2Body_IsValid(pCollider->GetBodyId()))
+		{
+			b2DestroyBody(pCollider->GetBodyId());
+		}
+	}
+	pCollider->SetBodyId(b2_nullBodyId);
+	pCollider->SetAttachedToRigidBody(false);
 
 	if (m_vColliders.empty()) return;
 

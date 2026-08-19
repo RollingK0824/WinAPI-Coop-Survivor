@@ -23,7 +23,6 @@ ColliderComponent::~ColliderComponent()
 void ColliderComponent::Awake()
 {
 	PhysicsManager::GetInstance()->RegisterCollider(this);
-	RebuildShape();
 }
 
 void ColliderComponent::PostDeserialize(Scene* pScene)

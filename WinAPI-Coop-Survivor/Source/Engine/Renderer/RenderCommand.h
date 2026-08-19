@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <d2d1.h>
 #include "Engine/Renderer/Sprite.h"
 
@@ -51,6 +51,7 @@ struct RenderCommand
 	float scaleX = 1.0f;
 	float scaleY = 1.0f;
 	int32 zOrder = 0;
+	size_t hierarchyIndex = 0; // 렌더 정렬용: 부모 ➔ 자식 순서 보장
 	RenderType type = RenderType::BITMAP;
 	bool isUI = false;
 

@@ -34,11 +34,9 @@ void ProjectileComponent::Init(const Vector2& dir, const SkillLevelData& data, c
 	m_effectKey = pSO ? pSO->GetEffectKey() : "";
 	m_hitInstanceIDs.clear();
 
-	// 방향에 따른 회전각 설정
 	float angleRad = atan2f(m_direction.y, m_direction.x);
 	transform.SetRotation(angleRad);
 
-	// 동적 스프라이트 주입
 	if (auto renderer = gameObject.GetComponent<SpriteRendererComponent>())
 	{
 		if (pSO && !pSO->GetSpriteKey().empty())
@@ -109,7 +107,6 @@ void ProjectileComponent::OnCollision(ColliderComponent* pOtherCollider)
 			}
 		}
 
-		// 타격 관통 처리 (-1은 무한 관통, >0 일 경우 차감 후 0 이하 시 Despawn)
 		if (m_penetrationCount > 0)
 		{
 			m_penetrationCount--;

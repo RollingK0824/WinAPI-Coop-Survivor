@@ -58,7 +58,6 @@ void SkillComponent::AddSkill(std::shared_ptr<const SkillSO> pSkillSO)
 		{
 			m_skills[i].level++;
 
-			// EventBus: SkillSlotChanged 발행
 			OnSkillSlotChangedEvent evt;
 			evt.playerNetID = 0;
 			evt.slotIndex = static_cast<uint8>(i);
@@ -69,7 +68,7 @@ void SkillComponent::AddSkill(std::shared_ptr<const SkillSO> pSkillSO)
 		}
 	}
 
-	if (m_skills.size() >= MAX_SKILL_SLOTS) return; // 슬롯 최대치 도달 시 거부
+	if (m_skills.size() >= MAX_SKILL_SLOTS) return; 
 
 	SkillInstance newInst;
 	newInst.pSO = pSkillSO;
@@ -79,7 +78,6 @@ void SkillComponent::AddSkill(std::shared_ptr<const SkillSO> pSkillSO)
 
 	size_t slotIdx = m_skills.size() - 1;
 
-	// EventBus: SkillSlotChanged 발행
 	OnSkillSlotChangedEvent evt;
 	evt.playerNetID = 0;
 	evt.slotIndex = static_cast<uint8>(slotIdx);
@@ -132,7 +130,6 @@ void SkillComponent::FixedUpdate(float fixedDt)
 {
 	if (!gameObject.IsActive() || !IsEnabled()) return;
 
-	// 게임 진행 상태 확인 (InGameManager가 활성 중이고 게임 시작 전/카운트다운 중이면 스킬 발동 중지)
 	if (InGameManager* pInGameMgr = InGameManager::GetInstance())
 	{
 		if (!pInGameMgr->IsGameStarted())

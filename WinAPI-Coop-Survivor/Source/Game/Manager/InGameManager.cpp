@@ -87,7 +87,6 @@ void InGameManager::Start()
 		initSkillPool("GenericAuraPrefab", 20);
 		initSkillPool("GenericAoEPrefab", 50);
 
-		// ExpGem 오브젝트 풀 초기화 (미등록 시 런타임 자동 생성 폴백 백업)
 		PoolManager::GetInstance()->CreatePool<GameObject>(
 			"ExpGemPrefab",
 			[pScene]() {
@@ -155,7 +154,6 @@ void InGameManager::Start()
 					expectedSize += (snapshot->monsterCount - 1) * sizeof(MonsterSnapshotData);
 				if (size < static_cast<int>(expectedSize)) return;
 
-				// MonsterSpawner 탐색
 				MonsterSpawner* spawner = nullptr;
 				Scene* pScene = gameObject.GetOwnerScene();
 				if (pScene)
@@ -185,7 +183,6 @@ void InGameManager::Start()
 						}
 						else
 						{
-							// 컬링 후 재진입 등 거리 차이가 큰 경우 즉시 위치 세팅(Snap)하여 대각선 고속 이동/텔레포트 방지
 							float dist = Vector2::Distance(pMonster->transform.GetPosition(), targetPos);
 							if (dist > 150.0f)
 							{
@@ -207,7 +204,6 @@ void InGameManager::Start()
 				auto killPkt = reinterpret_cast<const MonsterKillPacket*>(packet);
 				this->SpawnExpGem(killPkt->dropItemPos, 10);
 
-				// Client 몬스터 Despawn 처리
 				Scene* pScene = gameObject.GetOwnerScene();
 				if (pScene)
 				{
@@ -431,7 +427,6 @@ void InGameManager::BroadcastPlayerEntityState()
 		if (obj && obj->IsActive())
 		{
 			NetworkIdentity* netIdComp = obj->GetComponent<NetworkIdentity>();
-			// 몬스터 제외, 플레이어 객체만 ENTITY_STATE_SYNC로 동기화 (NetID < 1000)
 			if (netIdComp && netIdComp->GetNetID() > 0 && netIdComp->GetNetID() < 1000)
 			{
 				int idx = syncPacket.entityCount;
@@ -513,7 +508,6 @@ GameObject* InGameManager::SpawnPlayer(uint32 netId, bool isLocal, Vector2 spawn
 		return nullptr;
 	}
 
-	// 스폰 좌표가 0,0 기본값이면 NetID에 따라 가로 120px 간격으로 일렬 스폰
 	if (spawnPos.x == 0.0f && spawnPos.y == 0.0f)
 	{
 		spawnPos.x = (static_cast<float>(netId) - 1.0f) * 120.0f;
@@ -521,7 +515,6 @@ GameObject* InGameManager::SpawnPlayer(uint32 netId, bool isLocal, Vector2 spawn
 
 	pPlayerObj->transform.SetPosition(spawnPos);
 
-	// Box2D 물리 강체 좌표도 스폰 위치로 즉시 동기화 (0,0 겹침 방지)
 	ColliderComponent* pCollider = pPlayerObj->GetComponent<ColliderComponent>();
 	if (pCollider && b2Body_IsValid(pCollider->GetBodyId()))
 	{
@@ -537,7 +530,6 @@ GameObject* InGameManager::SpawnPlayer(uint32 netId, bool isLocal, Vector2 spawn
 	netIdentity->SetNetID(netId);
 	netIdentity->SetLocalPlayer(isLocal);
 
-	// SkillComponent 가져오기 (없으면 추가)
 	SkillComponent* pSkillComp = pPlayerObj->GetComponent<SkillComponent>();
 	if (!pSkillComp)
 	{
@@ -610,19 +602,17 @@ void InGameManager::AddTeamExp(float amount)
 		m_onExpChanged(m_teamExp, m_teamMaxExp);
 	}
 
-	// 팀 경험치가 목표치를 달성할 때까지 반복 레벨업 처리 (경험치 이월 지원)
 	while (m_teamExp >= m_teamMaxExp)
 	{
 		m_teamExp -= m_teamMaxExp;
 		m_teamLevel++;
-		m_teamMaxExp *= 1.25f; // 다음 레벨업 필요 경험치 25% 증가
+		m_teamMaxExp *= 1.25f;
 
 		if (m_onTeamLevelUp)
 		{
 			m_onTeamLevelUp(m_teamLevel);
 		}
 
-		// 레벨업 3중 1택 스킬 선택 UI 표시
 		if (auto* choiceCtrl = gameObject.GetComponent<SkillChoiceController>())
 		{
 			uint32 myID = NetworkManager::GetInstance()->GetMyNetID();
@@ -638,7 +628,6 @@ void InGameManager::AddTeamExp(float amount)
 		}
 	}
 
-	// Host 권한 기반 팀 레벨/경험치 상태 패킷 동기화 전송
 	if (NetworkManager::GetInstance()->GetRole() == NetRole::HOST)
 	{
 		TeamExpSyncPacket syncPkt{};
@@ -684,7 +673,6 @@ void InGameManager::CreateTeamExpBarUI()
 	Scene* pScene = gameObject.GetOwnerScene();
 	if (!pScene) return;
 
-	// Scene 파일(InGameScene.scene)에 사전 등록된 UI 오브젝트 바인딩
 	if (!m_pExpBarFillImg)
 	{
 		if (GameObject* fillObj = pScene->FindGameObjectByName("TeamEXPBar_Fill"))
@@ -774,7 +762,6 @@ bool InGameManager::IsAllClientsSkillChoiceComplete() const
 	NetworkManager* net = NetworkManager::GetInstance();
 	if (net->GetRole() != NetRole::HOST) return true;
 
-	// Host 본인 확인
 	uint32 hostID = net->GetMyNetID();
 	if (hostID == 0) hostID = 1;
 	auto hostIter = m_clientSkillChoiceMap.find(hostID);
@@ -783,7 +770,6 @@ bool InGameManager::IsAllClientsSkillChoiceComplete() const
 		return false;
 	}
 
-	// 접속된 클라이언트 확인
 	const auto& clients = net->GetConnectedClients();
 	for (const auto& [netID, info] : clients)
 	{
@@ -802,7 +788,6 @@ void InGameManager::CheckAndResumeSimulationIfAllChosen()
 
 	if (IsAllClientsSkillChoiceComplete())
 	{
-		// 모든 인원 선택 완료 -> 게임 재개 신호 브로드캐스트
 		SimulationResumeSignalPacket resumePkt{};
 		resumePkt.header.type = PacketType::SIMULATION_RESUME_SIGNAL;
 		resumePkt.header.size = sizeof(SimulationResumeSignalPacket);

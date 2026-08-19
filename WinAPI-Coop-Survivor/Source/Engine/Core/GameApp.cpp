@@ -53,7 +53,7 @@ bool GameApp::Initialize(HINSTANCE hInstance, int nCmdShow, DisplayMode mode)
 	int screenWidth = GetSystemMetrics(SM_CXSCREEN);
 	int screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
-	DWORD windowStyle = WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_MAXIMIZE; // 기본 윈도우 스타일
+	DWORD windowStyle = WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_MAXIMIZE;
 	int width = GWinSizeX;
 	int height = GWinSizeY;
 
@@ -136,7 +136,6 @@ int GameApp::Run()
 		}
 		else
 		{
-			// TODO: 게임 업데이트 및 렌더링 로직 추가
 			EngineKernel::GetInstance()->ProcessFrame();
 		}
 	}
@@ -146,8 +145,7 @@ int GameApp::Run()
 
 void GameApp::Release()
 {
-	// TODO: 각종 해제 코드 추가
-	ChangeDisplaySettings(nullptr, 0); // 전체 화면 모드 해제
+	ChangeDisplaySettings(nullptr, 0);
 
 	EngineKernel::GetInstance()->Release();
 

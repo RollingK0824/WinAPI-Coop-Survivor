@@ -14,6 +14,16 @@ bool GUISystem::Initialize()
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     ImGui::StyleColorsDark();
 
+    // 한글 폰트 로드 (Windows 기본 맑은 고딕)
+    if (std::filesystem::exists("C:\\Windows\\Fonts\\malgun.ttf"))
+    {
+        io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\malgun.ttf", 16.0f, nullptr, io.Fonts->GetGlyphRangesKorean());
+    }
+    else
+    {
+        io.Fonts->AddFontDefault();
+    }
+
     HWND hWnd = GameApp::GetInstance()->GetWindowHandle();
     GraphicManager* pGM = GraphicManager::GetInstance();
 

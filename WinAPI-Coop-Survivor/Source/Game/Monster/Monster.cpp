@@ -241,7 +241,6 @@ void Monster::UpdateAI(float fixedDt)
 		return;
 	}
 
-	// 항상 Chase 상태 유지 (접촉 피해는 Player::OnCollision에서 처리)
 	m_state = EMonsterState::Chase;
 }
 
@@ -307,7 +306,6 @@ void Monster::OnDie()
 
 	if (role == NetRole::HOST)
 	{
-		// Host: 로컬 경험치 보석 스폰 및 Client 들에게 MONSTER_KILL 패킷 전송
 		if (InGameManager* mgr = InGameManager::GetInstance())
 		{
 			mgr->SpawnExpGem(transform.GetPosition(), m_expAmount);
@@ -323,7 +321,6 @@ void Monster::OnDie()
 	}
 	else if (role == NetRole::NONE)
 	{
-		// 싱글 플레이어: 로컬 경험치 보석 스폰
 		if (InGameManager* mgr = InGameManager::GetInstance())
 		{
 			mgr->SpawnExpGem(transform.GetPosition(), m_expAmount);

@@ -75,7 +75,6 @@ void ExpGem::Update(float dt)
 	InGameManager* mgr = InGameManager::GetInstance();
 	if (!mgr || mgr->IsSimulationPaused()) return;
 
-	// Player 주체가 타깃으로 지정한 경우 플레이어 방향으로 이동만 수행 (획득/경험치 연산은 Player가 담당)
 	if (m_targetPlayer.IsValid())
 	{
 		Vector2 myPos = transform.GetPosition();

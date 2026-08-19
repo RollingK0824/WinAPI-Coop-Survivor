@@ -39,6 +39,13 @@ bool PrefabManager::LoadPrefab(const std::string& key, const std::string& filePa
 	json prefabData;
 	if (!FileSystem::ReadJson(filePath, prefabData)) return false;
 
+	auto it = m_PrefabTemplates.find(key);
+	if (it != m_PrefabTemplates.end() && it->second != nullptr)
+	{
+		delete it->second;
+		m_PrefabTemplates.erase(it);
+	}
+
 	GameObject* templateObj = new GameObject(nullptr);
 	JsonSerializer::ApplyJsonToGameObject(templateObj, prefabData);
 	m_PrefabTemplates[key] = templateObj;

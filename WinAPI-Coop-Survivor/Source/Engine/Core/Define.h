@@ -43,6 +43,7 @@ namespace EngineKey
 		constexpr std::string_view HUDPresenter = "HUDPresenter";
 
 		constexpr std::string_view DebugHUDComponent = "DebugHUDComponent";
+		constexpr std::string_view RigidBody = "RigidBodyComponent";
 	}
 
 	namespace Property

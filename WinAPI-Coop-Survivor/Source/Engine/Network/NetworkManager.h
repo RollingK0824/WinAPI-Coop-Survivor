@@ -69,7 +69,7 @@ private:
     NetworkManager() = default;
     virtual ~NetworkManager() override;
 
-    size_t m_maxClients = 3; // 기본값 3 (Host 1명 + Client 3명 = 총 4명)
+    size_t m_maxClients = 3; // 기본값 3
     ConnResultCallback m_onConnResultCallback = nullptr;
 
 

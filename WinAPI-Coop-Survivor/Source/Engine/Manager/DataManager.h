@@ -81,7 +81,6 @@ public:
 		return pSO;
 	}
 
-	// Helper getters with forward declarations
 	std::shared_ptr<const MonsterSO> GetMonsterSO(uint32 assetID) const;
 	std::shared_ptr<MonsterSO> GetMutableMonsterSO(uint32 assetID);
 

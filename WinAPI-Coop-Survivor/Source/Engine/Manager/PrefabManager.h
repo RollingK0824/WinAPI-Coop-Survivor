@@ -16,7 +16,6 @@ public:
 
 	bool LoadPrefab(const std::string& key, const std::string& filePath);
 
-	// 미리 조립된 GameObject 원본(Template)을 깊은 복사(Deep Copy)하여 새 인스턴스로 반환합니다.
 	GameObject* Instantiate(const std::string& prefabKey, Scene* pScene);
 private:
 	PrefabManager() = default;

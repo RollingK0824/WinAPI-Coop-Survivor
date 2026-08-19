@@ -62,7 +62,6 @@ void NetworkIdentity::ResetInterpolation(const Vector2& pos)
 
 void NetworkIdentity::SetInterpolationTarget(const Vector2& targetPos, float duration)
 {
-	// 비활성화 상태이거나 이전 보간이 없던 경우 현재 Transform 위치를 시작 위치로 사용
 	Vector2 currentPos = transform.GetPosition();
 	if (m_interpData.active && m_interpData.duration > 0.0f)
 	{

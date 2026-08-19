@@ -41,6 +41,7 @@ public:
 	void PostFrameCleanUp();
 
 	void ReorderGameObject(GameObject* targetObj, int newIndex);
+	
 	void UpdateGameObjectIndices();
 
 	GameObject* FindGameObjectByName(const std::string& name) const;

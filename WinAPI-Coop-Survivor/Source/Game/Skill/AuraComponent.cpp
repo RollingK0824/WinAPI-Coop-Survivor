@@ -23,7 +23,7 @@ void AuraComponent::Init(const SkillLevelData& data, const SkillSO* pSO, GameObj
 	m_range = data.range;
 	m_duration = data.duration;
 	m_tickInterval = (data.cooldown > 0.0f) ? data.cooldown : 0.5f;
-	m_tickTimer = m_tickInterval; // 즉시 첫 틱 발동
+	m_tickTimer = m_tickInterval;
 	m_lifeTimer = 0.0f;
 	m_pCaster = pCaster;
 	m_poolKey = poolKey;

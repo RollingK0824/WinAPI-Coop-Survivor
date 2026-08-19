@@ -1,4 +1,3 @@
-﻿// Source/Engine/Framework/Components/UI/UITextComponent.cpp
 #include "Engine/Core/pch.h"
 #include "UITextComponent.h"
 #include "Engine/Core/ComponentRegister.h"
@@ -17,6 +16,12 @@ UITextComponent::UITextComponent(GameObject* owner, TransformComponent* transfor
 
 	ExposeVariable("Text", &m_text);
 	ExposeVariable("FontSize", &m_RenderCommand.text.fontSize);
+}
+
+const RenderCommand& UITextComponent::GetRenderCommand()
+{
+	m_RenderCommand.text.pText = m_text;
+	return m_RenderCommand;
 }
 
 void UITextComponent::SetText(const std::wstring& text)
