@@ -39,7 +39,9 @@ namespace EngineKey
 		constexpr std::string_view UITextComponent = "UITextComponent";
 		constexpr std::string_view UIImageComponent = "UIImageComponent";
 		constexpr std::string_view UIButtonComponent = "UIButtonComponent";
+		constexpr std::string_view UIInputFieldComponent = "UIInputFieldComponent";
 		constexpr std::string_view HUDPresenter = "HUDPresenter";
+
 		constexpr std::string_view DebugHUDComponent = "DebugHUDComponent";
 	}
 
@@ -83,11 +85,15 @@ namespace EngineKey
 		constexpr std::string_view InGameManager = "InGameManager";
 		constexpr std::string_view Monster = "Monster";
 		constexpr std::string_view MonsterSpawner = "MonsterSpawner";
-		constexpr std::string_view ProjectileComponent = "ProjectileComponent";
+		constexpr std::string_view SkillChoiceController = "SkillChoiceController";
 		constexpr std::string_view SkillComponent = "SkillComponent";
+		constexpr std::string_view ProjectileComponent = "ProjectileComponent";
 		constexpr std::string_view AuraComponent = "AuraComponent";
 		constexpr std::string_view AoEComponent = "AoEComponent";
 		constexpr std::string_view ExpGem = "ExpGem";
+		constexpr std::string_view ErrorPopupController = "ErrorPopupController";
+		constexpr std::string_view HostPopupController = "HostPopupController";
+		constexpr std::string_view JoinPopupController = "JoinPopupController";
 	}
 
 	namespace ScriptableObject

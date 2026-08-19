@@ -52,7 +52,14 @@ public:
 	void PauseSimulation(bool pause);
 	bool IsSimulationPaused() const { return m_bIsSimulationPaused; }
 
+	// 레벨업 스킬 선택 동기화 (멀티플레이)
+	void NotifySkillChoiceComplete(uint32 netID, uint32 chosenSkillID, uint8 choiceType);
+	void SendSkillChoiceCompletePacket(uint32 chosenSkillID, uint8 choiceType);
+	bool IsAllClientsSkillChoiceComplete() const;
+	void CheckAndResumeSimulationIfAllChosen();
+
 	int32 GetTeamLevel() const { return m_teamLevel; }
+
 	float GetTeamExp() const { return m_teamExp; }
 	float GetTeamMaxExp() const { return m_teamMaxExp; }
 	float GetTeamExpRatio() const { return (m_teamMaxExp > 0.0f) ? (m_teamExp / m_teamMaxExp) : 0.0f; }
@@ -74,7 +81,9 @@ private:
 	std::vector<GameObject*> m_vCachedPlayer;
 
 	std::unordered_map<uint32, bool> m_clientReadyMap;
+	std::unordered_map<uint32, bool> m_clientSkillChoiceMap;
 	bool m_bIsMyReady = false;
+
 
 	bool m_bIsCountDown = false;
 	bool m_bIsGameStarted = false;
@@ -90,11 +99,9 @@ private:
 	std::vector<ExpGem*> m_activeGems;
 
 	// 팀 경험치 바 UI (UIImage, UIText 조립)
-	ObserverPtr<GameObject> m_pExpBarBgObj;
-	ObserverPtr<GameObject> m_pExpBarFillObj;
-	ObserverPtr<class UIImageComponent> m_pExpBarFillImg;
-	ObserverPtr<GameObject> m_pExpTextObj;
-	ObserverPtr<class UITextComponent> m_pExpTextComp;
+	class UIImageComponent* m_pExpBarFillImg = nullptr;
+	class UITextComponent* m_pExpTextComp = nullptr;
+
 
 	std::function<void(float)> m_onCountdownTick;
 	std::function<void()> m_onGameStarted;

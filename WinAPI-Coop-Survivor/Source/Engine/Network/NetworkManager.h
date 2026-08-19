@@ -50,6 +50,12 @@ public:
     void RegisterPacketHandler(PacketType type, PacketHandler handler) { m_packetHandlers[type] = handler; }
     void UnregisterPacketHandler(PacketType type) { m_packetHandlers.erase(type); }
 
+    using ConnResultCallback = std::function<void(ConnResultCode code)>;
+    void SetOnConnResultCallback(ConnResultCallback callback) { m_onConnResultCallback = callback; }
+
+    void SetMaxClients(size_t maxClients) { m_maxClients = maxClients; }
+    size_t GetMaxClients() const { return m_maxClients; }
+
     NetRole GetRole() const { return m_Role; }
     uint32 GetMyNetID() const { return m_MyNetID; }
     bool IsConnected() const { return m_bConnected; }
@@ -62,6 +68,10 @@ public:
 private:
     NetworkManager() = default;
     virtual ~NetworkManager() override;
+
+    size_t m_maxClients = 3; // 기본값 3 (Host 1명 + Client 3명 = 총 4명)
+    ConnResultCallback m_onConnResultCallback = nullptr;
+
 
     void ProcessIncomingPackets();
     void HandlePacket(const char* buffer, int size, const sockaddr_in& senderAddr);

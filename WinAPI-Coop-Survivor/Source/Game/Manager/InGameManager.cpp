@@ -20,6 +20,10 @@
 #include "Engine/Framework/Components/UI/UIImageComponent.h"
 #include "Engine/Framework/Components/UI/UITextComponent.h"
 #include "Game/Player/NetworkController.h"
+#include "Game/UI/SkillChoiceController.h"
+#include "Game/Manager/GameEvents.h"
+#include "Engine/Core/EventBus.h"
+
 
 InGameManager* InGameManager::s_instance = nullptr;
 
@@ -33,6 +37,8 @@ InGameManager::InGameManager(GameObject* owner, TransformComponent* transform) :
 	ExposeVariable("TeamExp", &m_teamExp);
 	ExposeVariable("TeamMaxExp", &m_teamMaxExp);
 	ExposeVariable("IsSimulationPaused", &m_bIsSimulationPaused);
+	ExposeComponent("EXP Bar Fill Image", &m_pExpBarFillImg);
+	ExposeComponent("EXP Text Component", &m_pExpTextComp);
 }
 
 InGameManager::~InGameManager()
@@ -44,15 +50,8 @@ void InGameManager::OnDestroy()
 {
 	ScriptComponent::OnDestroy();
 	if (s_instance == this) s_instance = nullptr;
-
-	Scene* pScene = gameObject.GetOwnerScene();
-	if (pScene)
-	{
-		if (m_pExpBarBgObj.IsValid()) pScene->DestroyObjects(m_pExpBarBgObj.Get());
-		if (m_pExpBarFillObj.IsValid()) pScene->DestroyObjects(m_pExpBarFillObj.Get());
-		if (m_pExpTextObj.IsValid()) pScene->DestroyObjects(m_pExpTextObj.Get());
-	}
 }
+
 
 void InGameManager::Start()
 {
@@ -119,6 +118,12 @@ void InGameManager::Start()
 	{
 		gameObject.AddComponent<MonsterSpawner>();
 	}
+
+	if (!gameObject.GetComponent<SkillChoiceController>())
+	{
+		gameObject.AddComponent<SkillChoiceController>();
+	}
+
 
 	NetworkManager* net = NetworkManager::GetInstance();
 	uint32 myNetID = net->GetMyNetID();
@@ -236,6 +241,11 @@ void InGameManager::Start()
 
 				this->UpdateTeamExpBarUI();
 			});
+
+		net->RegisterPacketHandler(PacketType::SIMULATION_RESUME_SIGNAL,
+			[this](const PacketHeader* packet, const sockaddr_in& sender) {
+				this->PauseSimulation(false);
+			});
 	}
 
 	if (net->GetRole() == NetRole::HOST)
@@ -246,7 +256,14 @@ void InGameManager::Start()
 			SpawnPlayer(clientNetID, false, { startX, 0.0f });
 		}
 
+		net->RegisterPacketHandler(PacketType::SKILL_CHOICE_COMPLETE,
+			[this](const PacketHeader* packet, const sockaddr_in& sender) {
+				auto choicePkt = reinterpret_cast<const SkillChoiceCompletePacket*>(packet);
+				this->NotifySkillChoiceComplete(choicePkt->playerNetID, choicePkt->chosenSkillID, choicePkt->choiceType);
+			});
+
 		net->RegisterPacketHandler(PacketType::CLIENT_READY_REQ,
+
 			[this](const PacketHeader* packet, const sockaddr_in& sender) {
 				auto readyPkt = reinterpret_cast<const ClientReadyReqPacket*>(packet);
 				this->m_clientReadyMap[readyPkt->netId] = readyPkt->isReady;
@@ -605,8 +622,20 @@ void InGameManager::AddTeamExp(float amount)
 			m_onTeamLevelUp(m_teamLevel);
 		}
 
-		// 결정론적 시뮬레이션 일시정지 (5단계 UI 연동 전 테스트를 위해 임시 비활성화)
-		// PauseSimulation(true);
+		// 레벨업 3중 1택 스킬 선택 UI 표시
+		if (auto* choiceCtrl = gameObject.GetComponent<SkillChoiceController>())
+		{
+			uint32 myID = NetworkManager::GetInstance()->GetMyNetID();
+			GameObject* myPlayerObj = NetworkManager::GetInstance()->GetNetworkObject(myID != 0 ? myID : 1);
+			if (myPlayerObj)
+			{
+				Player* pPlayer = myPlayerObj->GetComponent<Player>();
+				if (pPlayer)
+				{
+					choiceCtrl->PresentChoices(pPlayer);
+				}
+			}
+		}
 	}
 
 	// Host 권한 기반 팀 레벨/경험치 상태 패킷 동기화 전송
@@ -655,51 +684,20 @@ void InGameManager::CreateTeamExpBarUI()
 	Scene* pScene = gameObject.GetOwnerScene();
 	if (!pScene) return;
 
-	Vector2 barPos = { 710.0f, 15.0f }; // 화면 상단 중앙 (1920 / 2 - 250 = 710)
-	Vector2 barSize = { 500.0f, 16.0f };
-
-	// 1. 팀 경험치 바 배경 (UIImageComponent)
-	m_pExpBarBgObj = pScene->CreateGameObject("TeamEXPBar_BG");
-	if (m_pExpBarBgObj.IsValid())
+	// Scene 파일(InGameScene.scene)에 사전 등록된 UI 오브젝트 바인딩
+	if (!m_pExpBarFillImg)
 	{
-		m_pExpBarBgObj->transform.SetPosition(barPos);
-		UIImageComponent* pBgImg = m_pExpBarBgObj->AddComponent<UIImageComponent>();
-		if (pBgImg)
+		if (GameObject* fillObj = pScene->FindGameObjectByName("TeamEXPBar_Fill"))
 		{
-			pBgImg->SetIsUI(true);
-			pBgImg->SetSize(barSize);
-			pBgImg->SetColor(D2D1::ColorF(0.1f, 0.1f, 0.15f, 0.85f));
-			pBgImg->SetZOrder(900);
+			m_pExpBarFillImg = fillObj->GetComponent<UIImageComponent>();
 		}
 	}
 
-	// 2. 팀 경험치 바 Fill (UIImageComponent)
-	m_pExpBarFillObj = pScene->CreateGameObject("TeamEXPBar_Fill");
-	if (m_pExpBarFillObj.IsValid())
+	if (!m_pExpTextComp)
 	{
-		m_pExpBarFillObj->transform.SetPosition(barPos);
-		m_pExpBarFillImg = m_pExpBarFillObj->AddComponent<UIImageComponent>();
-		if (m_pExpBarFillImg.IsValid())
+		if (GameObject* textObj = pScene->FindGameObjectByName("TeamEXP_Text"))
 		{
-			m_pExpBarFillImg->SetIsUI(true);
-			m_pExpBarFillImg->SetSize(barSize);
-			m_pExpBarFillImg->SetColor(D2D1::ColorF(0.2f, 0.85f, 1.0f, 1.0f)); // 민트/하늘색
-			m_pExpBarFillImg->SetFillAmount(0.0f);
-			m_pExpBarFillImg->SetZOrder(901);
-		}
-	}
-
-	// 3. 레벨/경험치 수치 텍스트 (UITextComponent)
-	m_pExpTextObj = pScene->CreateGameObject("TeamEXP_Text");
-	if (m_pExpTextObj.IsValid())
-	{
-		m_pExpTextObj->transform.SetPosition(barPos.x + 180.0f, barPos.y - 2.0f);
-		m_pExpTextComp = m_pExpTextObj->AddComponent<UITextComponent>();
-		if (m_pExpTextComp.IsValid())
-		{
-			m_pExpTextComp->SetFontSize(13.0f);
-			m_pExpTextComp->SetColor(D2D1::ColorF(D2D1::ColorF::White));
-			m_pExpTextComp->SetZOrder(902);
+			m_pExpTextComp = textObj->GetComponent<UITextComponent>();
 		}
 	}
 
@@ -708,12 +706,12 @@ void InGameManager::CreateTeamExpBarUI()
 
 void InGameManager::UpdateTeamExpBarUI()
 {
-	if (m_pExpBarFillImg.IsValid())
+	if (m_pExpBarFillImg)
 	{
 		m_pExpBarFillImg->SetFillAmount(GetTeamExpRatio());
 	}
 
-	if (m_pExpTextComp.IsValid())
+	if (m_pExpTextComp)
 	{
 		std::wstring text = L"LV." + std::to_wstring(m_teamLevel) + L"  ("
 			+ std::to_wstring(static_cast<int>(m_teamExp)) + L" / "
@@ -721,6 +719,7 @@ void InGameManager::UpdateTeamExpBarUI()
 		m_pExpTextComp->SetText(text);
 	}
 }
+
 
 void InGameManager::RegisterGem(ExpGem* gem)
 {
@@ -741,3 +740,76 @@ void InGameManager::UnregisterGem(ExpGem* gem)
 		m_activeGems.erase(it);
 	}
 }
+
+void InGameManager::SendSkillChoiceCompletePacket(uint32 chosenSkillID, uint8 choiceType)
+{
+	uint32 myNetID = NetworkManager::GetInstance()->GetMyNetID();
+	if (myNetID == 0) myNetID = 1;
+
+	if (NetworkManager::GetInstance()->GetRole() == NetRole::CLIENT)
+	{
+		SkillChoiceCompletePacket pk{};
+		pk.header.type = PacketType::SKILL_CHOICE_COMPLETE;
+		pk.header.size = sizeof(SkillChoiceCompletePacket);
+		pk.playerNetID = myNetID;
+		pk.chosenSkillID = chosenSkillID;
+		pk.choiceType = choiceType;
+
+		NetworkManager::GetInstance()->SendPacket(&pk, sizeof(pk));
+	}
+	else
+	{
+		NotifySkillChoiceComplete(myNetID, chosenSkillID, choiceType);
+	}
+}
+
+void InGameManager::NotifySkillChoiceComplete(uint32 netID, uint32 chosenSkillID, uint8 choiceType)
+{
+	m_clientSkillChoiceMap[netID] = true;
+	CheckAndResumeSimulationIfAllChosen();
+}
+
+bool InGameManager::IsAllClientsSkillChoiceComplete() const
+{
+	NetworkManager* net = NetworkManager::GetInstance();
+	if (net->GetRole() != NetRole::HOST) return true;
+
+	// Host 본인 확인
+	uint32 hostID = net->GetMyNetID();
+	if (hostID == 0) hostID = 1;
+	auto hostIter = m_clientSkillChoiceMap.find(hostID);
+	if (hostIter == m_clientSkillChoiceMap.end() || !hostIter->second)
+	{
+		return false;
+	}
+
+	// 접속된 클라이언트 확인
+	const auto& clients = net->GetConnectedClients();
+	for (const auto& [netID, info] : clients)
+	{
+		auto iter = m_clientSkillChoiceMap.find(netID);
+		if (iter == m_clientSkillChoiceMap.end() || !iter->second)
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+void InGameManager::CheckAndResumeSimulationIfAllChosen()
+{
+	if (NetworkManager::GetInstance()->GetRole() != NetRole::HOST) return;
+
+	if (IsAllClientsSkillChoiceComplete())
+	{
+		// 모든 인원 선택 완료 -> 게임 재개 신호 브로드캐스트
+		SimulationResumeSignalPacket resumePkt{};
+		resumePkt.header.type = PacketType::SIMULATION_RESUME_SIGNAL;
+		resumePkt.header.size = sizeof(SimulationResumeSignalPacket);
+		NetworkManager::GetInstance()->SendPacket(&resumePkt, sizeof(resumePkt));
+
+		m_clientSkillChoiceMap.clear();
+		PauseSimulation(false);
+	}
+}
+

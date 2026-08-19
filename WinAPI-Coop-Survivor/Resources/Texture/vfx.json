@@ -23541,7 +23541,7 @@
       {
         "name": "ProjectileBone_Effect",
         "frameDuration": 0.1,
-        "isLoop": false,
+        "isLoop": false, 
         "frames": [
           "ProjectileBone1.png",
           "ProjectileBone2.png",

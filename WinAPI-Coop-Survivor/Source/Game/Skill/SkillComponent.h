@@ -43,6 +43,9 @@ public:
 	int32 GetSkillLevel(uint32 skillAssetID) const;
 
 	const std::vector<SkillInstance>& GetSkills() const { return m_skills; }
+	static constexpr size_t MAX_SKILL_SLOTS = 4;
+	size_t GetMaxSkillSlots() const { return MAX_SKILL_SLOTS; }
+	bool IsSlotMax() const { return m_skills.size() >= MAX_SKILL_SLOTS; }
 
 	GameObject* FindClosestMonster(float maxRange) const;
 
@@ -57,3 +60,4 @@ private:
 	std::vector<SkillInstance> m_skills;
 	ObserverPtr<Player> m_pPlayer;
 };
+

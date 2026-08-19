@@ -415,9 +415,24 @@ void NetworkManager::HandlePacket(const char* buffer, int size, const sockaddr_i
 			}
 		}
 
-		// 신규 클라이언트라면 NetID 생성 및 등록
+		// 신규 클라이언트 접속 시도
 		if (clientNetID == 0)
 		{
+			// 정원 초과(Max Clients) 검사
+			if (m_ConnectedClients.size() >= m_maxClients)
+			{
+				std::cout << "[NetworkManager] Rejecting connection: Room Full (" << m_ConnectedClients.size() << "/" << m_maxClients << ")" << std::endl;
+				ClientConnResPacket rejectPkt;
+				rejectPkt.header.type = PacketType::CLIENT_CONN_RES;
+				rejectPkt.header.size = sizeof(ClientConnResPacket);
+				rejectPkt.header.tick = m_currentTick;
+				rejectPkt.resultCode = ConnResultCode::ROOM_FULL;
+				rejectPkt.assignedNetID = 0;
+
+				SendPacket(&rejectPkt, sizeof(ClientConnResPacket), &senderAddr);
+				break;
+			}
+
 			clientNetID = m_NextNetID++;
 			NetClientInfo newClient;
 			newClient.address = senderAddr;
@@ -427,6 +442,15 @@ void NetworkManager::HandlePacket(const char* buffer, int size, const sockaddr_i
 
 			std::cout << "New client connected. Assigned NetID: " << clientNetID << std::endl;
 		}
+
+		// 접속 성공 응답 패킷 전송
+		ClientConnResPacket connResPkt;
+		connResPkt.header.type = PacketType::CLIENT_CONN_RES;
+		connResPkt.header.size = sizeof(ClientConnResPacket);
+		connResPkt.header.tick = m_currentTick;
+		connResPkt.resultCode = ConnResultCode::SUCCESS;
+		connResPkt.assignedNetID = clientNetID;
+		SendPacket(&connResPkt, sizeof(ClientConnResPacket), &senderAddr);
 
 		// Welcome 패킷 전송
 		WelcomePacket welcome;
@@ -439,6 +463,22 @@ void NetworkManager::HandlePacket(const char* buffer, int size, const sockaddr_i
 		break;
 	}
 
+	case PacketType::CLIENT_CONN_RES:
+	{
+		if (m_Role != NetRole::CLIENT) break;
+		const ClientConnResPacket* resPkt = (const ClientConnResPacket*)buffer;
+		if (resPkt->resultCode != ConnResultCode::SUCCESS)
+		{
+			m_bConnected = false;
+			std::cout << "[NetworkManager] Connection failed. ResultCode: " << static_cast<int>(resPkt->resultCode) << std::endl;
+			if (m_onConnResultCallback)
+			{
+				m_onConnResultCallback(resPkt->resultCode);
+			}
+		}
+		break;
+	}
+
 	case PacketType::HOST_WELCOME:
 	{
 		if (m_Role != NetRole::CLIENT) break;
@@ -448,7 +488,13 @@ void NetworkManager::HandlePacket(const char* buffer, int size, const sockaddr_i
 
 		RandomManager::GetInstance()->SetSharedSeed(welcome->randomSeed);
 
+		if (m_onConnResultCallback)
+		{
+			m_onConnResultCallback(ConnResultCode::SUCCESS);
+		}
+
 		std::cout << "Successfully connected to Host. Assigned NetID: " << m_MyNetID << std::endl;
+
 
 		// Bind player controllers when WELCOME packet arrives with assigned NetID
 		Scene* scene = SceneManager::GetInstance()->GetActiveScene();

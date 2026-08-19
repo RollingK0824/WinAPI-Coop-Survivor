@@ -18,11 +18,15 @@
 #include "Game/Skill/AuraComponent.h"
 #include "Game/Skill/AoEComponent.h"
 
+#include "Engine/Core/EventBus.h"
+#include "Game/Manager/GameEvents.h"
+
 static ComponentRegistrar<SkillComponent> registrar(EngineKey::CustomComponent::SkillComponent.data());
 
 SkillComponent::SkillComponent(GameObject* owner, TransformComponent* transform)
 	: ScriptComponent(owner, transform)
 {
+	m_skills.reserve(MAX_SKILL_SLOTS);
 }
 
 void SkillComponent::Start()
@@ -48,33 +52,61 @@ void SkillComponent::AddSkill(std::shared_ptr<const SkillSO> pSkillSO)
 {
 	if (!pSkillSO) return;
 
-	for (auto& inst : m_skills)
+	for (size_t i = 0; i < m_skills.size(); ++i)
 	{
-		if (inst.pSO && inst.pSO->GetSkillID() == pSkillSO->GetSkillID())
+		if (m_skills[i].pSO && m_skills[i].pSO->GetSkillID() == pSkillSO->GetSkillID())
 		{
-			inst.level++;
+			m_skills[i].level++;
+
+			// EventBus: SkillSlotChanged 발행
+			OnSkillSlotChangedEvent evt;
+			evt.playerNetID = 0;
+			evt.slotIndex = static_cast<uint8>(i);
+			evt.skillID = m_skills[i].pSO->GetSkillID();
+			evt.level = static_cast<uint8>(m_skills[i].level);
+			EventBus::GetInstance()->Publish(evt);
 			return;
 		}
 	}
+
+	if (m_skills.size() >= MAX_SKILL_SLOTS) return; // 슬롯 최대치 도달 시 거부
 
 	SkillInstance newInst;
 	newInst.pSO = pSkillSO;
 	newInst.level = 1;
 	newInst.cooldownTimer = 0.0f;
 	m_skills.push_back(newInst);
+
+	size_t slotIdx = m_skills.size() - 1;
+
+	// EventBus: SkillSlotChanged 발행
+	OnSkillSlotChangedEvent evt;
+	evt.playerNetID = 0;
+	evt.slotIndex = static_cast<uint8>(slotIdx);
+	evt.skillID = pSkillSO->GetSkillID();
+	evt.level = 1;
+	EventBus::GetInstance()->Publish(evt);
 }
 
 void SkillComponent::UpgradeSkill(uint32 skillAssetID)
 {
-	for (auto& inst : m_skills)
+	for (size_t i = 0; i < m_skills.size(); ++i)
 	{
-		if (inst.pSO && inst.pSO->GetSkillID() == skillAssetID)
+		if (m_skills[i].pSO && m_skills[i].pSO->GetSkillID() == skillAssetID)
 		{
-			inst.level++;
+			m_skills[i].level++;
+
+			OnSkillSlotChangedEvent evt;
+			evt.playerNetID = 0;
+			evt.slotIndex = static_cast<uint8>(i);
+			evt.skillID = m_skills[i].pSO->GetSkillID();
+			evt.level = static_cast<uint8>(m_skills[i].level);
+			EventBus::GetInstance()->Publish(evt);
 			return;
 		}
 	}
 }
+
 
 bool SkillComponent::HasSkill(uint32 skillAssetID) const
 {
