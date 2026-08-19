@@ -28,7 +28,6 @@ void EngineKernel::Release()
 	m_vUpdatableSystems.clear();
 	m_vRenderableSystems.clear();
 
-	// 임시 vector를 만들어 swap 함수 종료 시 완전 삭제
 	std::vector<ISystem*>().swap(m_vAllSystems);
 	std::vector<IUpdatable*>().swap(m_vUpdatableSystems);
 	std::vector<IRenderable*>().swap(m_vRenderableSystems);

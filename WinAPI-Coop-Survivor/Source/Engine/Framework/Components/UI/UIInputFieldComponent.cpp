@@ -94,7 +94,6 @@ void UIInputFieldComponent::Update(float dt)
 	InputManager* input = InputManager::GetInstance();
 	if (!input) return;
 
-	// 마우스 좌클릭 시 클릭 영역 호버 상태에 따라 포커스 활성화/해제
 	if (input->GetKeyDown(VK_LBUTTON))
 	{
 		if (clickAreaBtn)
@@ -113,7 +112,6 @@ void UIInputFieldComponent::Update(float dt)
 	if (!m_bIsFocused) return;
 
 
-	// 커서 깜빡임 애니메이션 (0.5초 주기)
 	m_cursorBlinkTimer += dt;
 	if (m_cursorBlinkTimer >= 0.5f)
 	{
@@ -135,10 +133,9 @@ void UIInputFieldComponent::ProcessKeyboardInput()
 	const auto& inputChars = input->GetInputChars();
 	bool handledBackspace = false;
 
-	// 1. WinAPI WM_CHAR / WM_IME_CHAR 기반 Unicode 입력 처리 (한글, 영어 대소문자, 숫자, 기호 전 범위 지원)
 	for (wchar_t ch : inputChars)
 	{
-		if (ch == L'\b') // Backspace
+		if (ch == L'\b')
 		{
 			handledBackspace = true;
 			if (!m_wtext.empty())
@@ -147,14 +144,14 @@ void UIInputFieldComponent::ProcessKeyboardInput()
 				UpdateTextDisplay();
 			}
 		}
-		else if (ch == L'\r' || ch == L'\n') // Enter
+		else if (ch == L'\r' || ch == L'\n')
 		{
 			if (m_onSubmit)
 			{
 				m_onSubmit(m_wtext);
 			}
 		}
-		else if (ch >= 32) // 출력 가능한 모든 유니코드 문자 (한글, 알파벳 대소문자, 숫자, 기호, 공백)
+		else if (ch >= 32)
 		{
 			if (m_digitsOnly)
 			{
@@ -169,7 +166,6 @@ void UIInputFieldComponent::ProcessKeyboardInput()
 		}
 	}
 
-	// 2. Direct GetKeyDown 백업 처리 (Backspace 키 누름)
 	if (!handledBackspace && input->GetKeyDown(VK_BACK))
 	{
 		if (!m_wtext.empty())
@@ -179,7 +175,6 @@ void UIInputFieldComponent::ProcessKeyboardInput()
 		}
 	}
 
-	// 3. Direct GetKeyDown 백업 처리 (Enter 키 누름)
 	if (input->GetKeyDown(VK_RETURN) && inputChars.empty())
 	{
 		if (m_onSubmit)

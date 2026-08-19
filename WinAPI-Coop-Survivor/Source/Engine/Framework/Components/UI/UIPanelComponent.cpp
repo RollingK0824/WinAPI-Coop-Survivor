@@ -1,4 +1,3 @@
-// Source/Engine/Framework/Components/UI/UIPanelComponent.cpp
 #include "Engine/Core/pch.h"
 #include "UIPanelComponent.h"
 #include "Engine/Core/ComponentRegister.h"

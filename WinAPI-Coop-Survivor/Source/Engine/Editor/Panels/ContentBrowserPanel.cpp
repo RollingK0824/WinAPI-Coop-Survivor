@@ -79,7 +79,6 @@ void ContentBrowserPanel::DrawContentGrid()
             {
                 if (isSOAssetFile)
                 {
-                    // 해당 .asset 파일의 SO 찾기
                     const auto& assets = DataManager::GetInstance()->GetAllAssets();
                     bool found = false;
                     for (const auto& [id, pAsset] : assets)

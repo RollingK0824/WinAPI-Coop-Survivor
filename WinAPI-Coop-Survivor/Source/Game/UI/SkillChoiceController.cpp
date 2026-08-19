@@ -34,10 +34,8 @@ std::vector<SkillChoiceItem> SkillChoiceController::Generate3Choices(Player* pPl
 
 	const auto& ownedSkills = pSkillComp->GetSkills();
 
-	// 전체 스킬 데이터베이스 목록 (테스트 및 확장용 ID 301, 302, 303)
 	std::vector<uint32> allSkillIDs = { 301, 302, 303 };
 
-	// 1. 소지 스킬 검사 및 만렙 여부 확인
 	bool isSlotMax = (ownedSkills.size() >= MAX_SKILL_SLOTS);
 	bool allOwnedMaxed = !ownedSkills.empty();
 
@@ -52,7 +50,6 @@ std::vector<SkillChoiceItem> SkillChoiceController::Generate3Choices(Player* pPl
 		}
 	}
 
-	// 2. 예외 처리 2: 소지한 모든 스킬이 만렙인 경우 -> 스킬 대신 HP 회복/보상 선택지로 전환
 	if (allOwnedMaxed && isSlotMax)
 	{
 		choices.push_back({ ChoiceType::HEAL_PERCENT, 0, L"HP 50% 회복", L"현재 최대 체력의 50%를 즉시 회복합니다." });
@@ -61,7 +58,6 @@ std::vector<SkillChoiceItem> SkillChoiceController::Generate3Choices(Player* pPl
 		return choices;
 	}
 
-	// 3. 예외 처리 1: 스킬 슬롯이 Max(4개)인 경우 -> 신규 스킬 제외, 이미 소지한 스킬만 선택지에 추가
 	if (!isSlotMax)
 	{
 		for (uint32 id : allSkillIDs)
@@ -73,7 +69,6 @@ std::vector<SkillChoiceItem> SkillChoiceController::Generate3Choices(Player* pPl
 		}
 	}
 
-	// 후보 중 무작위 셔플 후 3개 선택
 	std::mt19937 rng(std::random_device{}());
 	std::shuffle(eligibleSkillIDs.begin(), eligibleSkillIDs.end(), rng);
 
@@ -100,7 +95,6 @@ std::vector<SkillChoiceItem> SkillChoiceController::Generate3Choices(Player* pPl
 		choices.push_back(item);
 	}
 
-	// 선택지가 3개 미만이면 회복 보상으로 채우기
 	while (choices.size() < 3)
 	{
 		choices.push_back({ ChoiceType::HEAL_PERCENT, 0, L"HP 50% 회복", L"체력을 즉시 50% 회복합니다." });
@@ -115,18 +109,15 @@ void SkillChoiceController::PresentChoices(Player* pPlayer)
 	Scene* pScene = gameObject.GetOwnerScene();
 	if (!pScene) return;
 
-	// 게임 시뮬레이션 일시 정지
 	InGameManager::GetInstance()->PauseSimulation(true);
 
 	std::vector<SkillChoiceItem> choices = Generate3Choices(pPlayer);
 
-	// 팝업 패널 프리팹 생성
 	GameObject* choicePopupObj = PrefabManager::GetInstance()->Instantiate("SkillChoiceUIPrefab", pScene);
 	if (!choicePopupObj) return;
 
 	choicePopupObj->transform.SetPosition({ 960.0f, 540.0f });
 
-	// 선택 적용 및 UI 파괴 콜백
 	auto applyChoiceAndClose = [pScene, choicePopupObj, pPlayer](const SkillChoiceItem& choiceItem) {
 		SkillComponent* pSkillComp = pPlayer->gameObject.GetComponent<SkillComponent>();
 		if (choiceItem.type == ChoiceType::SKILL_NEW || choiceItem.type == ChoiceType::SKILL_UPGRADE)
@@ -154,7 +145,6 @@ void SkillChoiceController::PresentChoices(Player* pPlayer)
 			pScene->DestroyObjects(choicePopupObj);
 		}
 
-		// 선택 완료 상태를 Host에 통지 (모든 접속자가 선택을 마쳤을 때 Host가 PauseSimulation(false) 실행)
 		InGameManager::GetInstance()->SendSkillChoiceCompletePacket(choiceItem.skillID, static_cast<uint8>(choiceItem.type));
 	};
 

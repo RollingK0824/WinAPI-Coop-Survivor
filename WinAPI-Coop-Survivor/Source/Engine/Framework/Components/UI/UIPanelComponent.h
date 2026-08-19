@@ -1,4 +1,3 @@
-// Source/Engine/Framework/Components/UI/UIPanelComponent.h
 #pragma once
 #include "Engine/Framework/Components/Core/RenderComponent.h"
 #include "Engine/Renderer/Sprite.h"

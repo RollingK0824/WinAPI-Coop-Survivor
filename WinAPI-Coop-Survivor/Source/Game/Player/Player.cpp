@@ -33,8 +33,8 @@ void Player::Start()
 	if (m_pCollider.IsValid())
 	{
 		m_pCollider->m_bIsSensor = false;
-		m_pCollider->m_density = 1000.0f; // 몬스터 대비 압도적인 밀도/질량으로 몬스터를 밀치고 이동
-		m_pCollider->SetFilter(PhysicsLayer::Player, PhysicsLayer::All & ~PhysicsLayer::Player); // Player간 충돌 비활성화
+		m_pCollider->m_density = 1000.0f;
+		m_pCollider->SetFilter(PhysicsLayer::Player, PhysicsLayer::All & ~PhysicsLayer::Player);
 		m_pCollider->RebuildShape();
 	}
 
@@ -69,11 +69,10 @@ void Player::Update(float dt)
 		NetRole role = NetworkManager::GetInstance()->GetRole();
 		NetworkIdentity* netId = gameObject.GetComponent<NetworkIdentity>();
 
-		// Host 또는 내 로컬 로컬 소유 플레이어(Prediction)만 피격 검사 수행
 		if (role != NetRole::CLIENT || (netId && netId->HasAuthority()))
 		{
 			Vector2 myPos = transform.GetPosition();
-			float hitRadius = 24.0f; // 플레이어 피격 판정 반경
+			float hitRadius = 24.0f;
 
 			auto colliders = PhysicsManager::GetInstance()->OverlapAABB(myPos, hitRadius, PhysicsLayer::Monster);
 			for (auto* pCol : colliders)
@@ -84,7 +83,7 @@ void Player::Update(float dt)
 				if (pMonster && !pMonster->IsDead())
 				{
 					TakeDamage(pMonster->GetAttackDamage());
-					break; // 1회 피격 후 무적시간(iFrame) 재설정되므로 바로 탈출
+					break;
 				}
 			}
 		}
@@ -102,10 +101,9 @@ void Player::UpdateExpGemMagnet(float dt)
 	if (!mgr || mgr->IsSimulationPaused()) return;
 
 	Vector2 myPos = transform.GetPosition();
-	float magnetRange = 280.0f; // 자력 반응 반경 (픽셀)
-	float pickupRange = 70.0f;  // 실제 획득 반경 (픽셀)
+	float magnetRange = 280.0f;
+	float pickupRange = 70.0f;
 
-	// 안전한 순회를 위해 벡터 복사본 사용 (UnregisterGem 호출 시 m_activeGems 수정으로 인한 이터레이터 파괴 방지)
 	std::vector<ExpGem*> gemsToProcess = mgr->GetActiveGems();
 
 	for (ExpGem* pGem : gemsToProcess)
@@ -115,21 +113,17 @@ void Player::UpdateExpGemMagnet(float dt)
 		Vector2 gemPos = pGem->transform.GetPosition();
 		float dist = Vector2::Distance(myPos, gemPos);
 
-		// 1. 보석 획득 판정 (Player 주체로 AddTeamExp 호출 및 반납)
 		if (dist <= pickupRange)
 		{
-			// Host 및 싱글플레이어에서만 전역 경험치 변경 (Client는 Host 패킷으로 100% 동기화)
 			if (NetworkManager::GetInstance()->GetRole() != NetRole::CLIENT)
 			{
 				mgr->AddTeamExp(static_cast<float>(pGem->GetExpAmount()));
 			}
 
-			// 보석 소멸(Despawn)은 Client 로컬 화면에서도 흡수 제거 연출을 위해 실행
 			pGem->Despawn();
 			continue;
 		}
 
-		// 2. 자력 반응 반경 진입 처리 (더 가까운 플레이어로 자동 타깃 갱신)
 		if (dist <= magnetRange)
 		{
 			if (!pGem->HasTargetPlayer())
@@ -195,7 +189,6 @@ void Player::TakeDamage(float damage, GameObject* pAttacker)
 	NetRole role = NetworkManager::GetInstance()->GetRole();
 	NetworkIdentity* netId = gameObject.GetComponent<NetworkIdentity>();
 
-	// Client에서 남의 원격 플레이어 HP를 함부로 깎지 못하도록 차단
 	if (role == NetRole::CLIENT && netId && !netId->HasAuthority()) return;
 
 	m_currentHP -= damage;
@@ -215,7 +208,6 @@ void Player::CreateTestHPBar()
 	Vector2 playerPos = transform.GetPosition();
 	Vector2 hpBarPos = { playerPos.x, playerPos.y - 45.0f };
 
-	// 1. HPBar Background GameObject (월드 스페이스 UI)
 	m_pHpBarBgObj = pScene->CreateGameObject("Test_HPBar_BG");
 	if (m_pHpBarBgObj.IsValid())
 	{
@@ -223,14 +215,13 @@ void Player::CreateTestHPBar()
 		UIImageComponent* pBgImg = m_pHpBarBgObj->AddComponent<UIImageComponent>();
 		if (pBgImg)
 		{
-			pBgImg->SetIsUI(false); // 월드 좌표 따라가도록 설정
+			pBgImg->SetIsUI(false);
 			pBgImg->SetSize({ 50.0f, 6.0f });
 			pBgImg->SetColor(D2D1::ColorF(0.2f, 0.2f, 0.2f, 0.8f));
 			pBgImg->SetZOrder(500);
 		}
 	}
 
-	// 2. HPBar Fill GameObject (월드 스페이스 UI + FillAmount 연동)
 	m_pHpBarFillObj = pScene->CreateGameObject("Test_HPBar_Fill");
 	if (m_pHpBarFillObj.IsValid())
 	{
@@ -238,7 +229,7 @@ void Player::CreateTestHPBar()
 		m_pHpBarFillImg = m_pHpBarFillObj->AddComponent<UIImageComponent>();
 		if (m_pHpBarFillImg.IsValid())
 		{
-			m_pHpBarFillImg->SetIsUI(false); // 월드 좌표 따라가도록 설정
+			m_pHpBarFillImg->SetIsUI(false);
 			m_pHpBarFillImg->SetSize({ 50.0f, 6.0f });
 			m_pHpBarFillImg->SetColor(D2D1::ColorF(0.9f, 0.1f, 0.1f, 1.0f));
 			m_pHpBarFillImg->SetFillAmount(1.0f);

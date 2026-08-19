@@ -17,6 +17,24 @@
 static bool LeftDragFloat(const char* label, float* v, float v_speed = 0.1f, const char* format = "%.3f");
 static bool LeftDragInt(const char* label, int* v, float v_speed = 1.0f);
 
+static std::string WStringToUtf8(const std::wstring& wstr)
+{
+	if (wstr.empty()) return "";
+	int sizeNeeded = WideCharToMultiByte(CP_UTF8, 0, wstr.data(), static_cast<int>(wstr.size()), nullptr, 0, nullptr, nullptr);
+	std::string str(sizeNeeded, 0);
+	WideCharToMultiByte(CP_UTF8, 0, wstr.data(), static_cast<int>(wstr.size()), &str[0], sizeNeeded, nullptr, nullptr);
+	return str;
+}
+
+static std::wstring Utf8ToWString(const std::string& str)
+{
+	if (str.empty()) return L"";
+	int sizeNeeded = MultiByteToWideChar(CP_UTF8, 0, str.data(), static_cast<int>(str.size()), nullptr, 0);
+	std::wstring wstr(sizeNeeded, 0);
+	MultiByteToWideChar(CP_UTF8, 0, str.data(), static_cast<int>(str.size()), &wstr[0], sizeNeeded);
+	return wstr;
+}
+
 static bool DrawTexturePickerWithSearch(const std::string& propName, std::wstring* wKey, Component* comp = nullptr)
 {
 	std::string keyStr = "";
@@ -409,14 +427,12 @@ void InspectorPanel::DrawScriptableObjectData()
 	float col0Width = (std::max)(105.0f, totalWidth * 0.35f);
 	ImGui::SetColumnWidth(0, col0Width);
 
-	// Asset ID
 	ImGui::AlignTextToFramePadding();
 	ImGui::Text("Asset ID");
 	ImGui::NextColumn();
 	ImGui::Text("%u", assetID);
 	ImGui::NextColumn();
 
-	// Asset Name
 	ImGui::AlignTextToFramePadding();
 	ImGui::Text("Asset Name");
 	ImGui::NextColumn();
@@ -519,12 +535,12 @@ void InspectorPanel::DrawScriptableObjectData()
 		case PropType::WString:
 		{
 			std::wstring* wstr = static_cast<std::wstring*>(prop.data);
-			std::string str(wstr->begin(), wstr->end());
-			char buffer[256];
-			strcpy_s(buffer, str.c_str());
+			std::string utf8Str = WStringToUtf8(*wstr);
+			char buffer[512];
+			strcpy_s(buffer, utf8Str.c_str());
 			if (ImGui::InputText(("##" + prop.name).c_str(), buffer, sizeof(buffer)))
 			{
-				*wstr = std::wstring(buffer, buffer + strlen(buffer));
+				*wstr = Utf8ToWString(buffer);
 			}
 		}
 		break;
@@ -640,7 +656,6 @@ void InspectorPanel::DrawScriptableObjectData()
 
 void InspectorPanel::DrawHeader(GameObject* pObj)
 {
-	// Unity Style Header: [v] [GameObject Name]
 	bool isActive = pObj->IsActive();
 	if (ImGui::Checkbox("##IsActive", &isActive))
 	{
@@ -659,12 +674,11 @@ void InspectorPanel::DrawHeader(GameObject* pObj)
 	ImGui::Separator();
 }
 
-// 퍼블릭 ImGui API 전용 좌측 정렬(Left-Aligned) DragFloat 위젯 (드래그 + 더블클릭 직접 입력 지원)
 static bool LeftDragFloat(const char* label, float* v, float v_speed, const char* format)
 {
 	ImGui::PushID(label);
 	ImGuiID id = ImGui::GetID("##LeftDragField");
-	static ImGuiID activeEditId = 0; // 현재 키보드로 직접 입력 중인 위젯 ID
+	static ImGuiID activeEditId = 0;
 
 	float width = ImGui::CalcItemWidth();
 	ImVec2 cursorPos = ImGui::GetCursorScreenPos();
@@ -676,7 +690,6 @@ static bool LeftDragFloat(const char* label, float* v, float v_speed, const char
 
 	if (isEditingThis)
 	{
-		// 키보드 직접 입력 모드 (더블 클릭 시 전환)
 		char buf[64];
 		sprintf_s(buf, format, *v);
 		ImGui::SetNextItemWidth(width);
@@ -685,29 +698,26 @@ static bool LeftDragFloat(const char* label, float* v, float v_speed, const char
 		{
 			*v = static_cast<float>(atof(buf));
 			isChanged = true;
-			activeEditId = 0; // 입력 완료
+			activeEditId = 0;
 		}
 
 		if (!ImGui::IsItemActive() && ImGui::IsMouseClicked(0))
 		{
 			*v = static_cast<float>(atof(buf));
-			activeEditId = 0; // 외부 클릭 시 종료 및 수치 반영
+			activeEditId = 0;
 		}
 	}
 	else
 	{
-		// 1. 사각형 영역 버튼 이벤트 수집
 		ImGui::InvisibleButton(label, size);
 		bool isHovered = ImGui::IsItemHovered();
 		bool isActive = ImGui::IsItemActive();
 
-		// ★ 더블 클릭 시 키보드 직접 수치 입력 모드로 전환! ★
 		if (isHovered && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
 		{
 			activeEditId = id;
 		}
 
-		// 2. 마우스 드래그 조작
 		if (isActive && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
 		{
 			float delta = ImGui::GetIO().MouseDelta.x;
@@ -720,12 +730,10 @@ static bool LeftDragFloat(const char* label, float* v, float v_speed, const char
 			}
 		}
 
-		// 3. 입력 박스 프레임 배경 그리기
 		ImDrawList* drawList = ImGui::GetWindowDrawList();
 		ImU32 bgCol = ImGui::GetColorU32(isActive ? ImGuiCol_FrameBgActive : isHovered ? ImGuiCol_FrameBgHovered : ImGuiCol_FrameBg);
 		drawList->AddRectFilled(cursorPos, ImVec2(cursorPos.x + size.x, cursorPos.y + size.y), bgCol, ImGui::GetStyle().FrameRounding);
 
-		// 4. 수치 텍스트를 박스 좌측 끝에 붙여 왼쪽 정렬로 렌더링
 		char valStr[64];
 		sprintf_s(valStr, format, *v);
 
@@ -739,7 +747,6 @@ static bool LeftDragFloat(const char* label, float* v, float v_speed, const char
 	return isChanged;
 }
 
-// 퍼블릭 ImGui API 전용 좌측 정렬 DragInt 위젯
 static bool LeftDragInt(const char* label, int* v, float v_speed)
 {
 	float fVal = static_cast<float>(*v);
@@ -760,7 +767,6 @@ void InspectorPanel::DrawTransform(GameObject* pObj)
 		float col0Width = (std::max)(105.0f, totalWidth * 0.35f);
 		ImGui::SetColumnWidth(0, col0Width);
 
-		// Position (X, Y)
 		ImGui::AlignTextToFramePadding();
 		ImGui::Text("Position");
 		ImGui::NextColumn();
@@ -778,7 +784,6 @@ void InspectorPanel::DrawTransform(GameObject* pObj)
 		if (LeftDragFloat("##PosY", &pos.y, 1.0f, "%.3f")) pObj->transform.SetPosition(pos.x, pos.y);
 		ImGui::NextColumn();
 
-		// Rotation
 		ImGui::AlignTextToFramePadding();
 		ImGui::Text("Rotation");
 		ImGui::NextColumn();
@@ -788,7 +793,6 @@ void InspectorPanel::DrawTransform(GameObject* pObj)
 		if (LeftDragFloat("##RotAngle", &rot, 0.5f, "%.3f")) pObj->transform.SetRotation(rot);
 		ImGui::NextColumn();
 
-		// Scale (X, Y)
 		ImGui::AlignTextToFramePadding();
 		ImGui::Text("Scale");
 		ImGui::NextColumn();
@@ -873,12 +877,12 @@ void InspectorPanel::DrawComponents(GameObject* pObj)
 				case PropType::WString:
 				{
 					std::wstring* wstr = static_cast<std::wstring*>(prop.data);
-					std::string str(wstr->begin(), wstr->end());
-					char buffer[256];
-					strcpy_s(buffer, str.c_str());
+					std::string utf8Str = WStringToUtf8(*wstr);
+					char buffer[512];
+					strcpy_s(buffer, utf8Str.c_str());
 					if (ImGui::InputText(("##" + prop.name).c_str(), buffer, sizeof(buffer)))
 					{
-						*wstr = std::wstring(buffer, buffer + strlen(buffer));
+						*wstr = Utf8ToWString(buffer);
 					}
 				}
 				break;

@@ -36,7 +36,6 @@ void LocalController::Start() {
 void LocalController::Update(float dt) {
     Move(dt);
 
-    // 내 위치와 속도를 60Hz 주기로 Host에게 전송
     m_SendTimer += dt;
     if (m_SendTimer >= m_SendInterval) {
         m_SendTimer = 0.0f;

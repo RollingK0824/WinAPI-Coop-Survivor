@@ -31,7 +31,6 @@ void NetworkManager::Release() {
 	m_bNetworkThreadRunning = false;
 
 	if (m_Socket != INVALID_SOCKET) {
-		// 클라이언트인 경우 종료 알림 전송
 		if (m_Role == NetRole::CLIENT && m_bConnected) {
 			ClientDisconnPacket disconnPacket;
 			disconnPacket.header.type = PacketType::CLIENT_DISCONN;
@@ -67,7 +66,6 @@ bool NetworkManager::StartHost(int port) {
 		return false;
 	}
 
-	// 논블로킹 설정
 	u_long mode = 1;
 	if (ioctlsocket(m_Socket, FIONBIO, &mode) != 0) {
 		std::cerr << "ioctlsocket failed: " << WSAGetLastError() << std::endl;
@@ -87,7 +85,7 @@ bool NetworkManager::StartHost(int port) {
 	}
 
 	m_Role = NetRole::HOST;
-	m_MyNetID = 1; // Host의 NetID는 항상 1로 지정
+	m_MyNetID = 1;
 	m_bConnected = true;
 	uint32 newSeed = RandomManager::GetInstance()->GenerateNewSeed();
 	m_ConnectedClients.clear();
@@ -125,7 +123,6 @@ bool NetworkManager::ConnectToHost(const std::string& ip, int port) {
 		return false;
 	}
 
-	// 논블로킹 설정
 	u_long mode = 1;
 	if (ioctlsocket(m_Socket, FIONBIO, &mode) != 0) {
 		std::cerr << "ioctlsocket failed: " << WSAGetLastError() << std::endl;
@@ -133,7 +130,6 @@ bool NetworkManager::ConnectToHost(const std::string& ip, int port) {
 		return false;
 	}
 
-	// 클라이언트 소켓 바인딩 (임의 포트)
 	sockaddr_in localAddr;
 	localAddr.sin_family = AF_INET;
 	localAddr.sin_addr.s_addr = INADDR_ANY;
@@ -153,7 +149,6 @@ bool NetworkManager::ConnectToHost(const std::string& ip, int port) {
 	m_bConnected = false;
 	m_connRetryTimer = 0.0f;
 
-	// Host에 접속 요청 발송
 	PacketHeader connPacket;
 	connPacket.type = PacketType::CLIENT_CONN_REQ;
 	connPacket.size = sizeof(PacketHeader);
@@ -173,10 +168,8 @@ bool NetworkManager::ConnectToHost(const std::string& ip, int port) {
 void NetworkManager::Update(float dt) {
 	if (m_Role == NetRole::NONE) return;
 
-	// 1. 패킷 수신 및 처리
 	ProcessIncomingPackets();
 
-	// 2. 연결 재시도 (미연결 클라이언트)
 	if (m_Role == NetRole::CLIENT && !m_bConnected)
 	{
 		m_connRetryTimer += dt;
@@ -204,7 +197,6 @@ void NetworkManager::FixedUpdate(float fixedDt) {
 
 void NetworkManager::TickUpdate() {
 	if (m_Role == NetRole::CLIENT && m_bConnected) {
-		// Heartbeat 전송
 		QueryPerformanceCounter(&m_LastHeartbeatSentTick);
 
 		PacketHeader hb;
@@ -214,7 +206,6 @@ void NetworkManager::TickUpdate() {
 		SendPacket(&hb, sizeof(PacketHeader));
 	}
 	else if (m_Role == NetRole::HOST) {
-		// 클라이언트 타임아웃 검사 (30초 무반응 시 제거)
 		float currentTime = TimeManager::GetInstance()->GetRealTime();
 		for (auto it = m_ConnectedClients.begin(); it != m_ConnectedClients.end();) {
 			if (currentTime - it->second.lastHeartbeatTime > 30.0f) {
@@ -235,7 +226,6 @@ void NetworkManager::TickUpdate() {
 			}
 		}
 
-		// 0.5초 주기로 GameStateSync 브로드캐스트
 		m_stateBroadcastTimer += FIXED_DT;
 		if (m_stateBroadcastTimer >= 0.5f) {
 			m_stateBroadcastTimer = 0.0f;
@@ -298,7 +288,6 @@ void NetworkManager::SendPacket(const void* data, int size, const sockaddr_in* t
 	if (m_Socket == INVALID_SOCKET) return;
 
 	if (m_Role == NetRole::CLIENT) {
-		// Client는 항상 Host에게 보냄
 		sendto(m_Socket, (const char*)data, size, 0, (const sockaddr*)&m_HostAddr, sizeof(m_HostAddr));
 	}
 	else if (m_Role == NetRole::HOST) {
@@ -306,7 +295,6 @@ void NetworkManager::SendPacket(const void* data, int size, const sockaddr_in* t
 			sendto(m_Socket, (const char*)data, size, 0, (const sockaddr*)targetAddr, sizeof(sockaddr_in));
 		}
 		else {
-			// 브로드캐스트 (모든 클라이언트에게 전송)
 			for (const auto& client : m_ConnectedClients) {
 				sendto(m_Socket, (const char*)data, size, 0, (const sockaddr*)&client.second.address, sizeof(sockaddr_in));
 			}
@@ -403,7 +391,6 @@ void NetworkManager::HandlePacket(const char* buffer, int size, const sockaddr_i
 	{
 		if (m_Role != NetRole::HOST) break;
 
-		// 이미 등록된 클라이언트인지 검사 (동일한 Address 포트 비교)
 		uint32 clientNetID = 0;
 		for (const auto& client : m_ConnectedClients)
 		{
@@ -415,7 +402,6 @@ void NetworkManager::HandlePacket(const char* buffer, int size, const sockaddr_i
 			}
 		}
 
-		// 신규 클라이언트 접속 시도
 		if (clientNetID == 0)
 		{
 			// 정원 초과(Max Clients) 검사
@@ -496,7 +482,6 @@ void NetworkManager::HandlePacket(const char* buffer, int size, const sockaddr_i
 		std::cout << "Successfully connected to Host. Assigned NetID: " << m_MyNetID << std::endl;
 
 
-		// Bind player controllers when WELCOME packet arrives with assigned NetID
 		Scene* scene = SceneManager::GetInstance()->GetActiveScene();
 		if (scene)
 		{

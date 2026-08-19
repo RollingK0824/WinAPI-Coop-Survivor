@@ -1,4 +1,4 @@
-#include "Engine/Core/pch.h"
+﻿#include "Engine/Core/pch.h"
 #include "HostPopupController.h"
 #include "Engine/Core/ComponentRegister.h"
 #include "Engine/Network/NetworkManager.h"
@@ -36,9 +36,6 @@ void HostPopupController::Start()
 void HostPopupController::ShowPopup(bool show)
 {
 	gameObject.SetActive(show);
-	if (startHost_Btn) startHost_Btn->gameObject.SetActive(show);
-	if (cancel_Btn) cancel_Btn->gameObject.SetActive(show);
-	if (port_InputField) port_InputField->gameObject.SetActive(show);
 }
 
 void HostPopupController::OnClickStartHost()

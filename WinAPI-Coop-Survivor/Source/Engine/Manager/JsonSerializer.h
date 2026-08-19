@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 class Scene;
 class GameObject;
@@ -15,6 +15,8 @@ public:
 	static bool SavePrefab(GameObject* pObj, const std::string& filePath);
 
 	static GameObject* InstantiateFromPrefabData(Scene* pScene, const json& prefabJson);
+	// 계층형 프리팹 인스턴스화 (ID Remapping 포함)
+	static GameObject* InstantiateHierarchyFromPrefab(Scene* pScene, const json& prefabJson);
 
 	static std::vector<std::string> GetRegisteredComponentNames()
 	{
@@ -42,7 +44,7 @@ public:
 	static json SerializeScene(Scene* pScene);
 
 private:
-	static json SerializeGameObject(GameObject* pObj);
+	static json SerializeGameObject(GameObject* pObj, bool recursive = false);
 
 	static std::unordered_map<std::string, std::function<Component* (GameObject*)>>& GetComponentFactory();
 };

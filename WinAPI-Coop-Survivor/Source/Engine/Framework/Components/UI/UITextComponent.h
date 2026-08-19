@@ -1,4 +1,3 @@
-﻿// Source/Engine/Framework/Components/UI/UITextComponent.h
 #pragma once
 #include "Engine/Framework/Components/Core/RenderComponent.h"
 
@@ -9,6 +8,8 @@ public:
 
 	UITextComponent(GameObject* owner, TransformComponent* transform);
 	virtual ~UITextComponent() override = default;
+
+	virtual const RenderCommand& GetRenderCommand() override;
 
 	void SetText(const std::wstring& text);
 	void SetFontSize(float size);

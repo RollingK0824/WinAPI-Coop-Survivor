@@ -29,7 +29,6 @@ private:
     float m_SendTimer = 0.0f;
     const float m_SendInterval = 0.033f; // 30Hz
 
-    // 아레나 맵 이동 가능 범위 (픽셀 단위)
     static constexpr float k_MapHalfWidth  = 2000.0f;
     static constexpr float k_MapHalfHeight = 2000.0f;
 };

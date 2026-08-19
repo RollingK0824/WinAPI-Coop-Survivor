@@ -70,6 +70,9 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Label="Vcpkg">
+    <VcpkgEnableManifest>false</VcpkgEnableManifest>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -164,6 +167,7 @@
     <ClInclude Include="Source\Engine\Editor\Panels\InspectorPanel.h" />
     <ClInclude Include="Source\Engine\Editor\Panels\MainMenuBarPanel.h" />
     <ClInclude Include="Source\Engine\Framework\Components\Core\CameraComponent.h" />
+    <ClInclude Include="Source\Engine\Framework\Components\Physics\RigidBodyComponent.h" />
     <ClInclude Include="Source\Engine\Framework\Components\Render\SpriteRendererComponent.h" />
     <ClInclude Include="Source\Engine\Framework\Components\UI\DebugHUDComponent.h" />
     <ClInclude Include="Source\Engine\Framework\Components\UI\HUDPresenter.h" />
@@ -249,6 +253,7 @@
     <ClCompile Include="Source\Engine\Editor\Panels\InspectorPanel.cpp" />
     <ClCompile Include="Source\Engine\Editor\Panels\MainMenuBarPanel.cpp" />
     <ClCompile Include="Source\Engine\Framework\Components\Core\CameraComponent.cpp" />
+    <ClCompile Include="Source\Engine\Framework\Components\Physics\RigidBodyComponent.cpp" />
     <ClCompile Include="Source\Engine\Framework\Components\Render\SpriteRendererComponent.cpp" />
     <ClCompile Include="Source\Engine\Framework\Components\UI\DebugHUDComponent.cpp" />
     <ClCompile Include="Source\Engine\Framework\Components\UI\HUDPresenter.cpp" />

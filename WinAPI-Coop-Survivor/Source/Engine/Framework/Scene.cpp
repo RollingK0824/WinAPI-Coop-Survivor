@@ -1,4 +1,4 @@
-﻿#include "Engine/Core/pch.h"
+#include "Engine/Core/pch.h"
 #include "Scene.h"
 #include "Engine/Core/EngineKernel.h"
 #include "Engine/Manager/JsonSerializer.h"
@@ -26,7 +26,10 @@ void Scene::Release()
 {
 	for (auto* obj : m_vGameObjects)
 	{
-		if (obj != nullptr) delete obj;
+		if (obj != nullptr && obj->GetParent() == nullptr)
+		{
+			delete obj;
+		}
 	}
 
 	m_vGameObjects.clear();
@@ -42,7 +45,7 @@ void Scene::FixedUpdate(float fixedDt)
 {
 	for (auto* updatable : m_vUpdatableComponents)
 	{
-		if (updatable && updatable->IsEnabled() && updatable->gameObject.IsActive())
+		if (updatable && updatable->IsEnabled() && updatable->gameObject.IsActiveInHierarchy())
 		{
 			updatable->FixedUpdate(fixedDt);
 		}
@@ -53,7 +56,7 @@ void Scene::Update(float dt)
 {
 	for (auto* updatable : m_vUpdatableComponents)
 	{
-		if (updatable && updatable->IsEnabled() && updatable->gameObject.IsActive())
+		if (updatable && updatable->IsEnabled() && updatable->gameObject.IsActiveInHierarchy())
 		{
 			updatable->Update(dt);
 		}
@@ -64,7 +67,7 @@ void Scene::LateUpdate(float dt)
 {
 	for (auto* updatable : m_vUpdatableComponents)
 	{
-		if (updatable && updatable->IsEnabled() && updatable->gameObject.IsActive())
+		if (updatable && updatable->IsEnabled() && updatable->gameObject.IsActiveInHierarchy())
 		{
 			updatable->LateUpdate(dt);
 		}
@@ -75,18 +78,20 @@ void Scene::Render()
 {
 	for (auto* renderComp : m_vRenderComponents)
 	{
-		if (renderComp == nullptr || !renderComp->IsEnabled() || !renderComp->gameObject.IsActive()) continue;
+		if (renderComp == nullptr || !renderComp->IsEnabled() || !renderComp->gameObject.IsActiveInHierarchy()) continue;
 
 		RenderCommand cmd = renderComp->GetRenderCommand();
 
 		TransformComponent* transform = &renderComp->transform;
 		if (transform)
 		{
-			cmd.position = transform->GetPosition();
-			cmd.rotation = transform->GetRotation().angle;
-			cmd.scaleX = transform->GetScale().x;
-			cmd.scaleY = transform->GetScale().y;
+			cmd.position = transform->GetWorldPosition();
+			cmd.rotation = transform->GetWorldRotation();
+			cmd.scaleX   = transform->GetWorldScale().x;
+			cmd.scaleY   = transform->GetWorldScale().y;
 		}
+
+		cmd.hierarchyIndex = renderComp->gameObject.GetHierarchyIndex();
 
 		RenderSystem::GetInstance()->SubmitCommand(cmd);
 	}
@@ -321,6 +326,26 @@ void Scene::UpdateGameObjectIndices()
 		if (m_vGameObjects[i])
 		{
 			m_vGameObjects[i]->SetSceneIndex(i);
+		}
+	}
+
+	size_t hierarchyIdx = 0;
+
+	std::function<void(GameObject*)> dfsAssign = [&](GameObject* pObj)
+	{
+		if (pObj == nullptr || pObj->IsDead()) return;
+		pObj->SetHierarchyIndex(hierarchyIdx++);
+		for (GameObject* pChild : pObj->GetChildren())
+		{
+			dfsAssign(pChild);
+		}
+	};
+
+	for (GameObject* pObj : m_vGameObjects)
+	{
+		if (pObj && !pObj->IsDead() && pObj->GetParent() == nullptr)
+		{
+			dfsAssign(pObj);
 		}
 	}
 }

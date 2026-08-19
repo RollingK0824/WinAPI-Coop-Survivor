@@ -20,7 +20,6 @@ public:
 	bool IsLocalPlayer() const { return m_bIsLocalPlayer; }
 	bool HasAuthority() const { return m_bIsLocalPlayer; }
 
-	// 보간 API (패킷 수신 측에서 목표 위치를 설정)
 	void ResetInterpolation(const Vector2& pos);
 	void SetInterpolationTarget(const Vector2& targetPos, float duration = 0.0166f);
 	bool GetInterpolatedPosition(Vector2& outPos) const;
@@ -34,7 +33,6 @@ private:
 	uint32 m_netID = 0;
 	bool m_bIsLocalPlayer = false;
 
-	// 보간 상태 (NetworkManager에서 이전)
 	struct InterpolationData {
 		Vector2 startPos  { 0.0f, 0.0f };
 		Vector2 targetPos { 0.0f, 0.0f };

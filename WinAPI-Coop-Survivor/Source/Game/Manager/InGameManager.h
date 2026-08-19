@@ -47,12 +47,10 @@ public:
 	void SetOnTeamLevelUpCallback(std::function<void(int32)> cb) { m_onTeamLevelUp = cb; }
 	void SetOnExpChangedCallback(std::function<void(float, float)> cb) { m_onExpChanged = cb; }
 
-	// 팀 경험치 & 레벨 시스템
 	void AddTeamExp(float amount);
 	void PauseSimulation(bool pause);
 	bool IsSimulationPaused() const { return m_bIsSimulationPaused; }
 
-	// 레벨업 스킬 선택 동기화 (멀티플레이)
 	void NotifySkillChoiceComplete(uint32 netID, uint32 chosenSkillID, uint8 choiceType);
 	void SendSkillChoiceCompletePacket(uint32 chosenSkillID, uint8 choiceType);
 	bool IsAllClientsSkillChoiceComplete() const;
@@ -66,7 +64,6 @@ public:
 
 	void SpawnExpGem(Vector2 pos, int32 expAmount);
 
-	// 활성 경험치 보석 등록 및 관리 (Player 주체 자력 흡수를 위한 최적화)
 	void RegisterGem(ExpGem* gem);
 	void UnregisterGem(ExpGem* gem);
 	const std::vector<ExpGem*>& GetActiveGems() const { return m_activeGems; }
@@ -89,16 +86,13 @@ private:
 	bool m_bIsGameStarted = false;
 	float m_countdownTimer = 0.0f;
 
-	// 팀 공용 레벨 & 경험치
 	int32 m_teamLevel = 1;
 	float m_teamExp = 0.0f;
 	float m_teamMaxExp = 100.0f;
 	bool m_bIsSimulationPaused = false;
 
-	// 활성 보석 관리 리스트
 	std::vector<ExpGem*> m_activeGems;
 
-	// 팀 경험치 바 UI (UIImage, UIText 조립)
 	class UIImageComponent* m_pExpBarFillImg = nullptr;
 	class UITextComponent* m_pExpTextComp = nullptr;
 

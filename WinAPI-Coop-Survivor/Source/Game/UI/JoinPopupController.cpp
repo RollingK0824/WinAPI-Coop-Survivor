@@ -1,4 +1,4 @@
-#include "Engine/Core/pch.h"
+﻿#include "Engine/Core/pch.h"
 #include "JoinPopupController.h"
 #include "Engine/Core/ComponentRegister.h"
 #include "Engine/Network/NetworkManager.h"
@@ -37,10 +37,6 @@ void JoinPopupController::Start()
 void JoinPopupController::ShowPopup(bool show)
 {
 	gameObject.SetActive(show);
-	if (connect_Btn) connect_Btn->gameObject.SetActive(show);
-	if (cancel_Btn) cancel_Btn->gameObject.SetActive(show);
-	if (ip_InputField) ip_InputField->gameObject.SetActive(show);
-	if (port_InputField) port_InputField->gameObject.SetActive(show);
 }
 
 void JoinPopupController::OnClickConnect()

@@ -1,4 +1,4 @@
-#include "Engine/Core/pch.h"
+﻿#include "Engine/Core/pch.h"
 #include "RenderSystem.h"
 #include "Engine/Manager/CameraManager.h"
 #include "Engine/Renderer/GraphicManager.h"
@@ -26,11 +26,13 @@ void RenderSystem::Render()
 {
 	if (m_commands.empty())return;
 
-	// zOrder 오름차순, 동일 zOrder일 경우 position.y 오름차순 (2D Top-down Y-Sorting & 안정 정렬)
+	// 1순위: zOrder, 2순위: hierarchyIndex (부모 ➔ 자식), 3순위: position.y (Y-Sorting)
 	std::stable_sort(m_commands.begin(), m_commands.end(),
 		[](const RenderCommand& a, const RenderCommand& b) {
 			if (a.zOrder != b.zOrder)
 				return a.zOrder < b.zOrder;
+			if (a.hierarchyIndex != b.hierarchyIndex)
+				return a.hierarchyIndex < b.hierarchyIndex;
 			return a.position.y < b.position.y;
 		});
 
