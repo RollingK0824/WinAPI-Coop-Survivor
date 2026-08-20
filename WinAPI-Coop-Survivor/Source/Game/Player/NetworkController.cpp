@@ -5,6 +5,7 @@
 #include "Engine/Framework/GameObject.h"
 #include "Engine/Framework/Components/Core/TransformComponent.h"
 #include "Engine/Framework/Components/Physics/BoxCollider.h"
+#include "Engine/Framework/Components/Physics/RigidBodyComponent.h"
 #include "Game/Player/Player.h"
 
 NetworkController::NetworkController(GameObject* owner, TransformComponent* transform, uint32 netID)
@@ -13,6 +14,7 @@ NetworkController::NetworkController(GameObject* owner, TransformComponent* tran
 void NetworkController::Start()
 {
     m_pPlayer = gameObject.GetComponent<Player>();
+    m_pRigidBody = gameObject.GetComponent<RigidBodyComponent>();
     m_pCollider = gameObject.GetComponent<ColliderComponent>();
 }
 
@@ -21,16 +23,26 @@ void NetworkController::Update(float dt) {
     Vector2 interpolatedPos;
     NetworkIdentity* netId = gameObject.GetComponent<NetworkIdentity>();
 
+    b2BodyId bodyId = b2_nullBodyId;
+    if (m_pRigidBody.IsValid() && b2Body_IsValid(m_pRigidBody->GetBodyId()))
+        bodyId = m_pRigidBody->GetBodyId();
+    else if (m_pCollider.IsValid() && b2Body_IsValid(m_pCollider->GetBodyId()))
+        bodyId = m_pCollider->GetBodyId();
+
     if (role == NetRole::HOST) {
-        if (m_pCollider.IsValid() && b2Body_IsValid(m_pCollider->GetBodyId())) {
-            b2BodyId bodyId = m_pCollider->GetBodyId();
+        if (b2Body_IsValid(bodyId)) {
             b2Vec2 currentB2Pos = b2Body_GetPosition(bodyId);
             Vector2 currentPos = { MeterToPixel(currentB2Pos.x), MeterToPixel(currentB2Pos.y) };
 
             Vector2 finalVel = m_velocity;
-            if (m_pPlayer.IsValid() && m_velocity.LengthSquared() > 0.0001f)
+            bool isMoving = (m_velocity.LengthSquared() > 0.0001f);
+            if (m_pPlayer.IsValid())
             {
-                m_pPlayer->SetFacingDirection(m_velocity);
+                m_pPlayer->SetMoving(isMoving);
+                if (isMoving)
+                {
+                    m_pPlayer->SetFacingDirection(m_velocity);
+                }
             }
 
             if (netId && netId->GetInterpolatedPosition(interpolatedPos)) {
@@ -54,10 +66,22 @@ void NetworkController::Update(float dt) {
         }
     } else {
         if (netId && netId->GetInterpolatedPosition(interpolatedPos)) {
+            Vector2 currentPos = transform.GetPosition();
+            Vector2 delta = interpolatedPos - currentPos;
+            bool isMoving = (delta.LengthSquared() > 0.001f);
+            if (m_pPlayer.IsValid())
+            {
+                m_pPlayer->SetMoving(isMoving);
+                if (isMoving)
+                {
+                    m_pPlayer->SetFacingDirection(delta);
+                }
+            }
+
             transform.SetPosition(interpolatedPos);
-            if (m_pCollider.IsValid() && b2Body_IsValid(m_pCollider->GetBodyId())) {
+            if (b2Body_IsValid(bodyId)) {
                 b2Vec2 b2Pos = { PixelToMeter(interpolatedPos.x), PixelToMeter(interpolatedPos.y) };
-                b2Body_SetTransform(m_pCollider->GetBodyId(), b2Pos, b2Rot_identity);
+                b2Body_SetTransform(bodyId, b2Pos, b2Rot_identity);
             }
         }
     }

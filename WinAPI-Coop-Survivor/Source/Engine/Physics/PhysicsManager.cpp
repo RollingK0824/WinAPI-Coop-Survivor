@@ -43,6 +43,16 @@ void PhysicsManager::FixedUpdate(float fixedDt)
 
 		pRigidBody->SyncTransformFromBody();
 	}
+
+	for (auto* pCollider : m_vColliders)
+	{
+		if (pCollider == nullptr || !pCollider->IsEnabled()) continue;
+		if (pCollider->IsAttachedToRigidBody()) continue;
+		if (!pCollider->gameObject.IsActiveInHierarchy()) continue;
+		if (pCollider->GetBodyType() == b2_staticBody) continue;
+
+		pCollider->SyncTransformFromBody();
+	}
 }
 
 void PhysicsManager::Update(float dt)
@@ -128,6 +138,26 @@ void PhysicsManager::RegisterRigidBody(RigidBodyComponent* pRigidBody)
 		b2Body_Disable(bodyId);
 
 	m_vRigidBodies.push_back(pRigidBody);
+
+	// 만약 이 오브젝트나 자식 오브젝트의 Collider들이 이미 등록되어 있다면 해당 Collider들을 이 Body로 재연결
+	for (auto* pCollider : m_vColliders)
+	{
+		if (pCollider == nullptr) continue;
+		if (pCollider->gameObject.GetComponentInParent<RigidBodyComponent>() == pRigidBody ||
+			pCollider->gameObject.GetComponent<RigidBodyComponent>() == pRigidBody)
+		{
+			if (!pCollider->IsAttachedToRigidBody())
+			{
+				if (b2Body_IsValid(pCollider->GetBodyId()))
+				{
+					DestoryBody(pCollider->GetBodyId());
+				}
+				pCollider->SetBodyId(bodyId);
+				pCollider->SetAttachedToRigidBody(true);
+				pCollider->RebuildShape();
+			}
+		}
+	}
 }
 
 void PhysicsManager::UnRegisterRigidBody(RigidBodyComponent* pRigidBody)
@@ -155,8 +185,14 @@ void PhysicsManager::RegisterCollider(ColliderComponent* pCollider)
 
 	b2BodyId bodyId = b2_nullBodyId;
 
-	if (pRigidBody != nullptr && b2Body_IsValid(pRigidBody->GetBodyId()))
+	if (pRigidBody != nullptr)
 	{
+		// RigidBody가 아직 초기화되지 않았다면 먼저 Body 생성을 보장
+		if (!b2Body_IsValid(pRigidBody->GetBodyId()))
+		{
+			RegisterRigidBody(pRigidBody);
+		}
+
 		bodyId = pRigidBody->GetBodyId();
 		pCollider->SetBodyId(bodyId);
 		pCollider->SetAttachedToRigidBody(true);

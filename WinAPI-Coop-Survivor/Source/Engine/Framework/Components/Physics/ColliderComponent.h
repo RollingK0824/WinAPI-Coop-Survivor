@@ -16,6 +16,7 @@ public:
 	virtual void DrawDebug() {}
 
 	void RebuildShape();
+	void SyncTransformFromBody();
 
 	b2BodyId GetBodyId() const { return m_BodyId; }
 	void SetBodyId(b2BodyId id) { m_BodyId = id; }

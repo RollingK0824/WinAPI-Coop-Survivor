@@ -20,11 +20,17 @@ public:
 	virtual void PostDeserialize(Scene* pScene) override;
 
 	void AddClip(const AnimationClip& clip);
-	void Play(const std::wstring& clipName);
+	void Play(const std::wstring& clipName, bool bRestart = false);
+	void Pause();
+	void Resume();
 	void Stop();
 
 	void SetSpeed(float speed) { m_Speed = speed; }
 	float GetSpeed() const { return m_Speed; }
+
+	bool IsPlaying() const { return m_bIsPlaying; }
+	int GetCurrentFrameIdx() const { return m_CurrentFrameIdx; }
+	void SetCurrentFrameIdx(int frameIdx);
 
 	bool IsFinished() const
 	{

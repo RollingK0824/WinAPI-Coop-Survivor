@@ -4,6 +4,7 @@
 
 class Player;
 class ColliderComponent;
+class RigidBodyComponent;
 
 class NetworkController : public Controller {
 public:
@@ -23,6 +24,7 @@ public:
 
 private:
     ObserverPtr<Player> m_pPlayer;
+    ObserverPtr<RigidBodyComponent> m_pRigidBody;
     ObserverPtr<ColliderComponent> m_pCollider;
 
     Vector2 m_velocity{ 0.0f,0.0f };
