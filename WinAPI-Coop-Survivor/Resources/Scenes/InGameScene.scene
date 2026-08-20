@@ -26,16 +26,16 @@
                     "Type": "CameraComponent",
                     "Data": {
                         "IsEnabled": true,
-                        "Zoom": 1.0,
+                        "Zoom": 2.5,
                         "Enable Follow": true,
                         "Smooth Follow": true,
                         "Follow Speed": 5.0,
-                        "Use Map Bounds": false,
+                        "Use Map Bounds": true,
                         "Map Bounds": {
-                            "left": 0.0,
-                            "top": 0.0,
-                            "right": 0.0,
-                            "bottom": 0.0
+                            "left": -660.0,
+                            "top": -800.0,
+                            "right": 660.0,
+                            "bottom": 800.0
                         },
                         "Follow Target": 0
                     }

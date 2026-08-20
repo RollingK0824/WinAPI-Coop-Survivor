@@ -31,6 +31,8 @@ private:
     float m_SendTimer = 0.0f;
     const float m_SendInterval = 0.033f; // 30Hz
 
-    static constexpr float k_MapHalfWidth  = 2000.0f;
-    static constexpr float k_MapHalfHeight = 2000.0f;
+    // InGameScene: 4 tiles of 1024x1024 at (+-510, +-510) -> Map extent: [-1022, 1022]
+    // Player size: 34x34 (half-extent: 17.0f) -> Clamped bounds: [-1005, 1005]
+    static constexpr float k_MapHalfWidth  = 1005.0f;
+    static constexpr float k_MapHalfHeight = 1005.0f;
 };

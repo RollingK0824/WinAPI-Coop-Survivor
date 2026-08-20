@@ -64,7 +64,7 @@ private:
 	void UpdateExpGemMagnet(float dt);
 
 private:
-	float m_Speed = 120.0f;
+	float m_Speed = 1000.0f;
 	Vector2 m_facingDir = { 1.0f, 0.0f };
 	Vector2 m_prevPos = { 0.0f, 0.0f };
 	bool m_bIsMoving = false;
