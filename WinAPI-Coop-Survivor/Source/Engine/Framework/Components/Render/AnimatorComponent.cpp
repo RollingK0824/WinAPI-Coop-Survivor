@@ -149,7 +149,19 @@ void AnimatorComponent::Play(const std::wstring& clipName, bool bRestart)
 {
 	EnsureClipsLoaded();
 	auto it = m_MapClips.find(clipName);
-	if (it == m_MapClips.end()) return;
+	if (it == m_MapClips.end())
+	{
+		const AnimationClip* pClip = ResourceManager::GetInstance()->GetAnimationClip(clipName);
+		if (pClip)
+		{
+			AddClip(*pClip);
+			it = m_MapClips.find(clipName);
+		}
+		else
+		{
+			return;
+		}
+	}
 
 	if (m_pCurrentClip == &it->second && !bRestart)
 	{

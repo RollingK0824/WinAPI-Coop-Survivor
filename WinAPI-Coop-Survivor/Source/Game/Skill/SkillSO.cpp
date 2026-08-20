@@ -1,6 +1,7 @@
 #include "Engine/Core/pch.h"
 #include "SkillSO.h"
 #include "Engine/Core/Define.h"
+#include "Engine/Core/Util.h"
 #include "Engine/Core/ScriptableObjectRegister.h"
 
 static SORegistrar<SkillSO> soRegistrar(EngineKey::ScriptableObject::SkillSO.data());
@@ -26,7 +27,13 @@ SkillSO::SkillSO()
 	ExposeVariable("FixedAngleDeg", &m_fixedAngleDeg);
 	ExposeVariable("PrefabKey", &m_prefabKey);
 	ExposeTexture("SpriteKey", &m_spriteKey);
+	ExposeTexture("IconKey", &m_iconKey);
+	ExposeVariable("AnimClipKey", &m_animClipKey);
 	ExposeVariable("EffectKey", &m_effectKey);
+	ExposeVariable("OnHitAnimKey", &m_onHitAnimKey);
+	ExposeVariable("OnHitRadius", &m_onHitRadius);
+	ExposeVariable("OnHitDamageRatio", &m_onHitDamageRatio);
+	ExposeVariable("OnHitDuration", &m_onHitDuration);
 
 	m_levelTable.clear();
 	for (int i = 0; i < 5; ++i)
@@ -44,6 +51,7 @@ SkillSO::SkillSO()
 		lvl.aimType = m_aimType;
 		lvl.spreadAngle = m_spreadAngle;
 		lvl.fixedAngleDeg = m_fixedAngleDeg;
+		lvl.onHitRadius = m_onHitRadius;
 		m_levelTable.push_back(lvl);
 	}
 }
@@ -64,6 +72,7 @@ const SkillLevelData& SkillSO::GetLevelData(int32 level) const
 		s_dummyLevelData.aimType = m_aimType;
 		s_dummyLevelData.spreadAngle = m_spreadAngle;
 		s_dummyLevelData.fixedAngleDeg = m_fixedAngleDeg;
+		s_dummyLevelData.onHitRadius = m_onHitRadius;
 		return s_dummyLevelData;
 	}
 
@@ -113,11 +122,30 @@ void SkillSO::OnLoadFromJson(const json& j)
 	if (j.contains("SpreadAngle")) m_spreadAngle = j["SpreadAngle"].get<float>();
 	if (j.contains("FixedAngleDeg")) m_fixedAngleDeg = j["FixedAngleDeg"].get<float>();
 	if (j.contains("PrefabKey")) m_prefabKey = j["PrefabKey"].get<std::string>();
+	if (j.contains("AnimClipKey")) m_animClipKey = j["AnimClipKey"].get<std::string>();
 	if (j.contains("EffectKey")) m_effectKey = j["EffectKey"].get<std::string>();
+	if (j.contains("OnHitAnimKey")) m_onHitAnimKey = j["OnHitAnimKey"].get<std::string>();
+	if (j.contains("OnHitRadius")) m_onHitRadius = j["OnHitRadius"].get<float>();
+	if (j.contains("OnHitDamageRatio")) m_onHitDamageRatio = j["OnHitDamageRatio"].get<float>();
+	if (j.contains("OnHitDuration")) m_onHitDuration = j["OnHitDuration"].get<float>();
 	if (j.contains("SpriteKey"))
 	{
 		std::string keyStr = j["SpriteKey"].get<std::string>();
-		m_spriteKey = std::wstring(keyStr.begin(), keyStr.end());
+		m_spriteKey = Utf8ToWide(keyStr);
+	}
+	if (j.contains("IconKey"))
+	{
+		std::string iconStr = j["IconKey"].get<std::string>();
+		m_iconKey = Utf8ToWide(iconStr);
+	}
+	else
+	{
+		if (m_skillID == 301) m_iconKey = L"Axe.png";
+		else if (m_skillID == 302) m_iconKey = L"OrbBlue.png";
+		else if (m_skillID == 303) m_iconKey = L"-05-TP_SLASH1.png";
+		else if (m_skillID == 304) m_iconKey = L"flame1.png";
+		else if (m_skillID == 305) m_iconKey = L"Ring.png";
+		else m_iconKey = m_spriteKey;
 	}
 
 	if (j.contains("Levels") && j["Levels"].is_array() && !j["Levels"].empty())
@@ -129,6 +157,7 @@ void SkillSO::OnLoadFromJson(const json& j)
 			data.aimType = m_aimType;
 			data.spreadAngle = m_spreadAngle;
 			data.fixedAngleDeg = m_fixedAngleDeg;
+			data.onHitRadius = m_onHitRadius;
 
 			if (item.contains("Level")) data.level = item["Level"].get<int32>();
 			if (item.contains("Description")) data.description = item["Description"].get<std::string>();
@@ -142,6 +171,7 @@ void SkillSO::OnLoadFromJson(const json& j)
 			if (item.contains("AimType")) data.aimType = static_cast<EAimType>(item["AimType"].get<uint8>());
 			if (item.contains("SpreadAngle")) data.spreadAngle = item["SpreadAngle"].get<float>();
 			if (item.contains("FixedAngleDeg")) data.fixedAngleDeg = item["FixedAngleDeg"].get<float>();
+			if (item.contains("OnHitRadius")) data.onHitRadius = item["OnHitRadius"].get<float>();
 
 			m_levelTable.push_back(data);
 		}
@@ -166,10 +196,16 @@ void SkillSO::OnSaveToJson(json& j) const
 	j["SpreadAngle"] = m_spreadAngle;
 	j["FixedAngleDeg"] = m_fixedAngleDeg;
 	j["PrefabKey"] = m_prefabKey;
-
-	std::string spriteStr(m_spriteKey.begin(), m_spriteKey.end());
-	j["SpriteKey"] = spriteStr;
+	j["AnimClipKey"] = m_animClipKey;
 	j["EffectKey"] = m_effectKey;
+	j["OnHitAnimKey"] = m_onHitAnimKey;
+	j["OnHitRadius"] = m_onHitRadius;
+	j["OnHitDamageRatio"] = m_onHitDamageRatio;
+	j["OnHitDuration"] = m_onHitDuration;
+
+	j["SpriteKey"] = WideToUtf8(m_spriteKey);
+	j["IconKey"] = WideToUtf8(m_iconKey);
+	j["AnimClipKey"] = m_animClipKey;
 
 	json levelsArray = json::array();
 	for (const auto& data : m_levelTable)
@@ -187,6 +223,7 @@ void SkillSO::OnSaveToJson(json& j) const
 		lvlJson["AimType"] = static_cast<uint8>(data.aimType);
 		lvlJson["SpreadAngle"] = data.spreadAngle;
 		lvlJson["FixedAngleDeg"] = data.fixedAngleDeg;
+		lvlJson["OnHitRadius"] = data.onHitRadius;
 		levelsArray.push_back(lvlJson);
 	}
 	j["Levels"] = levelsArray;

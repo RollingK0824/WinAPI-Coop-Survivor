@@ -70,8 +70,8 @@
                 "CategoryBits": 1,
                 "MaskBits": -1,
                 "Size": {
-                    "x": 0.0,
-                    "y": 0.0
+                    "x": 10.0,
+                    "y": 15.0
                 }
             }
         },
@@ -87,7 +87,7 @@
             "Type": "Player",
             "Data": {
                 "IsEnabled": true,
-                "MaxHP": 100.0,
+                "MaxHP": 1.0,
                 "IFrameDuration": 0.30000001192092896
             }
         },

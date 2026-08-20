@@ -103,6 +103,7 @@ public:
 	void ExposeVariable(const std::string& name, int16* var) { m_vProperties.push_back({ name, PropType::Int, var }); }
 	void ExposeVariable(const std::string& name, uint32* var) { m_vProperties.push_back({ name, PropType::Int, var }); }
 	void ExposeVariable(const std::string& name, uint16* var) { m_vProperties.push_back({ name, PropType::Int, var }); }
+	void ExposeVariable(const std::string& name, uint8* var) { m_vProperties.push_back({ name, PropType::Int, var }); }
 	void ExposeVariable(const std::string& name, float* var) { m_vProperties.push_back({ name, PropType::Float, var }); }
 	void ExposeVariable(const std::string& name, bool* var) { m_vProperties.push_back({ name, PropType::Bool, var }); }
 	void ExposeVariable(const std::string& name, std::string* var) { m_vProperties.push_back({ name, PropType::String, var }); }

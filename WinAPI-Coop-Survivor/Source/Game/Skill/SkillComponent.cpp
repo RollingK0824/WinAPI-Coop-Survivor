@@ -17,6 +17,7 @@
 #include "Game/Skill/ProjectileComponent.h"
 #include "Game/Skill/AuraComponent.h"
 #include "Game/Skill/AoEComponent.h"
+#include "Engine/Framework/Components/Render/SpriteRendererComponent.h"
 
 #include "Engine/Core/EventBus.h"
 #include "Game/Manager/GameEvents.h"
@@ -129,6 +130,7 @@ int32 SkillComponent::GetSkillLevel(uint32 skillAssetID) const
 void SkillComponent::FixedUpdate(float fixedDt)
 {
 	if (!gameObject.IsActive() || !IsEnabled()) return;
+	if (m_pPlayer.IsValid() && m_pPlayer->IsDead()) return;
 
 	if (InGameManager* pInGameMgr = InGameManager::GetInstance())
 	{
@@ -263,6 +265,28 @@ void SkillComponent::CastProjectileSkill(const SkillInstance& instance, const Sk
 		poolKey = "GenericProjectilePrefab";
 	}
 
+	if (data.aimType == EAimType::Orbital)
+	{
+		float angleStep = (2.0f * 3.14159265f) / count;
+		for (int32 i = 0; i < count; ++i)
+		{
+			float angle = i * angleStep;
+			Vector2 initDir = { cosf(angle), sinf(angle) };
+
+			GameObject* pProjObj = PoolManager::GetInstance()->Spawn<GameObject>(poolKey);
+			if (!pProjObj) continue;
+
+			pProjObj->transform.SetPosition(myPos.x, myPos.y);
+
+			ProjectileComponent* pProj = pProjObj->GetComponent<ProjectileComponent>();
+			if (pProj)
+			{
+				pProj->Init(initDir, data, instance.pSO.get(), &gameObject, poolKey);
+			}
+		}
+		return;
+	}
+
 	if (count == 2 && spreadAngle >= 179.0f)
 	{
 		Vector2 dirs[2] = { baseDir, -baseDir };
@@ -329,6 +353,15 @@ void SkillComponent::CastAuraSkill(const SkillInstance& instance, const SkillLev
 
 	pAuraObj->transform.SetPosition(transform.GetPosition().x, transform.GetPosition().y);
 
+	if (ColliderComponent* pCol = pAuraObj->GetComponent<ColliderComponent>())
+	{
+		if (b2Body_IsValid(pCol->GetBodyId()))
+		{
+			Vector2 myPos = transform.GetPosition();
+			b2Body_SetTransform(pCol->GetBodyId(), { PixelToMeter(myPos.x), PixelToMeter(myPos.y) }, b2Rot_identity);
+		}
+	}
+
 	AuraComponent* pAura = pAuraObj->GetComponent<AuraComponent>();
 	if (!pAura)
 	{
@@ -354,33 +387,77 @@ void SkillComponent::CastGroundAreaSkill(const SkillInstance& instance, const Sk
 		poolKey = "GenericAoEPrefab";
 	}
 
-	float offsetDistance = (data.range > 0.0f) ? (data.range * 0.6f) : 80.0f;
+	float offsetDistance = (data.range > 0.0f) ? (data.range * 0.5f) : 60.0f;
 	int32 count = (std::max)(1, data.projectileCount);
 	float spreadAngle = data.spreadAngle;
 
-	std::vector<Vector2> spawnPositions;
-
-	if (data.aimType == EAimType::NearestEnemy)
+	struct AoESpawnConfig
 	{
-		if (pTargetMonster != nullptr)
+		Vector2 position;
+		float rotation = 0.0f;
+		bool flipX = false;
+	};
+
+	std::vector<AoESpawnConfig> spawnConfigs;
+
+	bool isPetalSlash = (instance.pSO && (instance.pSO->GetSkillID() == 303 || instance.pSO->GetAssetName() == "PetalSlash"));
+
+	if (isPetalSlash)
+	{
+		bool isFacingLeft = (facingDir.x < -0.01f);
+		if (std::abs(facingDir.x) <= 0.01f && m_pPlayer.IsValid())
 		{
-			spawnPositions.push_back(pTargetMonster->transform.GetPosition());
+			if (auto sprite = m_pPlayer->gameObject.GetComponent<SpriteRendererComponent>())
+			{
+				isFacingLeft = sprite->GetFlipX();
+			}
+		}
+
+		if (count == 1)
+		{
+			float sign = isFacingLeft ? -1.0f : 1.0f;
+			spawnConfigs.push_back({ myPos + Vector2(sign * offsetDistance, 0.0f), 0.0f, isFacingLeft });
+		}
+		else if (count == 2)
+		{
+			float sign1 = isFacingLeft ? -1.0f : 1.0f;
+			float sign2 = isFacingLeft ? 1.0f : -1.0f;
+			spawnConfigs.push_back({ myPos + Vector2(sign1 * offsetDistance, 0.0f), 0.0f, isFacingLeft });
+			spawnConfigs.push_back({ myPos + Vector2(sign2 * offsetDistance, 0.0f), 0.0f, !isFacingLeft });
 		}
 		else
 		{
-			spawnPositions.push_back(myPos + facingDir * offsetDistance);
+			for (int32 i = 0; i < count; ++i)
+			{
+				bool flip = (i % 2 == 0) ? isFacingLeft : !isFacingLeft;
+				float sign = flip ? -1.0f : 1.0f;
+				float yOffset = (i >= 2) ? ((i % 2 == 0 ? -1.0f : 1.0f) * 15.0f * (i / 2)) : 0.0f;
+				spawnConfigs.push_back({ myPos + Vector2(sign * offsetDistance, yOffset), 0.0f, flip });
+			}
+		}
+	}
+	else if (data.aimType == EAimType::NearestEnemy)
+	{
+		if (pTargetMonster != nullptr)
+		{
+			spawnConfigs.push_back({ pTargetMonster->transform.GetPosition(), 0.0f, false });
+		}
+		else
+		{
+			float rot = atan2f(facingDir.y, facingDir.x);
+			spawnConfigs.push_back({ myPos + facingDir * offsetDistance, rot, false });
 		}
 	}
 	else if (data.aimType == EAimType::OwnerFacing)
 	{
+		float baseRad = atan2f(facingDir.y, facingDir.x);
 		if (count == 2 && spreadAngle >= 179.0f)
 		{
-			spawnPositions.push_back(myPos + facingDir * offsetDistance);
-			spawnPositions.push_back(myPos - facingDir * offsetDistance);
+			spawnConfigs.push_back({ myPos + facingDir * offsetDistance, baseRad, false });
+			spawnConfigs.push_back({ myPos - facingDir * offsetDistance, baseRad + 3.14159265f, false });
 		}
 		else
 		{
-			float baseRad = atan2f(facingDir.y, facingDir.x);
 			float totalSpreadRad = DegreeToRadian(spreadAngle);
 			float startAngle = (count > 1) ? (-totalSpreadRad / 2.0f) : 0.0f;
 			float angleStep = (count > 1) ? (totalSpreadRad / (count - 1)) : 0.0f;
@@ -389,7 +466,7 @@ void SkillComponent::CastGroundAreaSkill(const SkillInstance& instance, const Sk
 			{
 				float finalRad = baseRad + startAngle + i * angleStep;
 				Vector2 dir = { cosf(finalRad), sinf(finalRad) };
-				spawnPositions.push_back(myPos + dir * offsetDistance);
+				spawnConfigs.push_back({ myPos + dir * offsetDistance, finalRad, false });
 			}
 		}
 	}
@@ -400,8 +477,8 @@ void SkillComponent::CastGroundAreaSkill(const SkillInstance& instance, const Sk
 
 		if (count == 2 && spreadAngle >= 179.0f)
 		{
-			spawnPositions.push_back(myPos + fixedDir * offsetDistance);
-			spawnPositions.push_back(myPos - fixedDir * offsetDistance);
+			spawnConfigs.push_back({ myPos + fixedDir * offsetDistance, baseRad, false });
+			spawnConfigs.push_back({ myPos - fixedDir * offsetDistance, baseRad + 3.14159265f, false });
 		}
 		else
 		{
@@ -413,12 +490,12 @@ void SkillComponent::CastGroundAreaSkill(const SkillInstance& instance, const Sk
 			{
 				float finalRad = baseRad + startAngle + i * angleStep;
 				Vector2 dir = { cosf(finalRad), sinf(finalRad) };
-				spawnPositions.push_back(myPos + dir * offsetDistance);
+				spawnConfigs.push_back({ myPos + dir * offsetDistance, finalRad, false });
 			}
 		}
 	}
 
-	for (const Vector2& spawnPos : spawnPositions)
+	for (const auto& config : spawnConfigs)
 	{
 		GameObject* pAoEObj = PoolManager::GetInstance()->Spawn<GameObject>(poolKey);
 		if (!pAoEObj)
@@ -427,15 +504,25 @@ void SkillComponent::CastGroundAreaSkill(const SkillInstance& instance, const Sk
 			continue;
 		}
 
-		pAoEObj->transform.SetPosition(spawnPos);
+		pAoEObj->transform.SetPosition(config.position.x, config.position.y);
+		pAoEObj->transform.SetRotation(config.rotation);
+
+		if (ColliderComponent* pCol = pAoEObj->GetComponent<ColliderComponent>())
+		{
+			if (b2Body_IsValid(pCol->GetBodyId()))
+			{
+				b2Body_SetTransform(pCol->GetBodyId(), { PixelToMeter(config.position.x), PixelToMeter(config.position.y) }, b2Rot_identity);
+			}
+		}
 
 		AoEComponent* pAoE = pAoEObj->GetComponent<AoEComponent>();
 		if (!pAoE)
 		{
-			std::cout << "[SkillComponent] Error: Prefab missing AoEComponent: " << poolKey << std::endl;
-			continue;
+			pAoE = pAoEObj->AddComponent<AoEComponent>();
 		}
-
-		pAoE->Init(data, instance.pSO.get(), &gameObject, poolKey);
+		if (pAoE)
+		{
+			pAoE->Init(data, instance.pSO.get(), &gameObject, poolKey, config.flipX);
+		}
 	}
 }

@@ -19,12 +19,14 @@ enum class PacketType : uint8 {
 	SKILL_SLOT_SYNC,
 	PARTY_HP_SYNC,
 	SKILL_CHOICE_COMPLETE,
-	SIMULATION_RESUME_SIGNAL
+	SIMULATION_RESUME_SIGNAL,
+	GAME_OVER_SIGNAL
 };
 
 enum class ConnResultCode : uint8 {
 	SUCCESS = 0,
 	ROOM_FULL,
+	GAME_ALREADY_STARTED,
 	INVALID_VERSION,
 	REJECTED
 };
@@ -91,6 +93,7 @@ struct EntitySyncData {
 	Vector2 vel;
 	float angle;
 	float hp;
+	bool isDead;
 };
 
 struct HeartbeatPacket
@@ -171,5 +174,10 @@ struct TeamExpSyncPacket
 	int32 teamLevel;
 	float teamExp;
 	float teamMaxExp;
+};
+
+struct GameOverSignalPacket
+{
+	PacketHeader header;
 };
 #pragma pack(pop)

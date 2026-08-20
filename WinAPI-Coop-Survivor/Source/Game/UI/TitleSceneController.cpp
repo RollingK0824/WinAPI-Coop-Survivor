@@ -67,6 +67,10 @@ void TitleSceneController::Start()
 		{
 			ShowErrorPopup(L"접속 실패: 서버/세션 정원이 초과되었습니다 (Room Full!)");
 		}
+		else if (code == ConnResultCode::GAME_ALREADY_STARTED)
+		{
+			ShowErrorPopup(L"접속 실패: 이미 게임이 시작된 방입니다.");
+		}
 		else if (code == ConnResultCode::REJECTED || code == ConnResultCode::INVALID_VERSION)
 		{
 			ShowErrorPopup(L"접속 실패: 호스트 연결에 실패했습니다 (서버 응답 없음 / 거절됨)");

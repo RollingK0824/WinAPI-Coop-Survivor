@@ -37,11 +37,7 @@ void SpriteRendererComponent::SetAsSprite(const Sprite& sprite)
 	float srcW = sprite.srcRect.right - sprite.srcRect.left;
 	float srcH = sprite.srcRect.bottom - sprite.srcRect.top;
 
-	if (m_size.x <= 0.0f || m_size.y <= 0.0f)
-	{
-		m_size = { srcW, srcH };
-	}
-	m_RenderCommand.bitmap.size = m_size;
+	m_RenderCommand.bitmap.size = (m_size.x > 0.0f && m_size.y > 0.0f) ? m_size : Vector2{ srcW, srcH };
 }
 
 void SpriteRendererComponent::SetSize(Vector2 size)

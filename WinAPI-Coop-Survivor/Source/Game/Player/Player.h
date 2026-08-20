@@ -1,5 +1,6 @@
 #pragma once
 #include "Engine/Framework/Components/Core/ScriptComponent.h"
+#include "Engine/Framework/Components/Render/SpriteRendererComponent.h"
 #include "Engine/Core/ObserverPtr.h"
 #include "Game/Interface/IDamageable.h"
 
@@ -40,13 +41,29 @@ public:
 	void SyncHP(float hp)
 	{
 		m_currentHP = hp;
-		if (m_currentHP <= 0.0f) m_currentHP = 0.0f;
+		if (m_currentHP <= 0.0f)
+		{
+			m_currentHP = 0.0f;
+			if (m_pSpriteRenderer.IsValid())
+			{
+				m_pSpriteRenderer->SetOpacity(0.0f);
+			}
+		}
+		else if (m_pSpriteRenderer.IsValid())
+		{
+			m_pSpriteRenderer->SetOpacity(1.0f);
+		}
+		UpdateHPBar();
 	}
 
 	void Heal(float amount)
 	{
 		m_currentHP += amount;
 		if (m_currentHP > m_maxHP) m_currentHP = m_maxHP;
+		if (m_pSpriteRenderer.IsValid() && m_currentHP > 0.0f)
+		{
+			m_pSpriteRenderer->SetOpacity(1.0f);
+		}
 		UpdateHPBar();
 	}
 
@@ -56,6 +73,13 @@ public:
 		m_currentHP += amount;
 		UpdateHPBar();
 	}
+
+	void SetInvincible(float duration)
+	{
+		m_iFrameTimer = duration;
+	}
+
+	bool IsInvincible() const { return m_iFrameTimer > 0.0f; }
 
 
 private:
@@ -73,10 +97,11 @@ private:
 	ObserverPtr<class AnimatorComponent> m_pAnimator;
 	ObserverPtr<class SpriteRendererComponent> m_pSpriteRenderer;
 
-	float m_maxHP = 100.0f;
-	float m_currentHP = 100.0f;
+	float m_maxHP = 1.0f;
+	float m_currentHP = 1.0f;
 	float m_iFrameTimer = 0.0f;
 	float m_iFrameDuration = 0.3f;
+	float m_hitFlashTimer = 0.0f;
 
 	ObserverPtr<GameObject> m_pHpBarRootObj;
 	ObserverPtr<class UIImageComponent> m_pHpBarFillImg;

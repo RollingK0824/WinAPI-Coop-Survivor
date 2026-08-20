@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <d2d1.h>
 #include "Engine/Renderer/Sprite.h"
 
@@ -28,10 +28,27 @@ struct ShapeParams
 	bool isFilled = true;
 };
 
+enum class ETextAlignment : uint8
+{
+	Left = 0,
+	Center = 1,
+	Right = 2
+};
+
+enum class EParagraphAlignment : uint8
+{
+	Top = 0,
+	Center = 1,
+	Bottom = 2
+};
+
 struct TextParams
 {
 	std::wstring_view pText;
 	float fontSize = 12.0f;
+	ETextAlignment alignment = ETextAlignment::Left;
+	EParagraphAlignment paragraphAlignment = EParagraphAlignment::Center;
+	Vector2 size = { 0.0f, 0.0f };
 };
 
 struct LineParams

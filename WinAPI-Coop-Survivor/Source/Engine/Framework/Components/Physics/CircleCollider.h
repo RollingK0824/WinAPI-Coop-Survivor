@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Engine/Framework/Components/Physics/ColliderComponent.h"
 
 class CircleCollider : public ColliderComponent
@@ -11,6 +11,8 @@ public:
 
 	virtual void Awake() override;
 	virtual void PostDeserialize(Scene* pScene) override;
+
+	float GetRadius() const { return m_Radius; }
 
 	void SetRadius(float radius) 
 	{ 

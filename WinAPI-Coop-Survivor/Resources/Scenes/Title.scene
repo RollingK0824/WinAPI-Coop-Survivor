@@ -208,7 +208,17 @@
                             "a": 1.0
                         },
                         "Text": "",
-                        "FontSize": 15.0
+                        "FontSize": 15.0,
+                        "Alignment": 257,
+                        "ParagraphAlignment": 1,
+                        "Size": {
+                            "x": 300.0,
+                            "y": 100.0
+                        },
+                        "Pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        }
                     }
                 },
                 {
@@ -332,7 +342,17 @@
                             "a": 1.0
                         },
                         "Text": "참가",
-                        "FontSize": 15.0
+                        "FontSize": 15.0,
+                        "Alignment": 257,
+                        "ParagraphAlignment": 1,
+                        "Size": {
+                            "x": 300.0,
+                            "y": 100.0
+                        },
+                        "Pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        }
                     }
                 },
                 {
@@ -445,7 +465,17 @@
                             "a": 1.0
                         },
                         "Text": "생성",
-                        "FontSize": 15.0
+                        "FontSize": 15.0,
+                        "Alignment": 257,
+                        "ParagraphAlignment": 1,
+                        "Size": {
+                            "x": 300.0,
+                            "y": 100.0
+                        },
+                        "Pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        }
                     }
                 },
                 {
@@ -558,7 +588,17 @@
                             "a": 1.0
                         },
                         "Text": "종료",
-                        "FontSize": 15.0
+                        "FontSize": 15.0,
+                        "Alignment": 257,
+                        "ParagraphAlignment": 1,
+                        "Size": {
+                            "x": 300.0,
+                            "y": 100.0
+                        },
+                        "Pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        }
                     }
                 },
                 {
@@ -633,7 +673,17 @@
                             "a": 1.0
                         },
                         "Text": "HOST IP",
-                        "FontSize": 25.0
+                        "FontSize": 25.0,
+                        "Alignment": 257,
+                        "ParagraphAlignment": 1,
+                        "Size": {
+                            "x": 300.0,
+                            "y": 100.0
+                        },
+                        "Pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        }
                     }
                 },
                 {
@@ -815,7 +865,17 @@
                             "a": 1.0
                         },
                         "Text": "확인",
-                        "FontSize": 15.0
+                        "FontSize": 15.0,
+                        "Alignment": 257,
+                        "ParagraphAlignment": 1,
+                        "Size": {
+                            "x": 300.0,
+                            "y": 100.0
+                        },
+                        "Pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        }
                     }
                 },
                 {
@@ -890,7 +950,17 @@
                             "a": 1.0
                         },
                         "Text": "접속 실패: 서버/세션 정원이 초과되었습니다 (Room Full!)",
-                        "FontSize": 14.0
+                        "FontSize": 14.0,
+                        "Alignment": 257,
+                        "ParagraphAlignment": 1,
+                        "Size": {
+                            "x": 300.0,
+                            "y": 100.0
+                        },
+                        "Pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        }
                     }
                 }
             ]

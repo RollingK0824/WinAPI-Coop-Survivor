@@ -17,6 +17,7 @@
 #include "Game/Item/ExpGem.h"
 #include "Game/Manager/InGameManager.h"
 #include "Engine/Manager/PrefabManager.h"
+#include "Coffin.h"
 
 static ComponentRegistrar<Player> registrar(EngineKey::CustomComponent::Player.data());
 
@@ -94,31 +95,62 @@ void Player::Start()
 
 void Player::Update(float dt)
 {
+	if (IsDead())
+	{
+		if (!m_pSpriteRenderer.IsValid())
+		{
+			m_pSpriteRenderer = gameObject.GetComponent<SpriteRendererComponent>();
+		}
+		if (m_pSpriteRenderer.IsValid())
+		{
+			m_pSpriteRenderer->SetOpacity(0.0f);
+		}
+		UpdateHPBar();
+		return;
+	}
+
+	if (m_hitFlashTimer > 0.0f)
+	{
+		m_hitFlashTimer -= dt;
+		if (m_hitFlashTimer <= 0.0f)
+		{
+			m_hitFlashTimer = 0.0f;
+			if (!m_pSpriteRenderer.IsValid())
+			{
+				m_pSpriteRenderer = gameObject.GetComponent<SpriteRendererComponent>();
+			}
+			if (m_pSpriteRenderer.IsValid())
+			{
+				m_pSpriteRenderer->SetOpacity(1.0f);
+			}
+		}
+	}
+
 	if (m_iFrameTimer > 0.0f)
 	{
 		m_iFrameTimer -= dt;
-	}
-	else if (!IsDead())
-	{
-		NetRole role = NetworkManager::GetInstance()->GetRole();
-		NetworkIdentity* netId = gameObject.GetComponent<NetworkIdentity>();
-
-		if (role != NetRole::CLIENT || (netId && netId->HasAuthority()))
+		if (m_iFrameTimer <= 0.0f)
 		{
-			Vector2 myPos = transform.GetPosition();
-			float hitRadius = 24.0f;
-
-			auto colliders = PhysicsManager::GetInstance()->OverlapAABB(myPos, hitRadius, PhysicsLayer::Monster);
-			for (auto* pCol : colliders)
+			m_iFrameTimer = 0.0f;
+			if (!m_pSpriteRenderer.IsValid())
 			{
-				if (!pCol || !pCol->IsEnabled() || !pCol->gameObject.IsActive()) continue;
-
-				Monster* pMonster = pCol->gameObject.GetComponent<Monster>();
-				if (pMonster && !pMonster->IsDead())
-				{
-					TakeDamage(pMonster->GetAttackDamage());
-					break;
-				}
+				m_pSpriteRenderer = gameObject.GetComponent<SpriteRendererComponent>();
+			}
+			if (m_pSpriteRenderer.IsValid())
+			{
+				m_pSpriteRenderer->SetOpacity(1.0f);
+			}
+		}
+		else
+		{
+			if (!m_pSpriteRenderer.IsValid())
+			{
+				m_pSpriteRenderer = gameObject.GetComponent<SpriteRendererComponent>();
+			}
+			if (m_pSpriteRenderer.IsValid())
+			{
+				float blink = (fmod(m_iFrameTimer, 0.2f) < 0.1f) ? 0.35f : 0.9f;
+				m_pSpriteRenderer->SetOpacity(blink);
 			}
 		}
 	}
@@ -183,8 +215,8 @@ void Player::UpdateExpGemMagnet(float dt)
 	if (!mgr || mgr->IsSimulationPaused()) return;
 
 	Vector2 myPos = transform.GetPosition();
-	float magnetRange = 280.0f;
-	float pickupRange = 70.0f;
+	float magnetRange = 50.0f;
+	float pickupRange = 10.0f;
 
 	std::vector<ExpGem*> gemsToProcess = mgr->GetActiveGems();
 
@@ -259,6 +291,7 @@ void Player::OnCollision(ColliderComponent* other)
 void Player::TakeDamage(float damage, GameObject* pAttacker)
 {
 	if (IsDead()) return;
+	if (m_iFrameTimer > 0.0f) return;
 
 	NetRole role = NetworkManager::GetInstance()->GetRole();
 	NetworkIdentity* netId = gameObject.GetComponent<NetworkIdentity>();
@@ -269,9 +302,69 @@ void Player::TakeDamage(float damage, GameObject* pAttacker)
 	if (m_currentHP <= 0.0f)
 	{
 		m_currentHP = 0.0f;
+
+		Scene* pScene = gameObject.GetOwnerScene();
+		if (pScene)
+		{
+			bool coffinExists = false;
+			for (GameObject* sceneObj : pScene->GetGameObjects())
+			{
+				if (sceneObj && sceneObj->IsActive())
+				{
+					Coffin* c = sceneObj->GetComponent<Coffin>();
+					if (c && c->GetTargetPlayer() == this)
+					{
+						coffinExists = true;
+						break;
+					}
+				}
+			}
+
+			if (!coffinExists)
+			{
+				GameObject* coffinObj = PrefabManager::GetInstance()->Instantiate("Coffin", pScene);
+				if (coffinObj)
+				{
+					coffinObj->transform.SetPosition(transform.GetPosition());
+					Coffin* pCoffinComp = coffinObj->GetComponent<Coffin>();
+					if (!pCoffinComp)
+					{
+						pCoffinComp = coffinObj->AddComponent<Coffin>();
+					}
+					if (pCoffinComp)
+					{
+						pCoffinComp->SetTargetPlayer(this);
+					}
+				}
+			}
+		}
+
+		if (!m_pSpriteRenderer.IsValid())
+		{
+			m_pSpriteRenderer = gameObject.GetComponent<SpriteRendererComponent>();
+		}
+		if (m_pSpriteRenderer.IsValid())
+		{
+			m_pSpriteRenderer->SetOpacity(0.0f);
+		}
+
+		UpdateHPBar();
+		return;
 	}
 
 	m_iFrameTimer = m_iFrameDuration;
+	m_hitFlashTimer = 0.15f;
+
+	if (!m_pSpriteRenderer.IsValid())
+	{
+		m_pSpriteRenderer = gameObject.GetComponent<SpriteRendererComponent>();
+	}
+	if (m_pSpriteRenderer.IsValid())
+	{
+		m_pSpriteRenderer->SetOpacity(0.35f);
+	}
+
+	UpdateHPBar();
 }
 
 void Player::CreateHPBarFromPrefab()

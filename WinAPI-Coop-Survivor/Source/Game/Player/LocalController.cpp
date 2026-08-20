@@ -36,6 +36,21 @@ void LocalController::Start() {
 }
 
 void LocalController::Update(float dt) {
+    if (m_pPlayer.IsValid() && m_pPlayer->IsDead())
+    {
+        b2BodyId bodyId = b2_nullBodyId;
+        if (m_pRigidBody.IsValid() && b2Body_IsValid(m_pRigidBody->GetBodyId()))
+            bodyId = m_pRigidBody->GetBodyId();
+        else if (m_pCollider.IsValid() && b2Body_IsValid(m_pCollider->GetBodyId()))
+            bodyId = m_pCollider->GetBodyId();
+
+        if (b2Body_IsValid(bodyId))
+        {
+            b2Body_SetLinearVelocity(bodyId, { 0.0f, 0.0f });
+        }
+        return;
+    }
+
     Move(dt);
 
     m_SendTimer += dt;

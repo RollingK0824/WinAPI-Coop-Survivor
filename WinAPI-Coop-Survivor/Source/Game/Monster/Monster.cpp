@@ -9,6 +9,7 @@
 #include "Engine/Manager/DataManager.h"
 #include "Game/Monster/MonsterSO.h"
 #include "Game/Player/Player.h"
+#include "Game/Player/Coffin.h"
 #include "Game/Monster/MonsterSpawner.h"
 #include "Game/Manager/InGameManager.h"
 #include "Engine/Network/NetworkManager.h"
@@ -116,6 +117,7 @@ void Monster::Init(uint32 spawnSeqId, MonsterSO* monsterData, const Vector2& spa
 		AnimatorComponent* pAnim = gameObject.GetComponent<AnimatorComponent>();
 		if (pAnim)
 		{
+			pAnim->SetPlaySpeed(0.5f);
 			pAnim->SetOnAnimationFinished(nullptr);
 		}
 
@@ -162,6 +164,12 @@ void Monster::Init(uint32 spawnSeqId, MonsterSO* monsterData, const Vector2& spa
 
 	m_targetSearchTimer = 0.0f;
 	m_targetPlayer = nullptr;
+	m_hitFlashTimer = 0.0f;
+
+	if (m_pSpriteRenderer.IsValid())
+	{
+		m_pSpriteRenderer->SetOpacity(1.0f);
+	}
 
 	transform.SetPosition(spawnPos);
 
@@ -206,6 +214,23 @@ void Monster::Update(float dt)
 {
 	if (m_state == EMonsterState::Dead || !gameObject.IsActive())
 		return;
+
+	if (m_hitFlashTimer > 0.0f)
+	{
+		m_hitFlashTimer -= dt;
+		if (m_hitFlashTimer <= 0.0f)
+		{
+			m_hitFlashTimer = 0.0f;
+			if (!m_pSpriteRenderer.IsValid())
+			{
+				m_pSpriteRenderer = gameObject.GetComponent<SpriteRendererComponent>();
+			}
+			if (m_pSpriteRenderer.IsValid())
+			{
+				m_pSpriteRenderer->SetOpacity(1.0f);
+			}
+		}
+	}
 
 	NetRole role = NetworkManager::GetInstance()->GetRole();
 	if (role == NetRole::CLIENT)
@@ -284,7 +309,9 @@ void Monster::UpdateTargetSearch(float fixedDt)
 	{
 		if (!pObj || pObj->IsDead() || !pObj->IsActive()) continue;
 
-		if (pObj->GetComponent<Player>())
+		Player* pPlayer = pObj->GetComponent<Player>();
+		Coffin* pCoffin = pObj->GetComponent<Coffin>();
+		if ((pPlayer && !pPlayer->IsDead()) || pCoffin)
 		{
 			float dist = Vector2::Distance(transform.GetPosition(), pObj->transform.GetPosition());
 			
@@ -357,11 +384,36 @@ void Monster::MoveTowardsTarget(float fixedDt)
 	{
 		transform.SetPosition(transform.GetPosition() + dir * m_moveSpeed * fixedDt);
 	}
+
+	float distToTarget = Vector2::Distance(myPos, targetPos);
+	if (distToTarget <= 28.0f)
+	{
+		Player* pPlayer = m_targetPlayer->GetComponent<Player>();
+		if (pPlayer && !pPlayer->IsDead())
+		{
+			pPlayer->TakeDamage(m_attackDamage, &gameObject);
+		}
+	}
 }
 
 void Monster::TakeDamage(float damage, GameObject* pAttacker)
 {
 	if (m_state == EMonsterState::Dead) return;
+
+	m_hitFlashTimer = 0.12f;
+	if (!m_pSpriteRenderer.IsValid())
+	{
+		m_pSpriteRenderer = gameObject.GetComponent<SpriteRendererComponent>();
+	}
+	if (m_pSpriteRenderer.IsValid())
+	{
+		m_pSpriteRenderer->SetOpacity(0.35f);
+	}
+
+	if (InGameManager* pMgr = InGameManager::GetInstance())
+	{
+		pMgr->SpawnDamageText(static_cast<int>(damage + 0.5f), transform.GetPosition(), damage >= 50.0f);
+	}
 
 	NetRole role = NetworkManager::GetInstance()->GetRole();
 	if (role == NetRole::CLIENT) return;
@@ -391,6 +443,7 @@ void Monster::OnDie()
 	AnimatorComponent* pAnim = gameObject.GetComponent<AnimatorComponent>();
 	if (m_pMonsterSO.IsValid() && !m_pMonsterSO->GetDieClipKey().empty() && pAnim)
 	{
+		pAnim->SetPlaySpeed(2.0f);
 		std::wstring wDieKey(m_pMonsterSO->GetDieClipKey().begin(), m_pMonsterSO->GetDieClipKey().end());
 		pAnim->Play(wDieKey, true);
 		pAnim->SetOnAnimationFinished([this](const std::wstring& clipName) {
@@ -420,6 +473,7 @@ void Monster::ClientDie()
 	AnimatorComponent* pAnim = gameObject.GetComponent<AnimatorComponent>();
 	if (m_pMonsterSO.IsValid() && !m_pMonsterSO->GetDieClipKey().empty() && pAnim)
 	{
+		pAnim->SetPlaySpeed(2.0f);
 		std::wstring wDieKey(m_pMonsterSO->GetDieClipKey().begin(), m_pMonsterSO->GetDieClipKey().end());
 		pAnim->Play(wDieKey, true);
 		pAnim->SetOnAnimationFinished([this](const std::wstring& clipName) {
@@ -434,9 +488,20 @@ void Monster::ClientDie()
 
 void Monster::DespawnSelf()
 {
+	m_hitFlashTimer = 0.0f;
+	if (!m_pSpriteRenderer.IsValid())
+	{
+		m_pSpriteRenderer = gameObject.GetComponent<SpriteRendererComponent>();
+	}
+	if (m_pSpriteRenderer.IsValid())
+	{
+		m_pSpriteRenderer->SetOpacity(1.0f);
+	}
+
 	AnimatorComponent* pAnim = gameObject.GetComponent<AnimatorComponent>();
 	if (pAnim)
 	{
+		pAnim->SetPlaySpeed(1.0f);
 		pAnim->SetOnAnimationFinished(nullptr);
 	}
 

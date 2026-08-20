@@ -11,6 +11,10 @@ static ComponentRegistrar<UIPanelComponent> registrar(EngineKey::Component::UIPa
 UIPanelComponent::UIPanelComponent(GameObject* owner, TransformComponent* transform)
 	: RenderComponent(owner, transform)
 {
+	m_RenderCommand.type = RenderType::BITMAP;
+	m_RenderCommand.isUI = true;
+	m_RenderCommand.zOrder = 9000;
+
 	ExposeTexture("SpriteKey", &m_spriteKey);
 	ExposeVariable("Size", &m_size);
 	ExposeVariable("Border", &m_RenderCommand.bitmap.sprite.border);

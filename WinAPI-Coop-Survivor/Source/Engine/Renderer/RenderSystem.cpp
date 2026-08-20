@@ -1,4 +1,4 @@
-﻿#include "Engine/Core/pch.h"
+#include "Engine/Core/pch.h"
 #include "RenderSystem.h"
 #include "Engine/Manager/CameraManager.h"
 #include "Engine/Renderer/GraphicManager.h"
@@ -246,22 +246,36 @@ void RenderSystem::DrawTextString(ID2D1RenderTarget* pRT, const RenderCommand& c
 	);
 	if (SUCCEEDED(hr) && pTextFormat)
 	{
-		if (cmd.pivot.x == 0.0f)
+		switch (cmd.text.alignment)
+		{
+		case ETextAlignment::Left:
 			pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
-		else if (cmd.pivot.x == 1.0f)
+			break;
+		case ETextAlignment::Right:
 			pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
-		else
+			break;
+		case ETextAlignment::Center:
+		default:
 			pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+			break;
+		}
 
-		if (cmd.pivot.y == 0.0f)
+		switch (cmd.text.paragraphAlignment)
+		{
+		case EParagraphAlignment::Top:
 			pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
-		else if (cmd.pivot.y == 1.0f)
+			break;
+		case EParagraphAlignment::Bottom:
 			pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_FAR);
-		else
+			break;
+		case EParagraphAlignment::Center:
+		default:
 			pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+			break;
+		}
 
-		float width = (cmd.srcRect.right > cmd.srcRect.left) ? (cmd.srcRect.right - cmd.srcRect.left) : 300.0f;
-		float height = (cmd.srcRect.bottom > cmd.srcRect.top) ? (cmd.srcRect.bottom - cmd.srcRect.top) : 100.0f;
+		float width = (cmd.text.size.x > 0.0f) ? cmd.text.size.x : ((cmd.srcRect.right > cmd.srcRect.left) ? (cmd.srcRect.right - cmd.srcRect.left) : 300.0f);
+		float height = (cmd.text.size.y > 0.0f) ? cmd.text.size.y : ((cmd.srcRect.bottom > cmd.srcRect.top) ? (cmd.srcRect.bottom - cmd.srcRect.top) : 100.0f);
 
 		pRT->SetTransform(CalculateSRTMatrix(cmd, width, height));
 

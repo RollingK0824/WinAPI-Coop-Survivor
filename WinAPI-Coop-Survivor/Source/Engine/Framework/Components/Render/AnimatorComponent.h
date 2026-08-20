@@ -27,6 +27,8 @@ public:
 
 	void SetSpeed(float speed) { m_Speed = speed; }
 	float GetSpeed() const { return m_Speed; }
+	void SetPlaySpeed(float speed) { m_Speed = speed; }
+	float GetPlaySpeed() const { return m_Speed; }
 
 	bool IsPlaying() const { return m_bIsPlaying; }
 	int GetCurrentFrameIdx() const { return m_CurrentFrameIdx; }

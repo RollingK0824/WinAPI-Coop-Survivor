@@ -72,7 +72,6 @@ public:
 		for (T* obj : m_pool)
 		{
 			if (m_actionOnDestroy) m_actionOnDestroy(obj);
-			delete obj;
 		}
 		m_pool.clear();
 	}

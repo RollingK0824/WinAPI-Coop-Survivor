@@ -1,0 +1,29 @@
+{
+  "Name": "DamageTextPrefab",
+  "IsActive": true,
+  "Components": [
+    {
+      "Type": "TransformComponent",
+      "Data": {
+        "Position": [0.0, 0.0],
+        "Rotation": 0.0,
+        "Scale": [1.0, 1.0]
+      }
+    },
+    {
+      "Type": "UITextComponent",
+      "Data": {
+        "Text": "0",
+        "FontSize": 14.0,
+        "Alignment": 1,
+        "ParagraphAlignment": 1,
+        "Size": [80.0, 30.0],
+        "Pivot": [0.5, 0.5]
+      }
+    },
+    {
+      "Type": "DamagePopupComponent",
+      "Data": {}
+    }
+  ]
+}

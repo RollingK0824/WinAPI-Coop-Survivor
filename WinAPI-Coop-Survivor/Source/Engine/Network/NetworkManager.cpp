@@ -98,6 +98,7 @@ bool NetworkManager::StartHost(int port) {
 	m_Role = NetRole::HOST;
 	m_MyNetID = 1;
 	m_bConnected = true;
+	m_bCanJoin = true;
 	uint32 newSeed = RandomManager::GetInstance()->GenerateNewSeed();
 	m_ConnectedClients.clear();
 	m_NextNetID = 2;
@@ -429,6 +430,21 @@ void NetworkManager::HandlePacket(const char* buffer, int size, const sockaddr_i
 
 		if (clientNetID == 0)
 		{
+			// 게임이 이미 시작된 방 검사
+			if (!m_bCanJoin)
+			{
+				std::cout << "[NetworkManager] Rejecting connection: Game Already Started" << std::endl;
+				ClientConnResPacket rejectPkt;
+				rejectPkt.header.type = PacketType::CLIENT_CONN_RES;
+				rejectPkt.header.size = sizeof(ClientConnResPacket);
+				rejectPkt.header.tick = m_currentTick;
+				rejectPkt.resultCode = ConnResultCode::GAME_ALREADY_STARTED;
+				rejectPkt.assignedNetID = 0;
+
+				SendPacket(&rejectPkt, sizeof(ClientConnResPacket), &senderAddr);
+				break;
+			}
+
 			// 정원 초과(Max Clients) 검사
 			if (m_ConnectedClients.size() >= m_maxClients)
 			{

@@ -18,6 +18,8 @@ public:
 	void SetColor(const D2D1::ColorF& color) { m_RenderCommand.color = color; }
 	void SetPivot(D2D1_POINT_2F pivot) { m_RenderCommand.pivot = pivot; }
 	void SetPivot(float x, float y) { m_RenderCommand.pivot = { x, y }; }
+	void SetIsUI(bool isUI) { m_RenderCommand.isUI = isUI; }
+	bool IsUI() const { return m_RenderCommand.isUI; }
 
 	virtual std::string_view GetComponentType() const override { return EngineKey::Component::Render; }
 

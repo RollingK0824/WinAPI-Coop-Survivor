@@ -85,4 +85,5 @@ private:
 	ObserverPtr<CircleCollider> m_pCollider;
 	ObserverPtr<MonsterSpawner> m_pSpawner;
 	ObserverPtr<SpriteRendererComponent> m_pSpriteRenderer;
+	float m_hitFlashTimer = 0.0f;
 };

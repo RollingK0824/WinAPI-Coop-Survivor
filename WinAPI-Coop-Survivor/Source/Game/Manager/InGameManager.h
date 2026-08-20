@@ -63,6 +63,7 @@ public:
 	float GetTeamExpRatio() const { return (m_teamMaxExp > 0.0f) ? (m_teamExp / m_teamMaxExp) : 0.0f; }
 
 	void SpawnExpGem(Vector2 pos, int32 expAmount);
+	void SpawnDamageText(int damage, const Vector2& pos, bool isCritical = false);
 
 	void RegisterGem(ExpGem* gem);
 	void UnregisterGem(ExpGem* gem);

@@ -225,6 +225,12 @@
     <ClInclude Include="Source\Game\Player\Player.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Game\Player\Coffin.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Game\UI\GameOverSceneController.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Game\Manager\InGameManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -277,6 +283,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\Game\UI\SkillChoiceController.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Game\UI\SkillSlotHUDController.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\Framework\Components\UI\UIInputFieldComponent.h">
@@ -437,6 +446,12 @@
     <ClCompile Include="Source\Game\Player\Player.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Game\Player\Coffin.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Game\UI\GameOverSceneController.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Game\Manager\InGameManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -483,6 +498,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\Game\UI\SkillChoiceController.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Game\UI\SkillSlotHUDController.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\Engine\Framework\Components\UI\UIInputFieldComponent.cpp">

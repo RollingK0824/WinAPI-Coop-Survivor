@@ -18,7 +18,7 @@
       }
     },
     {
-      "Type": "CircleCollider",
+      "Type": "CircleColliderComponent",
       "Data": {
         "Radius": 60.0,
         "Offset": [0.0, 0.0],

@@ -74,6 +74,16 @@
       "Key": "bg_forest.png",
       "Path": "Resources/Texture/bg_forest.png",
       "AtlasPath": "Resources/Texture/bg_forest.json"
+    },
+    {
+      "Key": "Coffin.png",
+      "Path": "Resources/Texture/Coffin.png",
+      "AtlasPath": "Resources/Texture/Coffin.json"
+    },
+    {
+      "Key": "CoffinRezBarSpritesheet.png",
+      "Path": "Resources/Texture/CoffinRezBarSpritesheet.png",
+      "AtlasPath": "Resources/Texture/CoffinRezBarSpritesheet.json"
     }
   ]
 }

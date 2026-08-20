@@ -50,12 +50,17 @@ public:
 
     void RegisterPacketHandler(PacketType type, PacketHandler handler) { m_packetHandlers[type] = handler; }
     void UnregisterPacketHandler(PacketType type) { m_packetHandlers.erase(type); }
+    void ClearPacketHandlers() { m_packetHandlers.clear(); }
+    void ClearNetworkObjects() { m_networkObjects.clear(); }
 
     using ConnResultCallback = std::function<void(ConnResultCode code)>;
     void SetOnConnResultCallback(ConnResultCallback callback) { m_onConnResultCallback = callback; }
 
     void SetMaxClients(size_t maxClients) { m_maxClients = maxClients; }
     size_t GetMaxClients() const { return m_maxClients; }
+
+    void SetCanJoin(bool canJoin) { m_bCanJoin = canJoin; }
+    bool CanJoin() const { return m_bCanJoin; }
 
     NetRole GetRole() const { return m_Role; }
     uint32 GetMyNetID() const { return m_MyNetID; }
@@ -98,6 +103,7 @@ private:
 
     uint32 m_MyNetID = 0;
     bool m_bConnected = false;
+    bool m_bCanJoin = true;
 
     // Fixed Tick
     uint32 m_currentTick     = 0;

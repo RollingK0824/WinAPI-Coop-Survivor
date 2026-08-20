@@ -43,7 +43,7 @@ public:
 	int32 GetSkillLevel(uint32 skillAssetID) const;
 
 	const std::vector<SkillInstance>& GetSkills() const { return m_skills; }
-	static constexpr size_t MAX_SKILL_SLOTS = 4;
+	static constexpr size_t MAX_SKILL_SLOTS = 5;
 	size_t GetMaxSkillSlots() const { return MAX_SKILL_SLOTS; }
 	bool IsSlotMax() const { return m_skills.size() >= MAX_SKILL_SLOTS; }
 
@@ -56,7 +56,7 @@ private:
 	void CastGroundAreaSkill(const SkillInstance& instance, const SkillLevelData& data, GameObject* pTargetMonster);
 
 private:
-	int32 m_defaultSkillID = 301;
+	int32 m_defaultSkillID = 303;
 	std::vector<SkillInstance> m_skills;
 	ObserverPtr<Player> m_pPlayer;
 };

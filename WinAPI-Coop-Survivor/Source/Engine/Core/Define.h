@@ -93,6 +93,10 @@ namespace EngineKey
 		constexpr std::string_view AoEComponent = "AoEComponent";
 		constexpr std::string_view ExpGem = "ExpGem";
 		constexpr std::string_view ErrorPopupController = "ErrorPopupController";
+		constexpr std::string_view SkillSlotHUDController = "SkillSlotHUDController";
+		constexpr std::string_view DamagePopup = "DamagePopupComponent";
+		constexpr std::string_view Coffin = "Coffin";
+		constexpr std::string_view GameOverSceneController = "GameOverSceneController";
 	}
 
 	namespace ScriptableObject
