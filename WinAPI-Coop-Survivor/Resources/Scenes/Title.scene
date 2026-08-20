@@ -4,6 +4,7 @@
         {
             "Name": "Main Camera",
             "InstanceID": 5,
+            "ParentInstanceID": 0,
             "IsActive": true,
             "Components": [
                 {
@@ -44,6 +45,7 @@
         {
             "Name": "TitleBackground",
             "InstanceID": 11,
+            "ParentInstanceID": 0,
             "IsActive": true,
             "Components": [
                 {
@@ -101,7 +103,8 @@
         },
         {
             "Name": "TitleSceneController",
-            "InstanceID": 8,
+            "InstanceID": 78,
+            "ParentInstanceID": 0,
             "IsActive": true,
             "Components": [
                 {
@@ -123,16 +126,19 @@
                     "Type": "TitleSceneController",
                     "Data": {
                         "IsEnabled": true,
-                        "Host Button": 15,
-                        "Join Button": 16,
-                        "Exit Button": 17
+                        "IP InputField": 79,
+                        "Host Button": 82,
+                        "Join Button": 81,
+                        "Exit Button": 83,
+                        "Error Popup Controller": 86
                     }
                 }
             ]
         },
         {
-            "Name": "Host_Btn",
-            "InstanceID": 15,
+            "Name": "IP_InputField",
+            "InstanceID": 79,
+            "ParentInstanceID": 0,
             "IsActive": true,
             "Components": [
                 {
@@ -140,8 +146,8 @@
                     "Data": {
                         "IsEnabled": true,
                         "Position": {
-                            "x": 550.0,
-                            "y": 300.0
+                            "x": 960.0,
+                            "y": 450.0
                         },
                         "Rotation": 0.0,
                         "Scale": {
@@ -163,10 +169,10 @@
                             "b": 1.0,
                             "a": 1.0
                         },
-                        "SpriteKey": "tilemap_packed.png",
+                        "SpriteKey": "UI/frame5_c4.png",
                         "Size": {
-                            "x": 95.0,
-                            "y": 27.0
+                            "x": 250.0,
+                            "y": 40.0
                         },
                         "Pivot": {
                             "x": 0.5,
@@ -177,22 +183,15 @@
                             "y": 0.0
                         },
                         "Border": {
-                            "left": 0.0,
-                            "top": 0.0,
-                            "right": 0.0,
-                            "bottom": 0.0
+                            "left": 14.0,
+                            "top": 14.0,
+                            "right": 14.0,
+                            "bottom": 14.0
                         },
                         "FillAmount": 1.0,
                         "IsUI": true,
                         "FlipX": false,
                         "FlipY": false
-                    }
-                },
-                {
-                    "Type": "UIButtonComponent",
-                    "Data": {
-                        "IsEnabled": true,
-                        "IsHovered": true
                     }
                 },
                 {
@@ -203,20 +202,67 @@
                         "ZOrder": 9999,
                         "Opacity": 1.0,
                         "Color": {
-                            "r": 0.0,
-                            "g": 0.0,
-                            "b": 0.0,
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 1.0,
                             "a": 1.0
                         },
-                        "Text": "Host",
-                        "FontSize": 14.0
+                        "Text": "",
+                        "FontSize": 15.0
+                    }
+                },
+                {
+                    "Type": "UIButtonComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "IsHovered": false,
+                        "Normal Sprite": "UI/frame5_c4.png",
+                        "Hover Sprite": "",
+                        "Pressed Sprite": "",
+                        "Disabled Sprite": "",
+                        "Normal Color": {
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 1.0,
+                            "a": 1.0
+                        },
+                        "Hover Color": {
+                            "r": 0.8999999761581421,
+                            "g": 0.8999999761581421,
+                            "b": 0.8999999761581421,
+                            "a": 1.0
+                        },
+                        "Pressed Color": {
+                            "r": 0.699999988079071,
+                            "g": 0.699999988079071,
+                            "b": 0.699999988079071,
+                            "a": 1.0
+                        },
+                        "Disabled Color": {
+                            "r": 0.5,
+                            "g": 0.5,
+                            "b": 0.5,
+                            "a": 1.0
+                        }
+                    }
+                },
+                {
+                    "Type": "UIInputFieldComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Max Length": 32,
+                        "Allow Dot": true,
+                        "Digits Only": false,
+                        "Text Display": 79,
+                        "Click Area Button": 79
                     }
                 }
             ]
         },
         {
             "Name": "Join_Btn",
-            "InstanceID": 16,
+            "InstanceID": 81,
+            "ParentInstanceID": 0,
             "IsActive": true,
             "Components": [
                 {
@@ -224,91 +270,7 @@
                     "Data": {
                         "IsEnabled": true,
                         "Position": {
-                            "x": 550.0,
-                            "y": 400.0
-                        },
-                        "Rotation": 0.0,
-                        "Scale": {
-                            "x": 1.0,
-                            "y": 1.0
-                        }
-                    }
-                },
-                {
-                    "Type": "UIImageComponent",
-                    "Data": {
-                        "IsEnabled": true,
-                        "RenderType": 256,
-                        "ZOrder": 9999,
-                        "Opacity": 1.0,
-                        "Color": {
-                            "r": 1.0,
-                            "g": 1.0,
-                            "b": 1.0,
-                            "a": 1.0
-                        },
-                        "SpriteKey": "tilemap_packed.png",
-                        "Size": {
-                            "x": 95.0,
-                            "y": 27.0
-                        },
-                        "Pivot": {
-                            "x": 0.5,
-                            "y": 0.5
-                        },
-                        "Offset": {
-                            "x": 0.0,
-                            "y": 0.0
-                        },
-                        "Border": {
-                            "left": 0.0,
-                            "top": 0.0,
-                            "right": 0.0,
-                            "bottom": 0.0
-                        },
-                        "FillAmount": 1.0,
-                        "IsUI": true,
-                        "FlipX": false,
-                        "FlipY": false
-                    }
-                },
-                {
-                    "Type": "UIButtonComponent",
-                    "Data": {
-                        "IsEnabled": true,
-                        "IsHovered": false
-                    }
-                },
-                {
-                    "Type": "UITextComponent",
-                    "Data": {
-                        "IsEnabled": true,
-                        "RenderType": 257,
-                        "ZOrder": 9999,
-                        "Opacity": 1.0,
-                        "Color": {
-                            "r": 0.0,
-                            "g": 0.0,
-                            "b": 0.0,
-                            "a": 1.0
-                        },
-                        "Text": "Join",
-                        "FontSize": 14.0
-                    }
-                }
-            ]
-        },
-        {
-            "Name": "Exit_Btn",
-            "InstanceID": 17,
-            "IsActive": true,
-            "Components": [
-                {
-                    "Type": "TransformComponent",
-                    "Data": {
-                        "IsEnabled": true,
-                        "Position": {
-                            "x": 550.0,
+                            "x": 960.0,
                             "y": 500.0
                         },
                         "Rotation": 0.0,
@@ -331,10 +293,10 @@
                             "b": 1.0,
                             "a": 1.0
                         },
-                        "SpriteKey": "tilemap_packed.png",
+                        "SpriteKey": "UI/button_c5_mouseover.png",
                         "Size": {
-                            "x": 95.0,
-                            "y": 27.0
+                            "x": 250.0,
+                            "y": 40.0
                         },
                         "Pivot": {
                             "x": 0.5,
@@ -345,22 +307,15 @@
                             "y": 0.0
                         },
                         "Border": {
-                            "left": 0.0,
-                            "top": 0.0,
-                            "right": 0.0,
-                            "bottom": 0.0
+                            "left": 14.0,
+                            "top": 14.0,
+                            "right": 14.0,
+                            "bottom": 14.0
                         },
                         "FillAmount": 1.0,
                         "IsUI": true,
                         "FlipX": false,
                         "FlipY": false
-                    }
-                },
-                {
-                    "Type": "UIButtonComponent",
-                    "Data": {
-                        "IsEnabled": true,
-                        "IsHovered": false
                     }
                 },
                 {
@@ -371,12 +326,570 @@
                         "ZOrder": 9999,
                         "Opacity": 1.0,
                         "Color": {
-                            "r": 0.0,
-                            "g": 0.0,
-                            "b": 0.0,
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 1.0,
                             "a": 1.0
                         },
-                        "Text": "Exit",
+                        "Text": "참가",
+                        "FontSize": 15.0
+                    }
+                },
+                {
+                    "Type": "UIButtonComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "IsHovered": false,
+                        "Normal Sprite": "UI/button_c5_mouseover.png",
+                        "Hover Sprite": "UI/button_c5_normal.png",
+                        "Pressed Sprite": "UI/button_c5_pressed.png",
+                        "Disabled Sprite": "",
+                        "Normal Color": {
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 1.0,
+                            "a": 1.0
+                        },
+                        "Hover Color": {
+                            "r": 0.8999999761581421,
+                            "g": 0.8999999761581421,
+                            "b": 0.8999999761581421,
+                            "a": 1.0
+                        },
+                        "Pressed Color": {
+                            "r": 0.699999988079071,
+                            "g": 0.699999988079071,
+                            "b": 0.699999988079071,
+                            "a": 1.0
+                        },
+                        "Disabled Color": {
+                            "r": 0.5,
+                            "g": 0.5,
+                            "b": 0.5,
+                            "a": 1.0
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "Name": "Create_Btn",
+            "InstanceID": 82,
+            "ParentInstanceID": 0,
+            "IsActive": true,
+            "Components": [
+                {
+                    "Type": "TransformComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Position": {
+                            "x": 960.0,
+                            "y": 550.0
+                        },
+                        "Rotation": 0.0,
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        }
+                    }
+                },
+                {
+                    "Type": "UIImageComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "RenderType": 256,
+                        "ZOrder": 9999,
+                        "Opacity": 1.0,
+                        "Color": {
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 1.0,
+                            "a": 1.0
+                        },
+                        "SpriteKey": "UI/button_c5_mouseover.png",
+                        "Size": {
+                            "x": 250.0,
+                            "y": 40.0
+                        },
+                        "Pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "Offset": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "Border": {
+                            "left": 14.0,
+                            "top": 14.0,
+                            "right": 14.0,
+                            "bottom": 14.0
+                        },
+                        "FillAmount": 1.0,
+                        "IsUI": true,
+                        "FlipX": false,
+                        "FlipY": false
+                    }
+                },
+                {
+                    "Type": "UITextComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "RenderType": 257,
+                        "ZOrder": 9999,
+                        "Opacity": 1.0,
+                        "Color": {
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 1.0,
+                            "a": 1.0
+                        },
+                        "Text": "생성",
+                        "FontSize": 15.0
+                    }
+                },
+                {
+                    "Type": "UIButtonComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "IsHovered": false,
+                        "Normal Sprite": "UI/button_c5_mouseover.png",
+                        "Hover Sprite": "UI/button_c5_normal.png",
+                        "Pressed Sprite": "UI/button_c5_pressed.png",
+                        "Disabled Sprite": "",
+                        "Normal Color": {
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 1.0,
+                            "a": 1.0
+                        },
+                        "Hover Color": {
+                            "r": 0.8999999761581421,
+                            "g": 0.8999999761581421,
+                            "b": 0.8999999761581421,
+                            "a": 1.0
+                        },
+                        "Pressed Color": {
+                            "r": 0.699999988079071,
+                            "g": 0.699999988079071,
+                            "b": 0.699999988079071,
+                            "a": 1.0
+                        },
+                        "Disabled Color": {
+                            "r": 0.5,
+                            "g": 0.5,
+                            "b": 0.5,
+                            "a": 1.0
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "Name": "Exit_Btn",
+            "InstanceID": 83,
+            "ParentInstanceID": 0,
+            "IsActive": true,
+            "Components": [
+                {
+                    "Type": "TransformComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Position": {
+                            "x": 960.0,
+                            "y": 600.0
+                        },
+                        "Rotation": 0.0,
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        }
+                    }
+                },
+                {
+                    "Type": "UIImageComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "RenderType": 256,
+                        "ZOrder": 9999,
+                        "Opacity": 1.0,
+                        "Color": {
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 1.0,
+                            "a": 1.0
+                        },
+                        "SpriteKey": "UI/button_c5_mouseover.png",
+                        "Size": {
+                            "x": 250.0,
+                            "y": 40.0
+                        },
+                        "Pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "Offset": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "Border": {
+                            "left": 14.0,
+                            "top": 14.0,
+                            "right": 14.0,
+                            "bottom": 14.0
+                        },
+                        "FillAmount": 1.0,
+                        "IsUI": true,
+                        "FlipX": false,
+                        "FlipY": false
+                    }
+                },
+                {
+                    "Type": "UITextComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "RenderType": 257,
+                        "ZOrder": 9999,
+                        "Opacity": 1.0,
+                        "Color": {
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 1.0,
+                            "a": 1.0
+                        },
+                        "Text": "종료",
+                        "FontSize": 15.0
+                    }
+                },
+                {
+                    "Type": "UIButtonComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "IsHovered": false,
+                        "Normal Sprite": "UI/button_c5_mouseover.png",
+                        "Hover Sprite": "UI/button_c5_normal.png",
+                        "Pressed Sprite": "UI/button_c5_pressed.png",
+                        "Disabled Sprite": "",
+                        "Normal Color": {
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 1.0,
+                            "a": 1.0
+                        },
+                        "Hover Color": {
+                            "r": 0.8999999761581421,
+                            "g": 0.8999999761581421,
+                            "b": 0.8999999761581421,
+                            "a": 1.0
+                        },
+                        "Pressed Color": {
+                            "r": 0.699999988079071,
+                            "g": 0.699999988079071,
+                            "b": 0.699999988079071,
+                            "a": 1.0
+                        },
+                        "Disabled Color": {
+                            "r": 0.5,
+                            "g": 0.5,
+                            "b": 0.5,
+                            "a": 1.0
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "Name": "IP_Text",
+            "InstanceID": 85,
+            "ParentInstanceID": 0,
+            "IsActive": true,
+            "Components": [
+                {
+                    "Type": "TransformComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Position": {
+                            "x": 750.0,
+                            "y": 449.0
+                        },
+                        "Rotation": 0.0,
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        }
+                    }
+                },
+                {
+                    "Type": "UITextComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "RenderType": 257,
+                        "ZOrder": 9999,
+                        "Opacity": 1.0,
+                        "Color": {
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 1.0,
+                            "a": 1.0
+                        },
+                        "Text": "HOST IP",
+                        "FontSize": 25.0
+                    }
+                },
+                {
+                    "Type": "UIButtonComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "IsHovered": false,
+                        "Normal Sprite": "",
+                        "Hover Sprite": "",
+                        "Pressed Sprite": "",
+                        "Disabled Sprite": "",
+                        "Normal Color": {
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 1.0,
+                            "a": 1.0
+                        },
+                        "Hover Color": {
+                            "r": 0.8999999761581421,
+                            "g": 0.8999999761581421,
+                            "b": 0.8999999761581421,
+                            "a": 1.0
+                        },
+                        "Pressed Color": {
+                            "r": 0.699999988079071,
+                            "g": 0.699999988079071,
+                            "b": 0.699999988079071,
+                            "a": 1.0
+                        },
+                        "Disabled Color": {
+                            "r": 0.5,
+                            "g": 0.5,
+                            "b": 0.5,
+                            "a": 1.0
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "Name": "Error_Popup",
+            "InstanceID": 86,
+            "ParentInstanceID": 0,
+            "IsActive": false,
+            "Components": [
+                {
+                    "Type": "TransformComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Position": {
+                            "x": 960.0,
+                            "y": 520.0
+                        },
+                        "Rotation": 0.0,
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        }
+                    }
+                },
+                {
+                    "Type": "UIImageComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "RenderType": 256,
+                        "ZOrder": 10000,
+                        "Opacity": 1.0,
+                        "Color": {
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 1.0,
+                            "a": 1.0
+                        },
+                        "SpriteKey": "UI/frame1_c2.png",
+                        "Size": {
+                            "x": 300.0,
+                            "y": 200.0
+                        },
+                        "Pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "Offset": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "Border": {
+                            "left": 14.0,
+                            "top": 14.0,
+                            "right": 14.0,
+                            "bottom": 14.0
+                        },
+                        "FillAmount": 1.0,
+                        "IsUI": true,
+                        "FlipX": false,
+                        "FlipY": false
+                    }
+                },
+                {
+                    "Type": "ErrorPopupController",
+                    "Data": {
+                        "IsEnabled": true,
+                        "OK Button": 99,
+                        "Message Text": 102
+                    }
+                }
+            ]
+        },
+        {
+            "Name": "Btn_Template",
+            "InstanceID": 99,
+            "ParentInstanceID": 86,
+            "IsActive": true,
+            "Components": [
+                {
+                    "Type": "TransformComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Position": {
+                            "x": 0.0,
+                            "y": 40.0
+                        },
+                        "Rotation": 0.0,
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        }
+                    }
+                },
+                {
+                    "Type": "UIImageComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "RenderType": 256,
+                        "ZOrder": 10000,
+                        "Opacity": 1.0,
+                        "Color": {
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 1.0,
+                            "a": 1.0
+                        },
+                        "SpriteKey": "UI/button_c5_mouseover.png",
+                        "Size": {
+                            "x": 150.0,
+                            "y": 40.0
+                        },
+                        "Pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "Offset": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "Border": {
+                            "left": 14.0,
+                            "top": 14.0,
+                            "right": 14.0,
+                            "bottom": 14.0
+                        },
+                        "FillAmount": 1.0,
+                        "IsUI": true,
+                        "FlipX": false,
+                        "FlipY": false
+                    }
+                },
+                {
+                    "Type": "UITextComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "RenderType": 257,
+                        "ZOrder": 10000,
+                        "Opacity": 1.0,
+                        "Color": {
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 1.0,
+                            "a": 1.0
+                        },
+                        "Text": "확인",
+                        "FontSize": 15.0
+                    }
+                },
+                {
+                    "Type": "UIButtonComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "IsHovered": false,
+                        "Normal Sprite": "UI/button_c5_mouseover.png",
+                        "Hover Sprite": "UI/button_c5_normal.png",
+                        "Pressed Sprite": "UI/button_c5_pressed.png",
+                        "Disabled Sprite": "",
+                        "Normal Color": {
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 1.0,
+                            "a": 1.0
+                        },
+                        "Hover Color": {
+                            "r": 0.8999999761581421,
+                            "g": 0.8999999761581421,
+                            "b": 0.8999999761581421,
+                            "a": 1.0
+                        },
+                        "Pressed Color": {
+                            "r": 0.699999988079071,
+                            "g": 0.699999988079071,
+                            "b": 0.699999988079071,
+                            "a": 1.0
+                        },
+                        "Disabled Color": {
+                            "r": 0.5,
+                            "g": 0.5,
+                            "b": 0.5,
+                            "a": 1.0
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "Name": "Error_Text",
+            "InstanceID": 102,
+            "ParentInstanceID": 86,
+            "IsActive": true,
+            "Components": [
+                {
+                    "Type": "TransformComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Position": {
+                            "x": 0.0,
+                            "y": -40.0
+                        },
+                        "Rotation": 0.0,
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        }
+                    }
+                },
+                {
+                    "Type": "UITextComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "RenderType": 257,
+                        "ZOrder": 10001,
+                        "Opacity": 1.0,
+                        "Color": {
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 1.0,
+                            "a": 1.0
+                        },
+                        "Text": "접속 실패: 서버/세션 정원이 초과되었습니다 (Room Full!)",
                         "FontSize": 14.0
                     }
                 }

@@ -30,7 +30,12 @@ public:
 		return m_RenderCommand;
 	}
 
+	virtual void Awake() override;
+	virtual void OnDestroy() override;
 	virtual void PostDeserialize(Scene* pScene) override;
+
+	bool CheckMouseOver() const;
+	static const std::vector<UIPanelComponent*>& GetAllPanels() { return s_allPanels; }
 
 	virtual std::string_view GetComponentType() const override
 	{
@@ -41,4 +46,7 @@ protected:
 	std::wstring m_spriteKey = L"";
 	Vector2 m_size = { 200.0f, 150.0f };
 	bool m_bRenderBackground = true;
+
+private:
+	static inline std::vector<UIPanelComponent*> s_allPanels;
 };

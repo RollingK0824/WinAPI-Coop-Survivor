@@ -1,10 +1,9 @@
 #pragma once
 #include "Engine/Framework/Components/Core/ScriptComponent.h"
-#include <string>
+#include "Engine/Core/ObserverPtr.h"
 
 class UIButtonComponent;
-class HostPopupController;
-class JoinPopupController;
+class UIInputFieldComponent;
 class ErrorPopupController;
 
 class TitleSceneController : public ScriptComponent
@@ -22,12 +21,11 @@ public:
 		return EngineKey::CustomComponent::TitleSceneController;
 	}
 
+	UIInputFieldComponent* ip_InputField = nullptr;
 	UIButtonComponent* host_Btn = nullptr;
 	UIButtonComponent* join_Btn = nullptr;
 	UIButtonComponent* exit_Btn = nullptr;
 
-	HostPopupController* hostPopup_Ctrl = nullptr;
-	JoinPopupController* joinPopup_Ctrl = nullptr;
 	ErrorPopupController* errorPopup_Ctrl = nullptr;
 
 private:
@@ -35,7 +33,5 @@ private:
 	void OnClickJoinBtn();
 	void OnClickExitBtn();
 
-	void ShowHostPopup();
-	void ShowJoinPopup();
 	void ShowErrorPopup(const std::wstring& message);
 };

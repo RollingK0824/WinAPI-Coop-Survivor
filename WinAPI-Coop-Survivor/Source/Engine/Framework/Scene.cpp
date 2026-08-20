@@ -24,19 +24,41 @@ bool Scene::Initialize()
 
 void Scene::Release()
 {
+	std::vector<GameObject*> roots;
+	roots.reserve(m_vGameObjects.size() + m_vCreationQueue.size());
+
 	for (auto* obj : m_vGameObjects)
 	{
 		if (obj != nullptr && obj->GetParent() == nullptr)
 		{
-			delete obj;
+			roots.push_back(obj);
+		}
+	}
+
+	for (auto* obj : m_vCreationQueue)
+	{
+		if (obj != nullptr && obj->GetParent() == nullptr)
+		{
+			roots.push_back(obj);
 		}
 	}
 
 	m_vGameObjects.clear();
+	m_vCreationQueue.clear();
+	m_vDestroyQueue.clear();
+	m_vComponentCreationQueue.clear();
 	m_vUpdatableComponents.clear();
 	m_vRenderComponents.clear();
 
+	for (auto* root : roots)
+	{
+		delete root;
+	}
+
 	std::vector<GameObject*>().swap(m_vGameObjects);
+	std::vector<GameObject*>().swap(m_vCreationQueue);
+	std::vector<GameObject*>().swap(m_vDestroyQueue);
+	std::vector<Component*>().swap(m_vComponentCreationQueue);
 	std::vector<ScriptComponent*>().swap(m_vUpdatableComponents);
 	std::vector<RenderComponent*>().swap(m_vRenderComponents);
 }

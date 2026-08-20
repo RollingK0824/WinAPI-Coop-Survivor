@@ -28,17 +28,25 @@ bool NetworkManager::Initialize() {
 void NetworkManager::Release() {
 	GUISystem::GetInstance()->UnRegisterPanel(this);
 
+	if (m_Role == NetRole::CLIENT && m_bConnected && m_Socket != INVALID_SOCKET) {
+		ClientDisconnPacket disconnPacket;
+		disconnPacket.header.type = PacketType::CLIENT_DISCONN;
+		disconnPacket.header.size = sizeof(ClientDisconnPacket);
+		disconnPacket.disconnectedNetID = m_MyNetID;
+		SendPacket(&disconnPacket, sizeof(ClientDisconnPacket));
+	}
+
+	StopNetwork();
+
+	WSACleanup();
+	m_networkObjects.clear();
+	m_ConnectedClients.clear();
+}
+
+void NetworkManager::StopNetwork() {
 	m_bNetworkThreadRunning = false;
 
 	if (m_Socket != INVALID_SOCKET) {
-		if (m_Role == NetRole::CLIENT && m_bConnected) {
-			ClientDisconnPacket disconnPacket;
-			disconnPacket.header.type = PacketType::CLIENT_DISCONN;
-			disconnPacket.header.size = sizeof(ClientDisconnPacket);
-			disconnPacket.disconnectedNetID = m_MyNetID;
-			SendPacket(&disconnPacket, sizeof(ClientDisconnPacket));
-		}
-
 		closesocket(m_Socket);
 		m_Socket = INVALID_SOCKET;
 	}
@@ -47,12 +55,11 @@ void NetworkManager::Release() {
 		m_networkThread.join();
 	}
 
-	WSACleanup();
 	m_Role = NetRole::NONE;
 	m_bConnected = false;
-	m_networkObjects.clear();
-	m_ConnectedClients.clear();
-	
+	m_connRetryTimer = 0.0f;
+	m_connTimeoutTimer = 0.0f;
+
 	{
 		std::lock_guard<std::mutex> lock(m_queueMutex);
 		m_incomingPacketQueue.clear();
@@ -60,6 +67,8 @@ void NetworkManager::Release() {
 }
 
 bool NetworkManager::StartHost(int port) {
+	StopNetwork();
+
 	m_Socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (m_Socket == INVALID_SOCKET) {
 		std::cerr << "Socket creation failed: " << WSAGetLastError() << std::endl;
@@ -70,6 +79,7 @@ bool NetworkManager::StartHost(int port) {
 	if (ioctlsocket(m_Socket, FIONBIO, &mode) != 0) {
 		std::cerr << "ioctlsocket failed: " << WSAGetLastError() << std::endl;
 		closesocket(m_Socket);
+		m_Socket = INVALID_SOCKET;
 		return false;
 	}
 
@@ -81,6 +91,7 @@ bool NetworkManager::StartHost(int port) {
 	if (::bind(m_Socket, (sockaddr*)&localAddr, sizeof(localAddr)) == SOCKET_ERROR) {
 		std::cerr << "Bind failed: " << WSAGetLastError() << std::endl;
 		closesocket(m_Socket);
+		m_Socket = INVALID_SOCKET;
 		return false;
 	}
 
@@ -108,15 +119,14 @@ bool NetworkManager::StartHost(int port) {
 	std::cout << "Host started on port " << port << std::endl;
 
 	m_bNetworkThreadRunning = true;
-	if (m_networkThread.joinable()) {
-		m_networkThread.join();
-	}
 	m_networkThread = std::thread(&NetworkManager::NetworkThreadLoop, this);
 
 	return true;
 }
 
 bool NetworkManager::ConnectToHost(const std::string& ip, int port) {
+	StopNetwork();
+
 	m_Socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (m_Socket == INVALID_SOCKET) {
 		std::cerr << "Socket creation failed: " << WSAGetLastError() << std::endl;
@@ -127,6 +137,7 @@ bool NetworkManager::ConnectToHost(const std::string& ip, int port) {
 	if (ioctlsocket(m_Socket, FIONBIO, &mode) != 0) {
 		std::cerr << "ioctlsocket failed: " << WSAGetLastError() << std::endl;
 		closesocket(m_Socket);
+		m_Socket = INVALID_SOCKET;
 		return false;
 	}
 
@@ -138,6 +149,7 @@ bool NetworkManager::ConnectToHost(const std::string& ip, int port) {
 	if (::bind(m_Socket, (sockaddr*)&localAddr, sizeof(localAddr)) == SOCKET_ERROR) {
 		std::cerr << "Client socket bind failed: " << WSAGetLastError() << std::endl;
 		closesocket(m_Socket);
+		m_Socket = INVALID_SOCKET;
 		return false;
 	}
 
@@ -148,6 +160,7 @@ bool NetworkManager::ConnectToHost(const std::string& ip, int port) {
 	m_Role = NetRole::CLIENT;
 	m_bConnected = false;
 	m_connRetryTimer = 0.0f;
+	m_connTimeoutTimer = 0.0f;
 
 	PacketHeader connPacket;
 	connPacket.type = PacketType::CLIENT_CONN_REQ;
@@ -157,9 +170,6 @@ bool NetworkManager::ConnectToHost(const std::string& ip, int port) {
 	std::cout << "Sent connection request to Host " << ip << ":" << port << std::endl;
 
 	m_bNetworkThreadRunning = true;
-	if (m_networkThread.joinable()) {
-		m_networkThread.join();
-	}
 	m_networkThread = std::thread(&NetworkManager::NetworkThreadLoop, this);
 
 	return true;
@@ -172,6 +182,22 @@ void NetworkManager::Update(float dt) {
 
 	if (m_Role == NetRole::CLIENT && !m_bConnected)
 	{
+		m_connTimeoutTimer += dt;
+		if (m_connTimeoutTimer >= CONN_TIMEOUT)
+		{
+			std::cout << "[NetworkManager] Connection timed out (" << CONN_TIMEOUT << "s). Stopping retry." << std::endl;
+			m_connTimeoutTimer = 0.0f;
+			m_connRetryTimer = 0.0f;
+			m_bConnected = false;
+			m_Role = NetRole::NONE;
+
+			if (m_onConnResultCallback)
+			{
+				m_onConnResultCallback(ConnResultCode::REJECTED);
+			}
+			return;
+		}
+
 		m_connRetryTimer += dt;
 		if (m_connRetryTimer >= 0.5f)
 		{
@@ -185,7 +211,6 @@ void NetworkManager::Update(float dt) {
 			std::cout << "Retrying connection to Host..." << std::endl;
 		}
 	}
-
 }
 
 void NetworkManager::FixedUpdate(float fixedDt) {
@@ -456,6 +481,10 @@ void NetworkManager::HandlePacket(const char* buffer, int size, const sockaddr_i
 		if (resPkt->resultCode != ConnResultCode::SUCCESS)
 		{
 			m_bConnected = false;
+			m_Role = NetRole::NONE;
+			m_connRetryTimer = 0.0f;
+			m_connTimeoutTimer = 0.0f;
+
 			std::cout << "[NetworkManager] Connection failed. ResultCode: " << static_cast<int>(resPkt->resultCode) << std::endl;
 			if (m_onConnResultCallback)
 			{
@@ -471,6 +500,8 @@ void NetworkManager::HandlePacket(const char* buffer, int size, const sockaddr_i
 		const WelcomePacket* welcome = (const WelcomePacket*)buffer;
 		m_MyNetID = welcome->assignedNetID;
 		m_bConnected = true;
+		m_connRetryTimer = 0.0f;
+		m_connTimeoutTimer = 0.0f;
 
 		RandomManager::GetInstance()->SetSharedSeed(welcome->randomSeed);
 

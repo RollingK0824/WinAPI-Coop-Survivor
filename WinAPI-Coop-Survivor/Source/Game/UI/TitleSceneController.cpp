@@ -2,11 +2,11 @@
 #include "TitleSceneController.h"
 #include "Engine/Core/ComponentRegister.h"
 #include "Engine/Network/NetworkManager.h"
+#include "Engine/Manager/SceneManager.h"
 #include "Engine/Framework/Scene.h"
 #include "Engine/Framework/GameObject.h"
 #include "Engine/Framework/Components/UI/UIButtonComponent.h"
-#include "Game/UI/HostPopupController.h"
-#include "Game/UI/JoinPopupController.h"
+#include "Engine/Framework/Components/UI/UIInputFieldComponent.h"
 #include "Game/UI/ErrorPopupController.h"
 
 static ComponentRegistrar<TitleSceneController> registrar(EngineKey::CustomComponent::TitleSceneController.data());
@@ -14,11 +14,10 @@ static ComponentRegistrar<TitleSceneController> registrar(EngineKey::CustomCompo
 TitleSceneController::TitleSceneController(GameObject* owner, TransformComponent* transform)
 	: ScriptComponent(owner, transform)
 {
+	ExposeComponent("IP InputField", &ip_InputField);
 	ExposeComponent("Host Button", &host_Btn);
 	ExposeComponent("Join Button", &join_Btn);
 	ExposeComponent("Exit Button", &exit_Btn);
-	ExposeComponent("Host Popup Controller", &hostPopup_Ctrl);
-	ExposeComponent("Join Popup Controller", &joinPopup_Ctrl);
 	ExposeComponent("Error Popup Controller", &errorPopup_Ctrl);
 }
 
@@ -43,53 +42,62 @@ void TitleSceneController::Start()
 		exit_Btn->SetOnClick([this]() { OnClickExitBtn(); });
 	}
 
-	if (pScene)
+	if (errorPopup_Ctrl == nullptr && pScene != nullptr)
 	{
-		if (!hostPopup_Ctrl)
+		for (auto* obj : pScene->GetGameObjects())
 		{
-			if (GameObject* hostObj = pScene->FindGameObjectByName("HostPopup_BG"))
+			if (obj)
 			{
-				hostPopup_Ctrl = hostObj->GetComponent<HostPopupController>();
-			}
-		}
-
-		if (!joinPopup_Ctrl)
-		{
-			if (GameObject* joinObj = pScene->FindGameObjectByName("JoinPopup_BG"))
-			{
-				joinPopup_Ctrl = joinObj->GetComponent<JoinPopupController>();
-			}
-		}
-
-		if (!errorPopup_Ctrl)
-		{
-			if (GameObject* errObj = pScene->FindGameObjectByName("ErrorPopup_BG"))
-			{
-				errorPopup_Ctrl = errObj->GetComponent<ErrorPopupController>();
+				auto* ctrl = obj->GetComponent<ErrorPopupController>();
+				if (ctrl)
+				{
+					errorPopup_Ctrl = ctrl;
+					break;
+				}
 			}
 		}
 	}
 
 	NetworkManager::GetInstance()->SetOnConnResultCallback([this](ConnResultCode code) {
-		if (code == ConnResultCode::ROOM_FULL)
+		if (code == ConnResultCode::SUCCESS)
+		{
+			SceneManager::GetInstance()->LoadSceneFromFile("Resources/Scenes/InGameScene.scene");
+		}
+		else if (code == ConnResultCode::ROOM_FULL)
 		{
 			ShowErrorPopup(L"접속 실패: 서버/세션 정원이 초과되었습니다 (Room Full!)");
 		}
 		else if (code == ConnResultCode::REJECTED || code == ConnResultCode::INVALID_VERSION)
 		{
-			ShowErrorPopup(L"접속 실패: 호스트 연결이 거절되었습니다.");
+			ShowErrorPopup(L"접속 실패: 호스트 연결에 실패했습니다 (서버 응답 없음 / 거절됨)");
 		}
 	});
 }
 
 void TitleSceneController::OnClickHostBtn()
 {
-	ShowHostPopup();
+	NetworkManager::GetInstance()->StartHost(9000);
+	SceneManager::GetInstance()->LoadSceneFromFile("Resources/Scenes/InGameScene.scene");
 }
 
 void TitleSceneController::OnClickJoinBtn()
 {
-	ShowJoinPopup();
+	std::string targetIP = "127.0.0.1";
+	if (ip_InputField != nullptr)
+	{
+		std::string input = ip_InputField->GetText();
+		if (!input.empty())
+		{
+			targetIP = input;
+		}
+	}
+
+	if (errorPopup_Ctrl)
+	{
+		errorPopup_Ctrl->ShowConnecting(L"호스트에 접속 중입니다...");
+	}
+
+	NetworkManager::GetInstance()->ConnectToHost(targetIP, 9000);
 }
 
 void TitleSceneController::OnClickExitBtn()
@@ -97,26 +105,14 @@ void TitleSceneController::OnClickExitBtn()
 	PostQuitMessage(0);
 }
 
-void TitleSceneController::ShowHostPopup()
-{
-	if (hostPopup_Ctrl)
-	{
-		hostPopup_Ctrl->ShowPopup(true);
-	}
-}
-
-void TitleSceneController::ShowJoinPopup()
-{
-	if (joinPopup_Ctrl)
-	{
-		joinPopup_Ctrl->ShowPopup(true);
-	}
-}
-
 void TitleSceneController::ShowErrorPopup(const std::wstring& message)
 {
 	if (errorPopup_Ctrl)
 	{
 		errorPopup_Ctrl->ShowError(message);
+	}
+	else
+	{
+		MessageBoxW(nullptr, message.c_str(), L"Connection Error", MB_OK | MB_ICONERROR);
 	}
 }
