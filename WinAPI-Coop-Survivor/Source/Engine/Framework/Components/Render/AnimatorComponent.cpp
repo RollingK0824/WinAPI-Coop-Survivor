@@ -110,6 +110,7 @@ void AnimatorComponent::Update(float dt)
 		m_AccTime -= m_pCurrentClip->frameDuration;
 		m_CurrentFrameIdx++;
 
+		bool bFinished = false;
 		if (m_CurrentFrameIdx >= static_cast<int>(m_pCurrentClip->frames.size()))
 		{
 			if (m_pCurrentClip->bIsLoop)
@@ -120,11 +121,18 @@ void AnimatorComponent::Update(float dt)
 			{
 				m_CurrentFrameIdx = static_cast<int>(m_pCurrentClip->frames.size()) - 1;
 				m_bIsPlaying = false;
+				bFinished = true;
 			}
 		}
 
 		const Sprite& currentFrame = m_pCurrentClip->frames[m_CurrentFrameIdx];
 		m_pSpriteRenderer->SetAsSprite(currentFrame);
+
+		if (bFinished && m_onAnimationFinished)
+		{
+			auto cb = m_onAnimationFinished;
+			cb(m_currentClipName);
+		}
 	}
 }
 

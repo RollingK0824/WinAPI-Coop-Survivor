@@ -106,8 +106,13 @@ void ColliderComponent::RebuildShape()
 	shapeDef.enableContactEvents = true;
 	shapeDef.enableSensorEvents = true;
 	shapeDef.filter = GetFilter();
+	shapeDef.userData = this;
 
 	m_ShapeId = CreateShape(m_BodyId, &shapeDef);
+	if (b2Shape_IsValid(m_ShapeId))
+	{
+		b2Shape_SetUserData(m_ShapeId, this);
+	}
 
 	if (GetBodyType() == b2_dynamicBody)
 	{

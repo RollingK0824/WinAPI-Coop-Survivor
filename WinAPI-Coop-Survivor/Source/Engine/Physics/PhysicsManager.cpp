@@ -59,6 +59,28 @@ void PhysicsManager::Update(float dt)
 {
 }
 
+static ColliderComponent* GetColliderFromShapeId(b2ShapeId shapeId)
+{
+	if (!b2Shape_IsValid(shapeId)) return nullptr;
+	ColliderComponent* col = reinterpret_cast<ColliderComponent*>(b2Shape_GetUserData(shapeId));
+	if (col) return col;
+
+	b2BodyId bodyId = b2Shape_GetBody(shapeId);
+	if (b2Body_IsValid(bodyId))
+	{
+		void* bodyUserData = b2Body_GetUserData(bodyId);
+		if (bodyUserData)
+		{
+			Component* comp = reinterpret_cast<Component*>(bodyUserData);
+			if (comp)
+			{
+				col = comp->gameObject.GetComponent<ColliderComponent>();
+			}
+		}
+	}
+	return col;
+}
+
 void PhysicsManager::ProcessContanctEvents()
 {
 	b2ContactEvents contactEvents = b2World_GetContactEvents(m_worldId);
@@ -66,11 +88,8 @@ void PhysicsManager::ProcessContanctEvents()
 	{
 		b2ContactBeginTouchEvent event = contactEvents.beginEvents[i];
 
-		b2BodyId bodyA = b2Shape_GetBody(event.shapeIdA);
-		b2BodyId bodyB = b2Shape_GetBody(event.shapeIdB);
-
-		ColliderComponent* colA = reinterpret_cast<ColliderComponent*>(b2Body_GetUserData(bodyA));
-		ColliderComponent* colB = reinterpret_cast<ColliderComponent*>(b2Body_GetUserData(bodyB));
+		ColliderComponent* colA = GetColliderFromShapeId(event.shapeIdA);
+		ColliderComponent* colB = GetColliderFromShapeId(event.shapeIdB);
 
 		if (colA && colB 
 			&& colA->IsEnabled() && colB->IsEnabled()
@@ -86,11 +105,8 @@ void PhysicsManager::ProcessContanctEvents()
 	{
 		b2SensorBeginTouchEvent event = sensorEvents.beginEvents[i];
 
-		b2BodyId bodyVisitor = b2Shape_GetBody(event.visitorShapeId);
-		b2BodyId bodySensor = b2Shape_GetBody(event.sensorShapeId);
-
-		ColliderComponent* colVisitor = reinterpret_cast<ColliderComponent*>(b2Body_GetUserData(bodyVisitor));
-		ColliderComponent* colSensor = reinterpret_cast<ColliderComponent*>(b2Body_GetUserData(bodySensor));
+		ColliderComponent* colVisitor = GetColliderFromShapeId(event.visitorShapeId);
+		ColliderComponent* colSensor = GetColliderFromShapeId(event.sensorShapeId);
 
 		if (colVisitor && colSensor 
 			&& colVisitor->IsEnabled() && colSensor->IsEnabled()
@@ -276,8 +292,7 @@ struct OverlapContext
 
 static bool OverlapCallback(b2ShapeId shapeId, void* context)
 {
-	b2BodyId bodyId = b2Shape_GetBody(shapeId);
-	ColliderComponent* col = reinterpret_cast<ColliderComponent*>(b2Body_GetUserData(bodyId));
+	ColliderComponent* col = GetColliderFromShapeId(shapeId);
 	if (col && col->IsEnabled() && col->gameObject.IsActive())
 	{
 		OverlapContext* ctx = static_cast<OverlapContext*>(context);

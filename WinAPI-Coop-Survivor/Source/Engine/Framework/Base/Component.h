@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Engine/Core/Define.h"
 #include "Engine/Core/ExposedProperty.h"
 
@@ -114,6 +114,7 @@ public:
 	void ExposeVariable(const std::string& name, std::vector<std::string>* var) { m_vProperties.push_back({ name, PropType::StringVector, var }); }
 	void ExposeTexture(const std::string& name, std::wstring* textureKey) { m_vProperties.push_back({ name, PropType::Texture, textureKey }); }
 	void ExposeTexture(const std::string& name, std::string* textureKey) { m_vProperties.push_back({ name, PropType::String, textureKey }); }
+	void ExposeAnimClip(const std::string& name, std::string* animKey) { m_vProperties.push_back({ name, PropType::AnimClip, animKey }); }
 
 	template<typename T>
 	void ExposeComponent(const std::string& name, T** componentPtr);

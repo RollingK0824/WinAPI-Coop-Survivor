@@ -43,6 +43,16 @@ public:
 
 	AnimationClip* GetCurrentClip() const { return m_pCurrentClip; }
 
+	void SetOnAnimationFinished(std::function<void(const std::wstring&)> callback) { m_onAnimationFinished = callback; }
+	void SetOnAnimationFinished(std::function<void()> callback)
+	{
+		if (callback)
+			m_onAnimationFinished = [callback](const std::wstring&) { callback(); };
+		else
+			m_onAnimationFinished = nullptr;
+	}
+	void SetOnAnimationFinished(std::nullptr_t) { m_onAnimationFinished = nullptr; }
+
 	virtual std::string_view GetComponentType() const override { return EngineKey::Component::Animator; }
 
 private:
@@ -59,4 +69,6 @@ private:
 	float m_AccTime = 0.0f;
 	float m_Speed = 1.0f;
 	bool m_bIsPlaying = false;
+
+	std::function<void(const std::wstring&)> m_onAnimationFinished = nullptr;
 };

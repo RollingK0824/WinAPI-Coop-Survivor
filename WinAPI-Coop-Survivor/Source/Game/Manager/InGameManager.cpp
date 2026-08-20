@@ -179,7 +179,7 @@ void InGameManager::Start()
 						pMonster = spawner->GetMonsterByNetID(monsterNetID);
 						if (!pMonster)
 						{
-							pMonster = spawner->SpawnMonsterClient(monsterNetID, targetPos);
+							pMonster = spawner->SpawnMonsterClient(monsterNetID, snapshot->monsters[i].monsterAssetID, targetPos);
 						}
 						else
 						{
@@ -214,7 +214,15 @@ void InGameManager::Start()
 							auto* spawner = obj->GetComponent<MonsterSpawner>();
 							if (spawner)
 							{
-								spawner->DespawnMonsterByNetID(killPkt->monsterNetID);
+								Monster* pMonster = spawner->GetMonsterByNetID(killPkt->monsterNetID);
+								if (pMonster)
+								{
+									pMonster->ClientDie();
+								}
+								else
+								{
+									spawner->DespawnMonsterByNetID(killPkt->monsterNetID);
+								}
 								break;
 							}
 						}

@@ -1,0 +1,13 @@
+﻿{
+    "Type": "MonsterSO",
+    "AssetID": 103,
+    "AssetName": "Monster_Mummy",
+    "MaxHP": 250.0,
+    "MoveSpeed": 40.0,
+    "AttackDamage": 20.0,
+    "ColliderRadius": 20.0,
+    "ExpAmount": 25,
+    "SpriteKey": "enemies/Mummy_i01.png",
+    "AnimClipKey": "Mummy_Run",
+    "DieClipKey": "Mummy_Die"
+}

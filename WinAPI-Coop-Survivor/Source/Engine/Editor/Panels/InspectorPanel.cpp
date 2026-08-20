@@ -592,6 +592,19 @@ void InspectorPanel::DrawScriptableObjectData()
 		}
 		break;
 
+		case PropType::AnimClip:
+		{
+			std::string* pAnimStr = static_cast<std::string*>(prop.data);
+			std::string btnLabel = pAnimStr->empty() ? "Select Clip..." : *pAnimStr;
+			std::string popupId = "AnimClipPickerPopup_" + prop.name;
+			if (ImGui::Button(btnLabel.c_str(), ImVec2(140.0f, 25.0f)))
+			{
+				ImGui::OpenPopup(popupId.c_str());
+			}
+			DrawAnimClipPickerPopup(popupId.c_str(), pAnimStr);
+		}
+		break;
+
 		case PropType::Asset:
 			DrawAssetComboWithSearch(prop);
 			break;
@@ -1008,6 +1021,19 @@ void InspectorPanel::DrawComponents(GameObject* pObj)
 				{
 					std::wstring* wKey = static_cast<std::wstring*>(prop.data);
 					DrawTexturePickerWithSearch(prop.name, wKey, comp);
+				}
+				break;
+
+				case PropType::AnimClip:
+				{
+					std::string* pAnimStr = static_cast<std::string*>(prop.data);
+					std::string btnLabel = pAnimStr->empty() ? "Select Clip..." : *pAnimStr;
+					std::string popupId = "AnimClipPickerPopup_" + prop.name;
+					if (ImGui::Button(btnLabel.c_str(), ImVec2(140.0f, 25.0f)))
+					{
+						ImGui::OpenPopup(popupId.c_str());
+					}
+					DrawAnimClipPickerPopup(popupId.c_str(), pAnimStr);
 				}
 				break;
 

@@ -14,6 +14,8 @@
 #include "Engine/Network/NetworkManager.h"
 #include "Engine/Framework/Components/Network/NetworkIdentity.h"
 #include "Engine/Framework/Components/Render/SpriteRendererComponent.h"
+#include "Engine/Framework/Components/Render/AnimatorComponent.h"
+#include "Engine/Manager/ResourceManager.h"
 
 static ComponentRegistrar<Monster> registrar(EngineKey::CustomComponent::Monster.data());
 
@@ -87,13 +89,67 @@ void Monster::Init(uint32 spawnSeqId, MonsterSO* monsterData, const Vector2& spa
 	m_state = EMonsterState::Chase;
 	m_pSpawner = spawner;
 
+	if (!m_pCollider.IsValid())
+	{
+		m_pCollider = gameObject.GetComponent<CircleCollider>();
+	}
+	if (!m_pSpriteRenderer.IsValid())
+	{
+		m_pSpriteRenderer = gameObject.GetComponent<SpriteRendererComponent>();
+	}
+
 	if (monsterData)
 	{
+		m_pMonsterSO = monsterData;
+		m_monsterAssetID = monsterData->GetAssetID();
 		m_maxHP = monsterData->GetMaxHP();
 		m_currentHP = m_maxHP;
 		m_moveSpeed = monsterData->GetMoveSpeed();
 		m_attackDamage = monsterData->GetAttackDamage();
 		m_expAmount = monsterData->GetExpAmount();
+
+		if (m_pCollider.IsValid())
+		{
+			m_pCollider->SetRadius(monsterData->GetColliderRadius());
+		}
+
+		AnimatorComponent* pAnim = gameObject.GetComponent<AnimatorComponent>();
+		if (pAnim)
+		{
+			pAnim->SetOnAnimationFinished(nullptr);
+		}
+
+		const std::string& animKey = monsterData->GetAnimClipKey();
+		if (!animKey.empty() && pAnim)
+		{
+			std::wstring wAnimKey(animKey.begin(), animKey.end());
+			const AnimationClip* pClip = ResourceManager::GetInstance()->GetAnimationClip(wAnimKey);
+			if (pClip)
+			{
+				pAnim->AddClip(*pClip);
+			}
+
+			const std::string& dieKey = monsterData->GetDieClipKey();
+			if (!dieKey.empty())
+			{
+				std::wstring wDieKey(dieKey.begin(), dieKey.end());
+				const AnimationClip* pDieClip = ResourceManager::GetInstance()->GetAnimationClip(wDieKey);
+				if (pDieClip)
+				{
+					pAnim->AddClip(*pDieClip);
+				}
+			}
+
+			pAnim->Play(wAnimKey, true);
+		}
+		else if (m_pSpriteRenderer.IsValid() && !monsterData->GetSpriteKey().empty())
+		{
+			if (pAnim)
+			{
+				pAnim->Stop();
+			}
+			m_pSpriteRenderer->SetSpriteKey(monsterData->GetSpriteKey());
+		}
 	}
 	else
 	{
@@ -109,25 +165,30 @@ void Monster::Init(uint32 spawnSeqId, MonsterSO* monsterData, const Vector2& spa
 
 	transform.SetPosition(spawnPos);
 
-	if (m_pCollider.IsValid() && b2Body_IsValid(m_pCollider->GetBodyId()))
+	if (m_pCollider.IsValid())
 	{
-		NetRole role = NetworkManager::GetInstance()->GetRole();
-		if (role == NetRole::CLIENT)
-		{
-			b2Body_SetType(m_pCollider->GetBodyId(), b2_kinematicBody);
-			m_pCollider->m_bIsSensor = true;
-			m_pCollider->RebuildShape();
-		}
-		else
-		{
-			b2Body_SetType(m_pCollider->GetBodyId(), b2_dynamicBody);
-			m_pCollider->m_bIsSensor = false;
-			m_pCollider->RebuildShape();
-		}
+		m_pCollider->SetFilter(PhysicsLayer::Monster, PhysicsLayer::All);
 
-		b2Vec2 b2SpawnPos = { PixelToMeter(spawnPos.x), PixelToMeter(spawnPos.y) };
-		b2Body_SetTransform(m_pCollider->GetBodyId(), b2SpawnPos, b2Rot_identity);
-		b2Body_SetLinearVelocity(m_pCollider->GetBodyId(), { 0.0f, 0.0f });
+		if (b2Body_IsValid(m_pCollider->GetBodyId()))
+		{
+			NetRole role = NetworkManager::GetInstance()->GetRole();
+			if (role == NetRole::CLIENT)
+			{
+				b2Body_SetType(m_pCollider->GetBodyId(), b2_kinematicBody);
+				m_pCollider->m_bIsSensor = true;
+				m_pCollider->RebuildShape();
+			}
+			else
+			{
+				b2Body_SetType(m_pCollider->GetBodyId(), b2_dynamicBody);
+				m_pCollider->m_bIsSensor = false;
+				m_pCollider->RebuildShape();
+			}
+
+			b2Vec2 b2SpawnPos = { PixelToMeter(spawnPos.x), PixelToMeter(spawnPos.y) };
+			b2Body_SetTransform(m_pCollider->GetBodyId(), b2SpawnPos, b2Rot_identity);
+			b2Body_SetLinearVelocity(m_pCollider->GetBodyId(), { 0.0f, 0.0f });
+		}
 	}
 }
 
@@ -173,7 +234,7 @@ void Monster::Update(float dt)
 				}
 				if (m_pSpriteRenderer.IsValid())
 				{
-					m_pSpriteRenderer->SetFlip(moveDir.x < 0.0f, false);
+					m_pSpriteRenderer->SetFlip(moveDir.x > 0.0f, false);
 				}
 			}
 		}
@@ -283,7 +344,7 @@ void Monster::MoveTowardsTarget(float fixedDt)
 	}
 	if (m_pSpriteRenderer.IsValid() && std::abs(dir.x) > 0.01f)
 	{
-		m_pSpriteRenderer->SetFlip(dir.x < 0.0f, false);
+		m_pSpriteRenderer->SetFlip(dir.x > 0.0f, false);
 	}
 
 	if (m_pCollider.IsValid() && b2Body_IsValid(m_pCollider->GetBodyId()))
@@ -316,8 +377,70 @@ void Monster::TakeDamage(float damage, GameObject* pAttacker)
 
 void Monster::OnDie()
 {
-	NetRole role = NetworkManager::GetInstance()->GetRole();
+	m_state = EMonsterState::Dead;
 
+	if (m_pCollider.IsValid())
+	{
+		m_pCollider->SetFilter(PhysicsLayer::None, PhysicsLayer::None);
+		if (b2Body_IsValid(m_pCollider->GetBodyId()))
+		{
+			b2Body_SetLinearVelocity(m_pCollider->GetBodyId(), { 0.0f, 0.0f });
+		}
+	}
+
+	AnimatorComponent* pAnim = gameObject.GetComponent<AnimatorComponent>();
+	if (m_pMonsterSO.IsValid() && !m_pMonsterSO->GetDieClipKey().empty() && pAnim)
+	{
+		std::wstring wDieKey(m_pMonsterSO->GetDieClipKey().begin(), m_pMonsterSO->GetDieClipKey().end());
+		pAnim->Play(wDieKey, true);
+		pAnim->SetOnAnimationFinished([this](const std::wstring& clipName) {
+			DespawnSelf();
+		});
+	}
+	else
+	{
+		DespawnSelf();
+	}
+}
+
+void Monster::ClientDie()
+{
+	if (m_state == EMonsterState::Dead) return;
+	m_state = EMonsterState::Dead;
+
+	if (m_pCollider.IsValid())
+	{
+		m_pCollider->SetFilter(PhysicsLayer::None, PhysicsLayer::None);
+		if (b2Body_IsValid(m_pCollider->GetBodyId()))
+		{
+			b2Body_SetLinearVelocity(m_pCollider->GetBodyId(), { 0.0f, 0.0f });
+		}
+	}
+
+	AnimatorComponent* pAnim = gameObject.GetComponent<AnimatorComponent>();
+	if (m_pMonsterSO.IsValid() && !m_pMonsterSO->GetDieClipKey().empty() && pAnim)
+	{
+		std::wstring wDieKey(m_pMonsterSO->GetDieClipKey().begin(), m_pMonsterSO->GetDieClipKey().end());
+		pAnim->Play(wDieKey, true);
+		pAnim->SetOnAnimationFinished([this](const std::wstring& clipName) {
+			DespawnSelf();
+		});
+	}
+	else
+	{
+		DespawnSelf();
+	}
+}
+
+void Monster::DespawnSelf()
+{
+	AnimatorComponent* pAnim = gameObject.GetComponent<AnimatorComponent>();
+	if (pAnim)
+	{
+		pAnim->SetOnAnimationFinished(nullptr);
+	}
+
+	NetRole role = NetworkManager::GetInstance()->GetRole();
 	if (role == NetRole::HOST)
 	{
 		if (InGameManager* mgr = InGameManager::GetInstance())
@@ -339,11 +462,6 @@ void Monster::OnDie()
 		{
 			mgr->SpawnExpGem(transform.GetPosition(), m_expAmount);
 		}
-	}
-
-	if (m_pCollider.IsValid() && b2Body_IsValid(m_pCollider->GetBodyId()))
-	{
-		b2Body_SetLinearVelocity(m_pCollider->GetBodyId(), { 0.0f, 0.0f });
 	}
 
 	if (m_pSpawner.IsValid())

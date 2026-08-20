@@ -41,10 +41,14 @@ public:
 
 	virtual void TakeDamage(float damage, GameObject* pAttacker = nullptr) override;
 	virtual bool IsDead() const override { return m_state == EMonsterState::Dead; }
+	void ClientDie();
+	void DespawnSelf();
 
 	uint32 GetSpawnSeqID() const { return m_spawnSeqID; }
 	uint16 GetNetID() const { return m_netID; }
 	void SetNetID(uint16 netID) { m_netID = netID; }
+	uint32 GetMonsterAssetID() const { return m_monsterAssetID; }
+	MonsterSO* GetMonsterSO() const { return m_pMonsterSO.Get(); }
 	float GetCurrentHP() const { return m_currentHP; }
 	float GetMaxHP() const { return m_maxHP; }
 	float GetAttackDamage() const { return m_attackDamage; }

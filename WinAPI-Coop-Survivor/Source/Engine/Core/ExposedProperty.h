@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <string>
 #include <vector>
 #include <functional>
@@ -18,6 +18,7 @@ enum class PropType
 	Rect,
 	StringVector,
 	Texture,
+	AnimClip,
 	ObjectRef,
 	Asset
 };

@@ -138,6 +138,7 @@ struct GameStartSignalPacket
 struct MonsterSnapshotData
 {
 	uint16 monsterNetID;
+	uint32 monsterAssetID;
 	Vector2 pos;
 };
 

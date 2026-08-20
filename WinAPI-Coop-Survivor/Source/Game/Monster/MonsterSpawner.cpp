@@ -35,6 +35,43 @@ MonsterSpawner::MonsterSpawner(GameObject* owner, TransformComponent* transform)
 void MonsterSpawner::Start()
 {
 	InitPool(300, 1000);
+	RefreshMonsterSOs();
+}
+
+void MonsterSpawner::RefreshMonsterSOs()
+{
+	m_spawnMonsterSOs.clear();
+	DataManager* dataMgr = DataManager::GetInstance();
+	if (!dataMgr) return;
+
+	if (!m_spawnMonsterAssetIDs.empty())
+	{
+		for (uint32 id : m_spawnMonsterAssetIDs)
+		{
+			auto so = dataMgr->GetMutableMonsterSO(id);
+			if (so)
+			{
+				m_spawnMonsterSOs.push_back(so.get());
+			}
+		}
+	}
+
+	if (m_spawnMonsterSOs.empty())
+	{
+		for (const auto& [id, pSO] : dataMgr->GetAllAssets())
+		{
+			if (auto pMonsterSO = dynamic_cast<MonsterSO*>(pSO.get()))
+			{
+				m_spawnMonsterSOs.push_back(pMonsterSO);
+				m_spawnMonsterAssetIDs.push_back(id);
+			}
+		}
+	}
+
+	if (!m_spawnMonsterSOs.empty())
+	{
+		m_pDefaultMonsterSO = m_spawnMonsterSOs[0];
+	}
 }
 
 void MonsterSpawner::InitPool(size_t defaultCapacity, size_t maxSize)
@@ -122,7 +159,7 @@ void MonsterSpawner::FixedUpdate(float fixedDt)
 
 					if (distSq <= 950.0f * 950.0f)
 					{
-						culledMonsters.push_back({ netID, monsterPos });
+						culledMonsters.push_back({ netID, pMonster->GetMonsterAssetID(), monsterPos });
 					}
 				}
 
@@ -162,10 +199,25 @@ void MonsterSpawner::FixedUpdate(float fixedDt)
 		if (m_activeMonsterCount >= m_maxActiveMonsters)
 			return;
 
+		if (m_spawnMonsterSOs.empty())
+		{
+			RefreshMonsterSOs();
+		}
+
 		for (int i = 0; i < m_spawnCountPerWave; ++i)
 		{
 			Vector2 spawnPos = CalculateDeterministicSpawnPos();
-			SpawnMonster(m_pDefaultMonsterSO.Get(), spawnPos);
+			MonsterSO* pChosenSO = nullptr;
+			if (!m_spawnMonsterSOs.empty())
+			{
+				int randIdx = RandomManager::GetInstance()->GetSharedRandomInt(0, static_cast<int>(m_spawnMonsterSOs.size()) - 1);
+				pChosenSO = m_spawnMonsterSOs[randIdx].Get();
+			}
+			else
+			{
+				pChosenSO = m_pDefaultMonsterSO.Get();
+			}
+			SpawnMonster(pChosenSO, spawnPos);
 		}
 	}
 }
@@ -235,7 +287,7 @@ Monster* MonsterSpawner::SpawnMonster(MonsterSO* monsterData, const Vector2& spa
 	return pMonsterComp;
 }
 
-Monster* MonsterSpawner::SpawnMonsterClient(uint16 netID, const Vector2& spawnPos)
+Monster* MonsterSpawner::SpawnMonsterClient(uint16 netID, uint32 monsterAssetID, const Vector2& spawnPos)
 {
 	GameObject* pMonsterObj = PoolManager::GetInstance()->Spawn<GameObject>(m_prefabKey);
 	if (!pMonsterObj) return nullptr;
@@ -255,7 +307,19 @@ Monster* MonsterSpawner::SpawnMonsterClient(uint16 netID, const Vector2& spawnPo
 	netIdComp->SetNetID(netID);
 	netIdComp->ResetInterpolation(spawnPos);
 
-	pMonsterComp->Init(0, m_pDefaultMonsterSO.Get(), spawnPos, this);
+	MonsterSO* pMonsterSO = nullptr;
+	if (monsterAssetID != 0)
+	{
+		auto soPtr = DataManager::GetInstance()->GetMutableMonsterSO(monsterAssetID);
+		if (soPtr) pMonsterSO = soPtr.get();
+	}
+	if (!pMonsterSO)
+	{
+		if (m_spawnMonsterSOs.empty()) RefreshMonsterSOs();
+		pMonsterSO = m_pDefaultMonsterSO.Get();
+	}
+
+	pMonsterComp->Init(0, pMonsterSO, spawnPos, this);
 
 	m_activeMonsterMap[netID] = pMonsterComp;
 	m_activeMonsterCount++;

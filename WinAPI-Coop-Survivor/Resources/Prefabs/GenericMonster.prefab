@@ -1,6 +1,6 @@
 {
-    "Name": "TempMonster",
-    "InstanceID": 148,
+    "Name": "GenericMonster",
+    "InstanceID": 1249,
     "ParentInstanceID": 0,
     "IsActive": true,
     "Components": [
@@ -32,10 +32,10 @@
                     "b": 1.0,
                     "a": 1.0
                 },
-                "SpriteKey": "Characeter_Green/Character0.png",
+                "SpriteKey": "enemies/Bat2_i01.png",
                 "Size": {
-                    "x": 16.0,
-                    "y": 16.0
+                    "x": 25.0,
+                    "y": 24.0
                 },
                 "Pivot": {
                     "x": 0.5,
@@ -61,12 +61,9 @@
                 "IsEnabled": true,
                 "IsPlaying": true,
                 "CurrentFrameIdx": 0,
-                "PlaySpeed": 1.0,
-                "ClipKeys": [
-                    "Green_Player_Run",
-                    "Green_Player_Die"
-                ],
-                "DefaultPlay": "Green_Player_Run"
+                "PlaySpeed": 0.5,
+                "ClipKeys": [],
+                "DefaultPlay": ""
             }
         },
         {
@@ -83,7 +80,7 @@
                 "FixedRotation": true,
                 "CategoryBits": 4,
                 "MaskBits": -1,
-                "Radius": 0.0
+                "Radius": 14.0
             }
         },
         {
@@ -98,11 +95,11 @@
             "Type": "Monster",
             "Data": {
                 "IsEnabled": true,
-                "MonsterSO": 101,
-                "CurrentHP": 100.0,
-                "MaxHP": 100.0,
-                "MoveSpeed": 120.0,
-                "AttackDamage": 10.0
+                "MonsterSO": 0,
+                "CurrentHP": 50.0,
+                "MaxHP": 50.0,
+                "MoveSpeed": 140.0,
+                "AttackDamage": 5.0
             }
         }
     ]

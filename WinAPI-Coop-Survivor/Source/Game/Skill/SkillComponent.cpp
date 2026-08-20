@@ -166,7 +166,7 @@ GameObject* SkillComponent::FindClosestMonster(float maxRange) const
 		if (!pCol || !pCol->IsEnabled() || !pCol->gameObject.IsActive()) continue;
 
 		Monster* pMonster = pCol->gameObject.GetComponent<Monster>();
-		if (pMonster && !pMonster->IsDead())
+		if (pMonster && !pMonster->IsDead() && pMonster->gameObject.IsActive())
 		{
 			Vector2 mPos = pMonster->transform.GetPosition();
 			float distSq = (mPos - myPos).LengthSquared();
@@ -177,6 +177,31 @@ GameObject* SkillComponent::FindClosestMonster(float maxRange) const
 			}
 		}
 	}
+
+	if (!pClosestObj)
+	{
+		Scene* pScene = gameObject.GetOwnerScene();
+		if (pScene)
+		{
+			for (auto* obj : pScene->GetGameObjects())
+			{
+				if (!obj || !obj->IsActive() || obj->IsDead()) continue;
+
+				Monster* pMonster = obj->GetComponent<Monster>();
+				if (pMonster && !pMonster->IsDead() && pMonster->gameObject.IsActive())
+				{
+					Vector2 mPos = pMonster->transform.GetPosition();
+					float distSq = (mPos - myPos).LengthSquared();
+					if (distSq < minDistSq)
+					{
+						minDistSq = distSq;
+						pClosestObj = obj;
+					}
+				}
+			}
+		}
+	}
+
 	return pClosestObj;
 }
 
