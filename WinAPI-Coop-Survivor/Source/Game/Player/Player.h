@@ -59,12 +59,12 @@ public:
 
 
 private:
-	void CreateTestHPBar();
+	void CreateHPBarFromPrefab();
 	void UpdateHPBar();
 	void UpdateExpGemMagnet(float dt);
 
 private:
-	float m_Speed = 1000.0f;
+	float m_Speed = 100.0f;
 	Vector2 m_facingDir = { 1.0f, 0.0f };
 	Vector2 m_prevPos = { 0.0f, 0.0f };
 	bool m_bIsMoving = false;
@@ -78,7 +78,6 @@ private:
 	float m_iFrameTimer = 0.0f;
 	float m_iFrameDuration = 0.3f;
 
-	ObserverPtr<GameObject> m_pHpBarBgObj;
-	ObserverPtr<GameObject> m_pHpBarFillObj;
+	ObserverPtr<GameObject> m_pHpBarRootObj;
 	ObserverPtr<class UIImageComponent> m_pHpBarFillImg;
 };
