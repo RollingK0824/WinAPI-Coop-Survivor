@@ -131,8 +131,8 @@
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>
-      </Command>
+      <Command>xcopy /y /d "C:\vcpkg\installed\x64-windows\debug\bin\box2dd.dll" "$(OutDir)"
+xcopy /y /d "C:\vcpkg\installed\x64-windows\debug\bin\box2dd.dll" "$(ProjectDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -155,8 +155,8 @@
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>
-      </Command>
+      <Command>xcopy /y /d "C:\vcpkg\installed\x64-windows\bin\box2d.dll" "$(OutDir)"
+xcopy /y /d "C:\vcpkg\installed\x64-windows\bin\box2d.dll" "$(ProjectDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
