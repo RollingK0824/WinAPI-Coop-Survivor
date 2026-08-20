@@ -24,7 +24,7 @@ void ErrorPopupController::Start()
 	}
 }
 
-void ErrorPopupController::ShowError(const std::wstring& message)
+void ErrorPopupController::ShowMessage(const std::wstring& message, bool showOkButton)
 {
 	if (messageText_Comp)
 	{
@@ -32,15 +32,26 @@ void ErrorPopupController::ShowError(const std::wstring& message)
 	}
 
 	gameObject.SetActive(true);
-	if (ok_Btn) ok_Btn->gameObject.SetActive(true);
-	if (messageText_Comp) messageText_Comp->gameObject.SetActive(true);
+
+	if (ok_Btn)
+	{
+		ok_Btn->gameObject.SetActive(showOkButton);
+	}
+}
+
+void ErrorPopupController::ShowError(const std::wstring& message)
+{
+	ShowMessage(message, true);
+}
+
+void ErrorPopupController::ShowConnecting(const std::wstring& message)
+{
+	ShowMessage(message, false);
 }
 
 void ErrorPopupController::HidePopup()
 {
 	gameObject.SetActive(false);
-	if (ok_Btn) ok_Btn->gameObject.SetActive(false);
-	if (messageText_Comp) messageText_Comp->gameObject.SetActive(false);
 }
 
 void ErrorPopupController::OnClickOK()

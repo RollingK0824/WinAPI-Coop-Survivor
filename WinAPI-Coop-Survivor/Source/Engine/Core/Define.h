@@ -93,8 +93,6 @@ namespace EngineKey
 		constexpr std::string_view AoEComponent = "AoEComponent";
 		constexpr std::string_view ExpGem = "ExpGem";
 		constexpr std::string_view ErrorPopupController = "ErrorPopupController";
-		constexpr std::string_view HostPopupController = "HostPopupController";
-		constexpr std::string_view JoinPopupController = "JoinPopupController";
 	}
 
 	namespace ScriptableObject

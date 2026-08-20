@@ -20,7 +20,9 @@ public:
 		return EngineKey::CustomComponent::ErrorPopupController;
 	}
 
+	void ShowMessage(const std::wstring& message, bool showOkButton = true);
 	void ShowError(const std::wstring& message);
+	void ShowConnecting(const std::wstring& message = L"호스트에 접속 중입니다...");
 	void HidePopup();
 
 	UIButtonComponent* ok_Btn = nullptr;

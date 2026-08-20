@@ -20,7 +20,6 @@ void SceneManager::Release()
 	{
 		if (pair.second != nullptr)
 		{
-			pair.second->Release();
 			delete pair.second;
 		}
 	}

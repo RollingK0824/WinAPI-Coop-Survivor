@@ -39,6 +39,7 @@ public:
 
     bool StartHost(int port);
     bool ConnectToHost(const std::string& ip, int port);
+    void StopNetwork();
     
     void SendPacket(const void* data, int size, const sockaddr_in* targetAddr = nullptr);
     void SendReliablePacket(const void* data, int size, const sockaddr_in* targetAddr = nullptr);
@@ -108,4 +109,6 @@ private:
 
     float m_stateBroadcastTimer = 0.0f;
     float m_connRetryTimer = 0.0f;
+    float m_connTimeoutTimer = 0.0f;
+    static constexpr float CONN_TIMEOUT = 3.0f;
 };
