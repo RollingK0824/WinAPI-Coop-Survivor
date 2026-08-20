@@ -16,6 +16,7 @@
 #include "Game/Monster/Monster.h"
 #include "Game/Item/ExpGem.h"
 #include "Game/Manager/InGameManager.h"
+#include "Engine/Manager/PrefabManager.h"
 
 static ComponentRegistrar<Player> registrar(EngineKey::CustomComponent::Player.data());
 
@@ -88,7 +89,7 @@ void Player::Start()
 		}
 	}
 
-	CreateTestHPBar();
+	CreateHPBarFromPrefab();
 }
 
 void Player::Update(float dt)
@@ -231,17 +232,9 @@ void Player::OnDestroy()
 {
 	ScriptComponent::OnDestroy();
 
-	Scene* pScene = gameObject.GetOwnerScene();
-	if (pScene)
+	if (m_pHpBarRootObj.IsValid())
 	{
-		if (m_pHpBarBgObj.IsValid())
-		{
-			pScene->DestroyObjects(m_pHpBarBgObj.Get());
-		}
-		if (m_pHpBarFillObj.IsValid())
-		{
-			pScene->DestroyObjects(m_pHpBarFillObj.Get());
-		}
+		m_pHpBarRootObj->Destroy();
 	}
 }
 
@@ -281,59 +274,34 @@ void Player::TakeDamage(float damage, GameObject* pAttacker)
 	m_iFrameTimer = m_iFrameDuration;
 }
 
-void Player::CreateTestHPBar()
+void Player::CreateHPBarFromPrefab()
 {
 	Scene* pScene = gameObject.GetOwnerScene();
 	if (!pScene) return;
 
-	Vector2 playerPos = transform.GetPosition();
-	Vector2 hpBarPos = { playerPos.x, playerPos.y - 45.0f };
+	GameObject* pHpBarRoot = PrefabManager::GetInstance()->Instantiate("HpBar", pScene);
+	if (!pHpBarRoot) return;
 
-	m_pHpBarBgObj = pScene->CreateGameObject("Test_HPBar_BG");
-	if (m_pHpBarBgObj.IsValid())
-	{
-		m_pHpBarBgObj->transform.SetPosition(hpBarPos);
-		UIImageComponent* pBgImg = m_pHpBarBgObj->AddComponent<UIImageComponent>();
-		if (pBgImg)
-		{
-			pBgImg->SetIsUI(false);
-			pBgImg->SetSize({ 50.0f, 6.0f });
-			pBgImg->SetColor(D2D1::ColorF(0.2f, 0.2f, 0.2f, 0.8f));
-			pBgImg->SetZOrder(500);
-		}
-	}
+	pHpBarRoot->SetParent(&this->gameObject, false);
+	pHpBarRoot->transform.SetLocalPosition(0.0f, 25.0f);
 
-	m_pHpBarFillObj = pScene->CreateGameObject("Test_HPBar_Fill");
-	if (m_pHpBarFillObj.IsValid())
+	m_pHpBarRootObj = pHpBarRoot;
+
+	for (GameObject* pChild : pHpBarRoot->GetChildren())
 	{
-		m_pHpBarFillObj->transform.SetPosition(hpBarPos);
-		m_pHpBarFillImg = m_pHpBarFillObj->AddComponent<UIImageComponent>();
-		if (m_pHpBarFillImg.IsValid())
+		if (pChild && pChild->GetName() == "HpBar_Filled")
 		{
-			m_pHpBarFillImg->SetIsUI(false);
-			m_pHpBarFillImg->SetSize({ 50.0f, 6.0f });
-			m_pHpBarFillImg->SetColor(D2D1::ColorF(0.9f, 0.1f, 0.1f, 1.0f));
-			m_pHpBarFillImg->SetFillAmount(1.0f);
-			m_pHpBarFillImg->SetZOrder(501);
+			m_pHpBarFillImg = pChild->GetComponent<UIImageComponent>();
+			break;
 		}
 	}
 }
 
 void Player::UpdateHPBar()
 {
-	Vector2 playerPos = transform.GetPosition();
-	Vector2 hpBarPos = { playerPos.x, playerPos.y - 45.0f };
-
-	if (m_pHpBarBgObj.IsValid())
+	if (m_pHpBarRootObj.IsValid())
 	{
-		m_pHpBarBgObj->transform.SetPosition(hpBarPos);
-		m_pHpBarBgObj->SetActive(!IsDead());
-	}
-
-	if (m_pHpBarFillObj.IsValid())
-	{
-		m_pHpBarFillObj->transform.SetPosition(hpBarPos);
-		m_pHpBarFillObj->SetActive(!IsDead());
+		m_pHpBarRootObj->SetActive(!IsDead());
 	}
 
 	if (m_pHpBarFillImg.IsValid())
@@ -341,3 +309,4 @@ void Player::UpdateHPBar()
 		m_pHpBarFillImg->SetFillAmount(GetHPRatio());
 	}
 }
+
