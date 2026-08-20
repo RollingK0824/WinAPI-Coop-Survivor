@@ -72,13 +72,10 @@ constexpr int32 GWinSizeY = 1080;
 #include "Types.h"
 
 // ==========================================
-// WITH_EDITOR 설정
+// WITH_EDITOR 설정 (Debug = Editor, Release = Game)
 // ==========================================
-#if defined(GAME_BUILD) || defined(NO_EDITOR) || defined(STANDALONE_GAME)
-#undef WITH_EDITOR
-#define WITH_EDITOR 0
-#else
-#ifndef WITH_EDITOR
+#if defined(_DEBUG)
 #define WITH_EDITOR 1
-#endif
+#else
+#define WITH_EDITOR 0
 #endif

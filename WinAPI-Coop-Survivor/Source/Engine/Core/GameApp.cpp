@@ -197,12 +197,13 @@ LRESULT CALLBACK GameApp::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 		InputManager::GetInstance()->OnCharInput(ch);
 	}
 
-
+#if WITH_EDITOR
 	if (ImGui::GetCurrentContext() != nullptr)
 	{
 		if (ImGui_ImplWin32_WndProcHandler(hWnd, message, wParam, lParam))
 			return true;
 	}
+#endif
 
 	switch (message)
 	{
@@ -219,7 +220,6 @@ LRESULT CALLBACK GameApp::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 		return 0;
 	}
 
-
 	return DefWindowProcW(hWnd, message, wParam, lParam);
 }
 
@@ -228,7 +228,6 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	_In_ LPSTR lpCmdLine,
 	_In_ int nCmdShow)
 {
-
 	if (!GameApp::GetInstance()->Initialize(hInstance, nCmdShow, DisplayMode::Windowed))
 	{
 		return 0;
@@ -238,5 +237,6 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 
 	GameApp::GetInstance()->Release();
 
+	ExitProcess(result);
 	return result;
 }
