@@ -20,7 +20,7 @@ static ComponentRegistrar<Player> registrar(EngineKey::CustomComponent::Player.d
 Player::Player(GameObject* owner, TransformComponent* transform) : ScriptComponent(owner, transform)
 {
 	ExposeVariable("MaxHP", &m_maxHP);
-	ExposeVariable("IFrameDuration", const_cast<float*>(&k_iFrameDuration));
+	ExposeVariable("IFrameDuration", &m_iFrameDuration);
 }
 
 void Player::Start()
@@ -197,7 +197,7 @@ void Player::TakeDamage(float damage, GameObject* pAttacker)
 		m_currentHP = 0.0f;
 	}
 
-	m_iFrameTimer = k_iFrameDuration;
+	m_iFrameTimer = m_iFrameDuration;
 }
 
 void Player::CreateTestHPBar()
