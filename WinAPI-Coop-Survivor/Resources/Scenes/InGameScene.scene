@@ -1,9 +1,10 @@
 {
-    "SceneName": "Title",
+    "SceneName": "InGameScene",
     "GameObjects": [
         {
             "Name": "Main Camera",
             "InstanceID": 13,
+            "ParentInstanceID": 0,
             "IsActive": true,
             "Components": [
                 {
@@ -42,8 +43,9 @@
             ]
         },
         {
-            "Name": "TempBackground",
+            "Name": "Backgrounds",
             "InstanceID": 19,
+            "ParentInstanceID": 0,
             "IsActive": true,
             "Components": [
                 {
@@ -60,42 +62,13 @@
                             "y": 1.0
                         }
                     }
-                },
-                {
-                    "Type": "SpriteRendererComponent",
-                    "Data": {
-                        "IsEnabled": true,
-                        "RenderType": 0,
-                        "ZOrder": -1000,
-                        "Opacity": 1.0,
-                        "Color": {
-                            "r": 1.0,
-                            "g": 1.0,
-                            "b": 1.0,
-                            "a": 1.0
-                        },
-                        "SpriteKey": "TempBackground.jpg",
-                        "Size": {
-                            "x": 1920.0,
-                            "y": 1080.0
-                        },
-                        "Pivot": {
-                            "x": 0.5,
-                            "y": 0.5
-                        },
-                        "Offset": {
-                            "x": 0.0,
-                            "y": 0.0
-                        },
-                        "FlipX": false,
-                        "FlipY": false
-                    }
                 }
             ]
         },
         {
             "Name": "InGameManager",
             "InstanceID": 20,
+            "ParentInstanceID": 0,
             "IsActive": true,
             "Components": [
                 {
@@ -116,7 +89,13 @@
                 {
                     "Type": "InGameManager",
                     "Data": {
-                        "IsEnabled": true
+                        "IsEnabled": true,
+                        "TeamLevel": 1,
+                        "TeamExp": 0.0,
+                        "TeamMaxExp": 100.0,
+                        "IsSimulationPaused": false,
+                        "EXP Bar Fill Image": 0,
+                        "EXP Text Component": 0
                     }
                 },
                 {
@@ -134,6 +113,7 @@
         {
             "Name": "Action_Btn",
             "InstanceID": 66,
+            "ParentInstanceID": 0,
             "IsActive": true,
             "Components": [
                 {
@@ -177,7 +157,14 @@
                             "x": 0.0,
                             "y": 0.0
                         },
+                        "Border": {
+                            "left": 0.0,
+                            "top": 0.0,
+                            "right": 0.0,
+                            "bottom": 0.0
+                        },
                         "FillAmount": 1.0,
+                        "IsUI": true,
                         "FlipX": false,
                         "FlipY": false
                     }
@@ -186,7 +173,35 @@
                     "Type": "UIButtonComponent",
                     "Data": {
                         "IsEnabled": true,
-                        "IsHovered": false
+                        "IsHovered": false,
+                        "Normal Sprite": "tilemap_packed/tilemap_packed.png",
+                        "Hover Sprite": "",
+                        "Pressed Sprite": "",
+                        "Disabled Sprite": "",
+                        "Normal Color": {
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 1.0,
+                            "a": 1.0
+                        },
+                        "Hover Color": {
+                            "r": 0.8999999761581421,
+                            "g": 0.8999999761581421,
+                            "b": 0.8999999761581421,
+                            "a": 1.0
+                        },
+                        "Pressed Color": {
+                            "r": 0.699999988079071,
+                            "g": 0.699999988079071,
+                            "b": 0.699999988079071,
+                            "a": 1.0
+                        },
+                        "Disabled Color": {
+                            "r": 0.5,
+                            "g": 0.5,
+                            "b": 0.5,
+                            "a": 1.0
+                        }
                     }
                 },
                 {
@@ -211,6 +226,7 @@
         {
             "Name": "Status_Text",
             "InstanceID": 67,
+            "ParentInstanceID": 0,
             "IsActive": true,
             "Components": [
                 {
@@ -250,6 +266,7 @@
         {
             "Name": "Countdown_Text",
             "InstanceID": 68,
+            "ParentInstanceID": 0,
             "IsActive": true,
             "Components": [
                 {
@@ -289,6 +306,7 @@
         {
             "Name": "TeamEXPBar_BG",
             "InstanceID": 101,
+            "ParentInstanceID": 0,
             "IsActive": true,
             "Components": [
                 {
@@ -296,7 +314,7 @@
                     "Data": {
                         "IsEnabled": true,
                         "Position": {
-                            "x": 710.0,
+                            "x": 0.0,
                             "y": 15.0
                         },
                         "Rotation": 0.0,
@@ -312,18 +330,36 @@
                         "IsEnabled": true,
                         "RenderType": 256,
                         "ZOrder": 900,
-                        "Opacity": 0.85,
+                        "Opacity": 0.8500000238418579,
                         "Color": {
-                            "r": 0.1,
-                            "g": 0.1,
-                            "b": 0.15,
-                            "a": 0.85
+                            "r": 0.10000000149011612,
+                            "g": 0.10000000149011612,
+                            "b": 0.15000000596046448,
+                            "a": 0.8500000238418579
                         },
+                        "SpriteKey": "",
                         "Size": {
-                            "x": 500.0,
-                            "y": 16.0
+                            "x": 1920.0,
+                            "y": 30.0
                         },
-                        "IsUI": true
+                        "Pivot": {
+                            "x": 0.0,
+                            "y": 0.5
+                        },
+                        "Offset": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "Border": {
+                            "left": 0.0,
+                            "top": 0.0,
+                            "right": 0.0,
+                            "bottom": 0.0
+                        },
+                        "FillAmount": 1.0,
+                        "IsUI": true,
+                        "FlipX": false,
+                        "FlipY": false
                     }
                 }
             ]
@@ -331,6 +367,7 @@
         {
             "Name": "TeamEXPBar_Fill",
             "InstanceID": 102,
+            "ParentInstanceID": 0,
             "IsActive": true,
             "Components": [
                 {
@@ -338,7 +375,7 @@
                     "Data": {
                         "IsEnabled": true,
                         "Position": {
-                            "x": 710.0,
+                            "x": 0.0,
                             "y": 15.0
                         },
                         "Rotation": 0.0,
@@ -356,17 +393,34 @@
                         "ZOrder": 901,
                         "Opacity": 1.0,
                         "Color": {
-                            "r": 0.2,
-                            "g": 0.85,
+                            "r": 0.20000000298023224,
+                            "g": 0.8500000238418579,
                             "b": 1.0,
                             "a": 1.0
                         },
+                        "SpriteKey": "",
                         "Size": {
-                            "x": 500.0,
-                            "y": 16.0
+                            "x": 1920.0,
+                            "y": 30.0
+                        },
+                        "Pivot": {
+                            "x": 0.0,
+                            "y": 0.5
+                        },
+                        "Offset": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "Border": {
+                            "left": 0.0,
+                            "top": 0.0,
+                            "right": 0.0,
+                            "bottom": 0.0
                         },
                         "FillAmount": 0.0,
-                        "IsUI": true
+                        "IsUI": true,
+                        "FlipX": false,
+                        "FlipY": false
                     }
                 }
             ]
@@ -374,6 +428,7 @@
         {
             "Name": "TeamEXP_Text",
             "InstanceID": 103,
+            "ParentInstanceID": 0,
             "IsActive": true,
             "Components": [
                 {
@@ -381,7 +436,7 @@
                     "Data": {
                         "IsEnabled": true,
                         "Position": {
-                            "x": 890.0,
+                            "x": 960.0,
                             "y": 13.0
                         },
                         "Rotation": 0.0,
@@ -409,6 +464,242 @@
                     }
                 }
             ]
+        },
+        {
+            "Name": "Background_1",
+            "InstanceID": 112,
+            "ParentInstanceID": 19,
+            "IsActive": true,
+            "Components": [
+                {
+                    "Type": "TransformComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Position": {
+                            "x": -510.0,
+                            "y": -510.0
+                        },
+                        "Rotation": 0.0,
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        }
+                    }
+                },
+                {
+                    "Type": "SpriteRendererComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "RenderType": 0,
+                        "ZOrder": 0,
+                        "Opacity": 1.0,
+                        "Color": {
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 1.0,
+                            "a": 1.0
+                        },
+                        "SpriteKey": "bg_forest/bg_forest.png",
+                        "Size": {
+                            "x": 1024.0,
+                            "y": 1024.0
+                        },
+                        "Pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "Offset": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "Border": {
+                            "left": 0.0,
+                            "top": 0.0,
+                            "right": 0.0,
+                            "bottom": 0.0
+                        },
+                        "FlipX": false,
+                        "FlipY": false
+                    }
+                }
+            ]
+        },
+        {
+            "Name": "Background_2",
+            "InstanceID": 113,
+            "ParentInstanceID": 19,
+            "IsActive": true,
+            "Components": [
+                {
+                    "Type": "TransformComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Position": {
+                            "x": 510.0,
+                            "y": -510.0
+                        },
+                        "Rotation": 0.0,
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        }
+                    }
+                },
+                {
+                    "Type": "SpriteRendererComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "RenderType": 0,
+                        "ZOrder": 0,
+                        "Opacity": 1.0,
+                        "Color": {
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 1.0,
+                            "a": 1.0
+                        },
+                        "SpriteKey": "bg_forest/bg_forest.png",
+                        "Size": {
+                            "x": 1024.0,
+                            "y": 1024.0
+                        },
+                        "Pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "Offset": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "Border": {
+                            "left": 0.0,
+                            "top": 0.0,
+                            "right": 0.0,
+                            "bottom": 0.0
+                        },
+                        "FlipX": false,
+                        "FlipY": false
+                    }
+                }
+            ]
+        },
+        {
+            "Name": "Background_3",
+            "InstanceID": 114,
+            "ParentInstanceID": 19,
+            "IsActive": true,
+            "Components": [
+                {
+                    "Type": "TransformComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Position": {
+                            "x": -510.0,
+                            "y": 510.0
+                        },
+                        "Rotation": 0.0,
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        }
+                    }
+                },
+                {
+                    "Type": "SpriteRendererComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "RenderType": 0,
+                        "ZOrder": 0,
+                        "Opacity": 1.0,
+                        "Color": {
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 1.0,
+                            "a": 1.0
+                        },
+                        "SpriteKey": "bg_forest/bg_forest.png",
+                        "Size": {
+                            "x": 1024.0,
+                            "y": 1024.0
+                        },
+                        "Pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "Offset": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "Border": {
+                            "left": 0.0,
+                            "top": 0.0,
+                            "right": 0.0,
+                            "bottom": 0.0
+                        },
+                        "FlipX": false,
+                        "FlipY": false
+                    }
+                }
+            ]
+        },
+        {
+            "Name": "Background_4",
+            "InstanceID": 115,
+            "ParentInstanceID": 19,
+            "IsActive": true,
+            "Components": [
+                {
+                    "Type": "TransformComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Position": {
+                            "x": 510.0,
+                            "y": 510.0
+                        },
+                        "Rotation": 0.0,
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        }
+                    }
+                },
+                {
+                    "Type": "SpriteRendererComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "RenderType": 0,
+                        "ZOrder": 0,
+                        "Opacity": 1.0,
+                        "Color": {
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 1.0,
+                            "a": 1.0
+                        },
+                        "SpriteKey": "bg_forest/bg_forest.png",
+                        "Size": {
+                            "x": 1024.0,
+                            "y": 1024.0
+                        },
+                        "Pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "Offset": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "Border": {
+                            "left": 0.0,
+                            "top": 0.0,
+                            "right": 0.0,
+                            "bottom": 0.0
+                        },
+                        "FlipX": false,
+                        "FlipY": false
+                    }
+                }
+            ]
         }
     ]
-}
+}
