@@ -2,6 +2,7 @@
 #include "ColliderComponent.h"
 #include "Engine/Physics/PhysicsManager.h"
 #include "Engine/Framework/GameObject.h"
+#include "Engine/Framework/Components/Core/TransformComponent.h"
 
 ColliderComponent::ColliderComponent(GameObject* owner, TransformComponent* transform)
 	: Component(owner, transform)
@@ -111,5 +112,30 @@ void ColliderComponent::RebuildShape()
 	if (GetBodyType() == b2_dynamicBody)
 	{
 		b2Body_ApplyMassFromShapes(m_BodyId);
+	}
+}
+
+void ColliderComponent::SyncTransformFromBody()
+{
+	if (!b2Body_IsValid(m_BodyId) || m_bAttachedToRigidBody) return;
+
+	b2Vec2 b2Pos = b2Body_GetPosition(m_BodyId);
+	b2Rot  b2Rot = b2Body_GetRotation(m_BodyId);
+
+	Vector2 worldPos(MeterToPixel(b2Pos.x), MeterToPixel(b2Pos.y));
+	float   worldRot = RadianToDegree(b2Rot_GetAngle(b2Rot));
+
+	TransformComponent& tf = transform;
+	if (gameObject.GetParent() != nullptr)
+	{
+		Vector2 localPos = tf.WorldToLocal(worldPos);
+		float parentWorldRot = gameObject.GetParent()->transform.GetWorldRotation();
+		tf.SetLocalPosition(localPos);
+		tf.SetLocalRotation(worldRot - parentWorldRot);
+	}
+	else
+	{
+		tf.SetLocalPosition(worldPos);
+		tf.SetLocalRotation(worldRot);
 	}
 }

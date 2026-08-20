@@ -8,6 +8,7 @@
 #include "Engine/Framework/Components/Core/CameraComponent.h"
 #include "Engine/Framework/Components/Core/TransformComponent.h"
 #include "Engine/Framework/Components/Physics/BoxCollider.h"
+#include "Engine/Framework/Components/Physics/RigidBodyComponent.h"
 #include "Game/Player/Player.h"
 
 LocalController::LocalController(GameObject* owner, TransformComponent* transform)
@@ -15,6 +16,7 @@ LocalController::LocalController(GameObject* owner, TransformComponent* transfor
 
 void LocalController::Start() {
     m_pPlayer = gameObject.GetComponent<Player>();
+    m_pRigidBody = gameObject.GetComponent<RigidBodyComponent>();
     m_pCollider = gameObject.GetComponent<ColliderComponent>();
 
     ActionManager::GetInstance()->BindAction("MoveUp", VK_UP);
@@ -42,10 +44,16 @@ void LocalController::Update(float dt) {
 
         NetworkManager* net = NetworkManager::GetInstance();
         if (net->GetRole() != NetRole::NONE && net->IsConnected()) {
-            if (m_pCollider.IsValid() && b2Body_IsValid(m_pCollider->GetBodyId())) {
-                b2Vec2 pos = b2Body_GetPosition(m_pCollider->GetBodyId());
-                b2Vec2 vel = b2Body_GetLinearVelocity(m_pCollider->GetBodyId());
-                float angle = b2Rot_GetAngle(b2Body_GetRotation(m_pCollider->GetBodyId()));
+            b2BodyId bodyId = b2_nullBodyId;
+            if (m_pRigidBody.IsValid() && b2Body_IsValid(m_pRigidBody->GetBodyId()))
+                bodyId = m_pRigidBody->GetBodyId();
+            else if (m_pCollider.IsValid() && b2Body_IsValid(m_pCollider->GetBodyId()))
+                bodyId = m_pCollider->GetBodyId();
+
+            if (b2Body_IsValid(bodyId)) {
+                b2Vec2 pos = b2Body_GetPosition(bodyId);
+                b2Vec2 vel = b2Body_GetLinearVelocity(bodyId);
+                float angle = b2Rot_GetAngle(b2Body_GetRotation(bodyId));
 
                 PlayerInputPacket packet;
                 packet.header.type = PacketType::PLAYER_INPUT;
@@ -62,7 +70,13 @@ void LocalController::Update(float dt) {
 }
 
 void LocalController::Move(float dt) {
-    if (!m_pCollider.IsValid() || !b2Body_IsValid(m_pCollider->GetBodyId())) {
+    b2BodyId bodyId = b2_nullBodyId;
+    if (m_pRigidBody.IsValid() && b2Body_IsValid(m_pRigidBody->GetBodyId()))
+        bodyId = m_pRigidBody->GetBodyId();
+    else if (m_pCollider.IsValid() && b2Body_IsValid(m_pCollider->GetBodyId()))
+        bodyId = m_pCollider->GetBodyId();
+
+    if (!b2Body_IsValid(bodyId)) {
         return;
     }
 
@@ -77,21 +91,32 @@ void LocalController::Move(float dt) {
     if (ActionManager::GetInstance()->GetActionPress("MoveRight"))
         targetVelocity.x += m_pPlayer->GetSpeed();
 
-    if (targetVelocity.LengthSquared() > 0.0001f && m_pPlayer.IsValid())
+    bool isMoving = (targetVelocity.LengthSquared() > 0.0001f);
+    if (m_pPlayer.IsValid())
     {
-        m_pPlayer->SetFacingDirection(targetVelocity);
+        m_pPlayer->SetMoving(isMoving);
+        if (isMoving)
+        {
+            m_pPlayer->SetFacingDirection(targetVelocity);
+        }
     }
 
     b2Vec2 b2Velocity = { PixelToMeter(targetVelocity.x), PixelToMeter(targetVelocity.y) };
-    b2Body_SetLinearVelocity(m_pCollider->GetBodyId(), b2Velocity);
+    b2Body_SetLinearVelocity(bodyId, b2Velocity);
 
     ApplyMapClamp();
 }
 
 void LocalController::ApplyMapClamp() {
-    if (!m_pCollider.IsValid() || !b2Body_IsValid(m_pCollider->GetBodyId())) return;
+    b2BodyId bodyId = b2_nullBodyId;
+    if (m_pRigidBody.IsValid() && b2Body_IsValid(m_pRigidBody->GetBodyId()))
+        bodyId = m_pRigidBody->GetBodyId();
+    else if (m_pCollider.IsValid() && b2Body_IsValid(m_pCollider->GetBodyId()))
+        bodyId = m_pCollider->GetBodyId();
 
-    b2Vec2 pos = b2Body_GetPosition(m_pCollider->GetBodyId());
+    if (!b2Body_IsValid(bodyId)) return;
+
+    b2Vec2 pos = b2Body_GetPosition(bodyId);
     float px = MeterToPixel(pos.x);
     float py = MeterToPixel(pos.y);
 
@@ -101,11 +126,11 @@ void LocalController::ApplyMapClamp() {
     if (clampedX != px || clampedY != py)
     {
         b2Body_SetTransform(
-            m_pCollider->GetBodyId(),
+            bodyId,
             { PixelToMeter(clampedX), PixelToMeter(clampedY) },
-            b2Body_GetRotation(m_pCollider->GetBodyId())
+            b2Body_GetRotation(bodyId)
         );
-        b2Body_SetLinearVelocity(m_pCollider->GetBodyId(), { 0.0f, 0.0f });
+        b2Body_SetLinearVelocity(bodyId, { 0.0f, 0.0f });
         transform.SetPosition(clampedX, clampedY);
     }
 }

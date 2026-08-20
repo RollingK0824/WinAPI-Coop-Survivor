@@ -7,6 +7,7 @@ class GameObject;
 class MonsterSO;
 class MonsterSpawner;
 class CircleCollider;
+class SpriteRendererComponent;
 
 enum class EMonsterState
 {
@@ -79,4 +80,5 @@ private:
 
 	ObserverPtr<CircleCollider> m_pCollider;
 	ObserverPtr<MonsterSpawner> m_pSpawner;
+	ObserverPtr<SpriteRendererComponent> m_pSpriteRenderer;
 };

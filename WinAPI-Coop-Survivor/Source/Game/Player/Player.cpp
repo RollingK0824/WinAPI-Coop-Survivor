@@ -8,6 +8,8 @@
 #include "Engine/Framework/Components/Core/TransformComponent.h"
 #include "Engine/Framework/Components/Network/NetworkIdentity.h"
 #include "Engine/Framework/Components/Physics/BoxCollider.h"
+#include "Engine/Framework/Components/Render/AnimatorComponent.h"
+#include "Engine/Framework/Components/Render/SpriteRendererComponent.h"
 #include "Engine/Framework/Components/UI/UIImageComponent.h"
 #include "LocalController.h"
 #include "NetworkController.h"
@@ -23,12 +25,43 @@ Player::Player(GameObject* owner, TransformComponent* transform) : ScriptCompone
 	ExposeVariable("IFrameDuration", &m_iFrameDuration);
 }
 
+void Player::SetFacingDirection(const Vector2& dir)
+{
+	if (dir.LengthSquared() > 0.0001f)
+	{
+		m_facingDir = dir.GetNormalized();
+		if (!m_pSpriteRenderer.IsValid())
+		{
+			m_pSpriteRenderer = gameObject.GetComponent<SpriteRendererComponent>();
+		}
+		if (m_pSpriteRenderer.IsValid())
+		{
+			if (m_facingDir.x < -0.01f)
+			{
+				m_pSpriteRenderer->SetFlip(true, false);
+			}
+			else if (m_facingDir.x > 0.01f)
+			{
+				m_pSpriteRenderer->SetFlip(false, false);
+			}
+		}
+	}
+}
+
 void Player::Start()
 {
 	m_currentHP = m_maxHP;
 	m_iFrameTimer = 0.0f;
 
 	m_pCollider = gameObject.GetComponent<ColliderComponent>();
+	m_pAnimator = gameObject.GetComponent<AnimatorComponent>();
+	m_pSpriteRenderer = gameObject.GetComponent<SpriteRendererComponent>();
+	m_prevPos = transform.GetPosition();
+
+	if (m_pAnimator.IsValid())
+	{
+		m_pAnimator->Pause();
+	}
 
 	if (m_pCollider.IsValid())
 	{
@@ -88,6 +121,54 @@ void Player::Update(float dt)
 			}
 		}
 	}
+
+	Vector2 currentPos = transform.GetPosition();
+	Vector2 posDelta = currentPos - m_prevPos;
+	m_prevPos = currentPos;
+
+	bool isMoving = m_bIsMoving || (posDelta.LengthSquared() > 0.001f);
+
+	if (!m_pAnimator.IsValid())
+	{
+		m_pAnimator = gameObject.GetComponent<AnimatorComponent>();
+	}
+
+	if (m_pAnimator.IsValid())
+	{
+		if (isMoving && !IsDead())
+		{
+			if (!m_pAnimator->IsPlaying())
+			{
+				m_pAnimator->Resume();
+			}
+		}
+		else
+		{
+			if (m_pAnimator->IsPlaying())
+			{
+				m_pAnimator->Pause();
+			}
+		}
+	}
+
+	if (!m_pSpriteRenderer.IsValid())
+	{
+		m_pSpriteRenderer = gameObject.GetComponent<SpriteRendererComponent>();
+	}
+
+	if (m_pSpriteRenderer.IsValid())
+	{
+		if (m_facingDir.x < -0.01f)
+		{
+			m_pSpriteRenderer->SetFlip(true, false);
+		}
+		else if (m_facingDir.x > 0.01f)
+		{
+			m_pSpriteRenderer->SetFlip(false, false);
+		}
+	}
+
+	m_bIsMoving = false;
 
 	UpdateHPBar();
 	UpdateExpGemMagnet(dt);

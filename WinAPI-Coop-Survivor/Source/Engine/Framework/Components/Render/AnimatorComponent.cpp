@@ -69,11 +69,13 @@ void AnimatorComponent::OnEnable()
 	if (m_pCurrentClip == nullptr && !m_defaultPlayClip.empty())
 	{
 		std::wstring wDefaultPlay(m_defaultPlayClip.begin(), m_defaultPlayClip.end());
-		Play(wDefaultPlay);
-	}
-	else if (m_pCurrentClip != nullptr)
-	{
-		m_bIsPlaying = true;
+		EnsureClipsLoaded();
+		auto it = m_MapClips.find(wDefaultPlay);
+		if (it != m_MapClips.end())
+		{
+			m_currentClipName = wDefaultPlay;
+			m_pCurrentClip = &it->second;
+		}
 	}
 
 	if (m_pSpriteRenderer.IsValid() && m_pCurrentClip != nullptr && !m_pCurrentClip->frames.empty())
@@ -135,11 +137,17 @@ void AnimatorComponent::AddClip(const AnimationClip& clip)
 	}
 }
 
-void AnimatorComponent::Play(const std::wstring& clipName)
+void AnimatorComponent::Play(const std::wstring& clipName, bool bRestart)
 {
 	EnsureClipsLoaded();
 	auto it = m_MapClips.find(clipName);
 	if (it == m_MapClips.end()) return;
+
+	if (m_pCurrentClip == &it->second && !bRestart)
+	{
+		m_bIsPlaying = true;
+		return;
+	}
 
 	m_currentClipName = clipName;
 	m_pCurrentClip = &it->second;
@@ -159,9 +167,54 @@ void AnimatorComponent::Play(const std::wstring& clipName)
 	}
 }
 
+void AnimatorComponent::Pause()
+{
+	m_bIsPlaying = false;
+}
+
+void AnimatorComponent::Resume()
+{
+	if (m_pCurrentClip != nullptr)
+	{
+		m_bIsPlaying = true;
+	}
+}
+
 void AnimatorComponent::Stop()
 {
 	m_bIsPlaying = false;
+	m_CurrentFrameIdx = 0;
+	m_AccTime = 0.0f;
+
+	if (!m_pSpriteRenderer.IsValid())
+	{
+		m_pSpriteRenderer = gameObject.GetComponent<SpriteRendererComponent>();
+	}
+
+	if (m_pSpriteRenderer.IsValid() && m_pCurrentClip && !m_pCurrentClip->frames.empty())
+	{
+		const Sprite& currentFrame = m_pCurrentClip->frames[0];
+		m_pSpriteRenderer->SetAsSprite(currentFrame);
+	}
+}
+
+void AnimatorComponent::SetCurrentFrameIdx(int frameIdx)
+{
+	if (m_pCurrentClip == nullptr || m_pCurrentClip->frames.empty()) return;
+
+	m_CurrentFrameIdx = std::clamp(frameIdx, 0, static_cast<int>(m_pCurrentClip->frames.size()) - 1);
+	m_AccTime = 0.0f;
+
+	if (!m_pSpriteRenderer.IsValid())
+	{
+		m_pSpriteRenderer = gameObject.GetComponent<SpriteRendererComponent>();
+	}
+
+	if (m_pSpriteRenderer.IsValid())
+	{
+		const Sprite& currentFrame = m_pCurrentClip->frames[m_CurrentFrameIdx];
+		m_pSpriteRenderer->SetAsSprite(currentFrame);
+	}
 }
 
 void AnimatorComponent::PostDeserialize(Scene* pScene)
@@ -170,9 +223,14 @@ void AnimatorComponent::PostDeserialize(Scene* pScene)
 
 	EnsureClipsLoaded();
 
-	if (!m_defaultPlayClip.empty())
+	if (m_pCurrentClip == nullptr && !m_defaultPlayClip.empty())
 	{
 		std::wstring wDefaultPlay(m_defaultPlayClip.begin(), m_defaultPlayClip.end());
-		Play(wDefaultPlay);
+		auto it = m_MapClips.find(wDefaultPlay);
+		if (it != m_MapClips.end())
+		{
+			m_currentClipName = wDefaultPlay;
+			m_pCurrentClip = &it->second;
+		}
 	}
 }

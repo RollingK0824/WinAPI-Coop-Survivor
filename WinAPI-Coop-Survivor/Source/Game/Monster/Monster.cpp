@@ -30,6 +30,7 @@ Monster::Monster(GameObject* owner, TransformComponent* transform)
 void Monster::Start()
 {
 	m_pCollider = gameObject.GetComponent<CircleCollider>();
+	m_pSpriteRenderer = gameObject.GetComponent<SpriteRendererComponent>();
 	if (m_pCollider.IsValid())
 	{
 		m_pCollider->SetFilter(PhysicsLayer::Monster, PhysicsLayer::All);
@@ -42,6 +43,7 @@ void Monster::OnEnable()
 	m_targetPlayer = nullptr;
 	m_targetSearchTimer = 0.0f;
 
+	m_pSpriteRenderer = gameObject.GetComponent<SpriteRendererComponent>();
 	if (!m_pCollider.IsValid())
 	{
 		m_pCollider = gameObject.GetComponent<CircleCollider>();
@@ -165,10 +167,13 @@ void Monster::Update(float dt)
 
 			if (std::abs(moveDir.x) > 0.01f)
 			{
-				auto pSprite = gameObject.GetComponent<SpriteRendererComponent>();
-				if (pSprite)
+				if (!m_pSpriteRenderer.IsValid())
 				{
-					pSprite->SetFlip(moveDir.x < 0.0f, false);
+					m_pSpriteRenderer = gameObject.GetComponent<SpriteRendererComponent>();
+				}
+				if (m_pSpriteRenderer.IsValid())
+				{
+					m_pSpriteRenderer->SetFlip(moveDir.x < 0.0f, false);
 				}
 			}
 		}
@@ -271,6 +276,15 @@ void Monster::MoveTowardsTarget(float fixedDt)
 	Vector2 myPos = transform.GetPosition();
 	Vector2 targetPos = m_targetPlayer->transform.GetPosition();
 	Vector2 dir = (targetPos - myPos).GetNormalized();
+
+	if (!m_pSpriteRenderer.IsValid())
+	{
+		m_pSpriteRenderer = gameObject.GetComponent<SpriteRendererComponent>();
+	}
+	if (m_pSpriteRenderer.IsValid() && std::abs(dir.x) > 0.01f)
+	{
+		m_pSpriteRenderer->SetFlip(dir.x < 0.0f, false);
+	}
 
 	if (m_pCollider.IsValid() && b2Body_IsValid(m_pCollider->GetBodyId()))
 	{

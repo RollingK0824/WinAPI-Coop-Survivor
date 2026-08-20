@@ -27,14 +27,11 @@ public:
 	void SetSpeed(float speed) { m_Speed = speed; }
 	float GetSpeed() const { return m_Speed; }
 
+	void SetMoving(bool isMoving) { m_bIsMoving = isMoving; }
+	bool IsMoving() const { return m_bIsMoving; }
+
 	Vector2 GetFacingDirection() const { return m_facingDir; }
-	void SetFacingDirection(const Vector2& dir)
-	{
-		if (dir.LengthSquared() > 0.0001f)
-		{
-			m_facingDir = dir.GetNormalized();
-		}
-	}
+	void SetFacingDirection(const Vector2& dir);
 
 	float GetCurrentHP() const { return m_currentHP; }
 	float GetMaxHP() const { return m_maxHP; }
@@ -67,9 +64,14 @@ private:
 	void UpdateExpGemMagnet(float dt);
 
 private:
-	float m_Speed = 500.0f;
+	float m_Speed = 120.0f;
 	Vector2 m_facingDir = { 1.0f, 0.0f };
+	Vector2 m_prevPos = { 0.0f, 0.0f };
+	bool m_bIsMoving = false;
+
 	ObserverPtr<ColliderComponent> m_pCollider;
+	ObserverPtr<class AnimatorComponent> m_pAnimator;
+	ObserverPtr<class SpriteRendererComponent> m_pSpriteRenderer;
 
 	float m_maxHP = 100.0f;
 	float m_currentHP = 100.0f;

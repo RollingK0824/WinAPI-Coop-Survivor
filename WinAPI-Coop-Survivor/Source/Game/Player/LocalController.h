@@ -4,6 +4,7 @@
 
 class Player;
 class ColliderComponent;
+class RigidBodyComponent;
 
 class LocalController : public Controller {
 public:
@@ -25,6 +26,7 @@ private:
 
 private:
     ObserverPtr<Player> m_pPlayer;
+    ObserverPtr<RigidBodyComponent> m_pRigidBody = nullptr;
     ObserverPtr<ColliderComponent> m_pCollider = nullptr;
     float m_SendTimer = 0.0f;
     const float m_SendInterval = 0.033f; // 30Hz
