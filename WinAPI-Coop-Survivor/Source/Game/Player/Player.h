@@ -74,7 +74,7 @@ private:
 	float m_maxHP = 100.0f;
 	float m_currentHP = 100.0f;
 	float m_iFrameTimer = 0.0f;
-	static constexpr float k_iFrameDuration = 0.3f;
+	float m_iFrameDuration = 0.3f;
 
 	ObserverPtr<GameObject> m_pHpBarBgObj;
 	ObserverPtr<GameObject> m_pHpBarFillObj;

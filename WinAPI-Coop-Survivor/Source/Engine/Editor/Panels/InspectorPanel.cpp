@@ -716,6 +716,8 @@ void InspectorPanel::DrawHeader(GameObject* pObj)
 
 static bool LeftDragFloat(const char* label, float* v, float v_speed, const char* format)
 {
+	if (!v) return false;
+
 	ImGui::PushID(label);
 	ImGuiID id = ImGui::GetID("##LeftDragField");
 	static ImGuiID activeEditId = 0;
@@ -789,6 +791,8 @@ static bool LeftDragFloat(const char* label, float* v, float v_speed, const char
 
 static bool LeftDragInt(const char* label, int* v, float v_speed)
 {
+	if (!v) return false;
+
 	float fVal = static_cast<float>(*v);
 	bool changed = LeftDragFloat(label, &fVal, v_speed, "%.0f");
 	if (changed)
@@ -888,6 +892,8 @@ void InspectorPanel::DrawComponents(GameObject* pObj)
 
 			for (const auto& prop : comp->GetProperties())
 			{
+				if (!prop.data) continue;
+
 				ImGui::PushID(prop.name.c_str());
 
 				ImGui::AlignTextToFramePadding();

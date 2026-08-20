@@ -126,6 +126,7 @@ Scene* SceneManager::CreateDefaultTemplateScene(const std::string& sceneName)
 {
 	if (!CreateScene(sceneName)) return nullptr;
 	Scene* pScene = m_mapScenes[sceneName];
+	pScene->SetScenePath("Resources/Scenes/" + sceneName + ".scene");
 	m_pActiveScene = pScene;
 	EditorSystem::GetInstance()->SetSelectedObject(nullptr);
 
@@ -160,12 +161,17 @@ bool SceneManager::SaveActiveScene(const std::string& jsonFilePath)
 	std::string targetPath = jsonFilePath;
 	if (targetPath.empty())
 	{
-		std::string sceneName = m_pActiveScene->GetSceneName();
-		if (sceneName.empty()) sceneName = "DefaultScene";
-		targetPath = "Resources/Scenes/" + sceneName + ".scene";
+		targetPath = m_pActiveScene->GetScenePath();
+		if (targetPath.empty())
+		{
+			std::string sceneName = m_pActiveScene->GetSceneName();
+			if (sceneName.empty()) sceneName = "DefaultScene";
+			targetPath = "Resources/Scenes/" + sceneName + ".scene";
+		}
 	}
 	std::filesystem::path p(targetPath);
 	m_pActiveScene->SetSceneName(p.stem().string());
+	m_pActiveScene->SetScenePath(targetPath);
 
 	return JsonSerializer::SaveScene(m_pActiveScene, targetPath);
 }
@@ -199,6 +205,7 @@ bool SceneManager::LoadSceneFromFile(const std::string& jsonFilePath)
 	}
 
 	targetScene->SetSceneName(sceneName);
+	targetScene->SetScenePath(jsonFilePath);
 	m_mapScenes[sceneName] = targetScene;
 
 	if (!JsonSerializer::LoadScene(targetScene, sceneJson))

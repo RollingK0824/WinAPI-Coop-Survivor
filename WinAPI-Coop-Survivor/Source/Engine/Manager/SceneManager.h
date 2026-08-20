@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Engine/Core/Define.h"
 #include "Engine/Core/Singleton.h"
 #include "Engine/Framework/Base/ISystem.h"
@@ -29,7 +29,7 @@ public:
 	bool LoadScene(const std::string& sceneName);
 	Scene* GetActiveScene() const { return m_pActiveScene; }
 
-	bool SaveActiveScene(const std::string& jsonFilePath = EngineKey::FilePath::DefaultScene.data() );
+	bool SaveActiveScene(const std::string& jsonFilePath = "");
 	bool LoadSceneFromFile(const std::string& jsonFilePath);
 
 	void SavePlaySnapshot();
