@@ -1,4 +1,4 @@
-﻿#include "Engine/Core/pch.h"
+#include "Engine/Core/pch.h"
 #include "Engine/Core/Define.h"
 #include "GameApp.h"
 #include "Engine/Core/EventBus.h"
@@ -53,7 +53,7 @@ bool GameApp::Initialize(HINSTANCE hInstance, int nCmdShow, DisplayMode mode)
 	int screenWidth = GetSystemMetrics(SM_CXSCREEN);
 	int screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
-	DWORD windowStyle = WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_MAXIMIZE; // 기본 윈도우 스타일
+	DWORD windowStyle = WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_MAXIMIZE;
 	int width = GWinSizeX;
 	int height = GWinSizeY;
 
@@ -136,7 +136,6 @@ int GameApp::Run()
 		}
 		else
 		{
-			// TODO: 게임 업데이트 및 렌더링 로직 추가
 			EngineKernel::GetInstance()->ProcessFrame();
 		}
 	}
@@ -146,8 +145,7 @@ int GameApp::Run()
 
 void GameApp::Release()
 {
-	// TODO: 각종 해제 코드 추가
-	ChangeDisplaySettings(nullptr, 0); // 전체 화면 모드 해제
+	ChangeDisplaySettings(nullptr, 0);
 
 	EngineKernel::GetInstance()->Release();
 
@@ -193,11 +191,19 @@ void GameApp::RegisterManagers()
 
 LRESULT CALLBACK GameApp::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	if (message == WM_CHAR)
+	{
+		wchar_t ch = static_cast<wchar_t>(wParam);
+		InputManager::GetInstance()->OnCharInput(ch);
+	}
+
+#if WITH_EDITOR
 	if (ImGui::GetCurrentContext() != nullptr)
 	{
 		if (ImGui_ImplWin32_WndProcHandler(hWnd, message, wParam, lParam))
 			return true;
 	}
+#endif
 
 	switch (message)
 	{
@@ -222,7 +228,6 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	_In_ LPSTR lpCmdLine,
 	_In_ int nCmdShow)
 {
-
 	if (!GameApp::GetInstance()->Initialize(hInstance, nCmdShow, DisplayMode::Windowed))
 	{
 		return 0;
@@ -232,5 +237,6 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 
 	GameApp::GetInstance()->Release();
 
+	ExitProcess(result);
 	return result;
 }

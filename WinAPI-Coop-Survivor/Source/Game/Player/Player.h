@@ -1,5 +1,6 @@
 #pragma once
 #include "Engine/Framework/Components/Core/ScriptComponent.h"
+#include "Engine/Framework/Components/Render/SpriteRendererComponent.h"
 #include "Engine/Core/ObserverPtr.h"
 #include "Game/Interface/IDamageable.h"
 
@@ -27,6 +28,12 @@ public:
 	void SetSpeed(float speed) { m_Speed = speed; }
 	float GetSpeed() const { return m_Speed; }
 
+	void SetMoving(bool isMoving) { m_bIsMoving = isMoving; }
+	bool IsMoving() const { return m_bIsMoving; }
+
+	Vector2 GetFacingDirection() const { return m_facingDir; }
+	void SetFacingDirection(const Vector2& dir);
+
 	float GetCurrentHP() const { return m_currentHP; }
 	float GetMaxHP() const { return m_maxHP; }
 	float GetHPRatio() const { return (m_maxHP > 0.0f) ? (m_currentHP / m_maxHP) : 0.0f; }
@@ -34,24 +41,68 @@ public:
 	void SyncHP(float hp)
 	{
 		m_currentHP = hp;
-		if (m_currentHP <= 0.0f) m_currentHP = 0.0f;
+		if (m_currentHP <= 0.0f)
+		{
+			m_currentHP = 0.0f;
+			if (m_pSpriteRenderer.IsValid())
+			{
+				m_pSpriteRenderer->SetOpacity(0.0f);
+			}
+		}
+		else if (m_pSpriteRenderer.IsValid())
+		{
+			m_pSpriteRenderer->SetOpacity(1.0f);
+		}
+		UpdateHPBar();
 	}
 
+	void Heal(float amount)
+	{
+		m_currentHP += amount;
+		if (m_currentHP > m_maxHP) m_currentHP = m_maxHP;
+		if (m_pSpriteRenderer.IsValid() && m_currentHP > 0.0f)
+		{
+			m_pSpriteRenderer->SetOpacity(1.0f);
+		}
+		UpdateHPBar();
+	}
+
+	void IncreaseMaxHP(float amount)
+	{
+		m_maxHP += amount;
+		m_currentHP += amount;
+		UpdateHPBar();
+	}
+
+	void SetInvincible(float duration)
+	{
+		m_iFrameTimer = duration;
+	}
+
+	bool IsInvincible() const { return m_iFrameTimer > 0.0f; }
+
+
 private:
-	void CreateTestHPBar();
+	void CreateHPBarFromPrefab();
 	void UpdateHPBar();
 	void UpdateExpGemMagnet(float dt);
 
 private:
-	float m_Speed = 500.0f;
+	float m_Speed = 100.0f;
+	Vector2 m_facingDir = { 1.0f, 0.0f };
+	Vector2 m_prevPos = { 0.0f, 0.0f };
+	bool m_bIsMoving = false;
+
 	ObserverPtr<ColliderComponent> m_pCollider;
+	ObserverPtr<class AnimatorComponent> m_pAnimator;
+	ObserverPtr<class SpriteRendererComponent> m_pSpriteRenderer;
 
-	float m_maxHP = 100.0f;
-	float m_currentHP = 100.0f;
+	float m_maxHP = 1.0f;
+	float m_currentHP = 1.0f;
 	float m_iFrameTimer = 0.0f;
-	static constexpr float k_iFrameDuration = 0.3f;
+	float m_iFrameDuration = 0.3f;
+	float m_hitFlashTimer = 0.0f;
 
-	ObserverPtr<GameObject> m_pHpBarBgObj;
-	ObserverPtr<GameObject> m_pHpBarFillObj;
+	ObserverPtr<GameObject> m_pHpBarRootObj;
 	ObserverPtr<class UIImageComponent> m_pHpBarFillImg;
 };

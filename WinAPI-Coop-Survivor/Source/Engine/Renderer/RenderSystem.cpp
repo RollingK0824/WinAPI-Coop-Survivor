@@ -26,11 +26,13 @@ void RenderSystem::Render()
 {
 	if (m_commands.empty())return;
 
-	// zOrder 오름차순, 동일 zOrder일 경우 position.y 오름차순 (2D Top-down Y-Sorting & 안정 정렬)
+	// 1순위: zOrder, 2순위: hierarchyIndex (부모 ➔ 자식), 3순위: position.y (Y-Sorting)
 	std::stable_sort(m_commands.begin(), m_commands.end(),
 		[](const RenderCommand& a, const RenderCommand& b) {
 			if (a.zOrder != b.zOrder)
 				return a.zOrder < b.zOrder;
+			if (a.hierarchyIndex != b.hierarchyIndex)
+				return a.hierarchyIndex < b.hierarchyIndex;
 			return a.position.y < b.position.y;
 		});
 
@@ -140,6 +142,13 @@ void RenderSystem::DrawBitmap(ID2D1RenderTarget* pRT, const RenderCommand& cmd)
 
 	pRT->SetTransform(CalculateSRTMatrix(cmd, renderW, renderH));
 
+	const D2D1_RECT_F& b = sprite.border;
+	if (b.left > 0.0f || b.top > 0.0f || b.right > 0.0f || b.bottom > 0.0f)
+	{
+		DrawNineSliceBitmap(pRT, cmd, destRect, b);
+		return;
+	}
+
 	pRT->DrawBitmap(
 		sprite.pTexture,
 		destRect,
@@ -147,6 +156,76 @@ void RenderSystem::DrawBitmap(ID2D1RenderTarget* pRT, const RenderCommand& cmd)
 		D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
 		&clippedSrcRect
 	);
+}
+
+void RenderSystem::DrawNineSliceBitmap(ID2D1RenderTarget* pRT, const RenderCommand& cmd, const D2D1_RECT_F& destRect, const D2D1_RECT_F& border)
+{
+	const Sprite& sprite = cmd.bitmap.sprite;
+	const D2D1_RECT_F& src = sprite.srcRect;
+
+	float destW = destRect.right - destRect.left;
+	float destH = destRect.bottom - destRect.top;
+	if (destW <= 0.0f || destH <= 0.0f) return;
+
+	float bL = border.left;
+	float bT = border.top;
+	float bR = border.right;
+	float bB = border.bottom;
+
+	float scaleX = (destW < (bL + bR) && (bL + bR) > 0.0f) ? (destW / (bL + bR)) : 1.0f;
+	float scaleY = (destH < (bT + bB) && (bT + bB) > 0.0f) ? (destH / (bT + bB)) : 1.0f;
+
+	float effL = bL * scaleX;
+	float effR = bR * scaleX;
+	float effT = bT * scaleY;
+	float effB = bB * scaleY;
+
+	float srcX[4] = { src.left, src.left + bL, src.right - bR, src.right };
+	float srcY[4] = { src.top, src.top + bT, src.bottom - bB, src.bottom };
+
+	float dstX[4] = {
+		floorf(destRect.left + 0.5f),
+		floorf(destRect.left + effL + 0.5f),
+		floorf(destRect.right - effR + 0.5f),
+		floorf(destRect.right + 0.5f)
+	};
+	float dstY[4] = {
+		floorf(destRect.top + 0.5f),
+		floorf(destRect.top + effT + 0.5f),
+		floorf(destRect.bottom - effB + 0.5f),
+		floorf(destRect.bottom + 0.5f)
+	};
+
+	D2D1_ANTIALIAS_MODE oldAAMode = pRT->GetAntialiasMode();
+	pRT->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
+	
+
+	for (int row = 0; row < 3; ++row)
+	{
+		for (int col = 0; col < 3; ++col)
+		{
+			float sW = srcX[col + 1] - srcX[col];
+			float sH = srcY[row + 1] - srcY[row];
+			float dW = dstX[col + 1] - dstX[col];
+			float dH = dstY[row + 1] - dstY[row];
+
+			if (sW <= 0.0f || sH <= 0.0f || dW <= 0.0f || dH <= 0.0f)
+				continue;
+
+			D2D1_RECT_F subSrcRect = D2D1::RectF(srcX[col], srcY[row], srcX[col + 1], srcY[row + 1]);
+			D2D1_RECT_F subDstRect = D2D1::RectF(dstX[col], dstY[row], dstX[col + 1], dstY[row + 1]);
+
+			pRT->DrawBitmap(
+				sprite.pTexture,
+				subDstRect,
+				cmd.bitmap.opacity,
+				D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
+				&subSrcRect
+			);
+		}
+	}
+
+	pRT->SetAntialiasMode(oldAAMode);
 }
 
 void RenderSystem::DrawTextString(ID2D1RenderTarget* pRT, const RenderCommand& cmd, ID2D1SolidColorBrush* pBrush)
@@ -167,22 +246,36 @@ void RenderSystem::DrawTextString(ID2D1RenderTarget* pRT, const RenderCommand& c
 	);
 	if (SUCCEEDED(hr) && pTextFormat)
 	{
-		if (cmd.pivot.x == 0.0f)
+		switch (cmd.text.alignment)
+		{
+		case ETextAlignment::Left:
 			pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
-		else if (cmd.pivot.x == 1.0f)
+			break;
+		case ETextAlignment::Right:
 			pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
-		else
+			break;
+		case ETextAlignment::Center:
+		default:
 			pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+			break;
+		}
 
-		if (cmd.pivot.y == 0.0f)
+		switch (cmd.text.paragraphAlignment)
+		{
+		case EParagraphAlignment::Top:
 			pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
-		else if (cmd.pivot.y == 1.0f)
+			break;
+		case EParagraphAlignment::Bottom:
 			pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_FAR);
-		else
+			break;
+		case EParagraphAlignment::Center:
+		default:
 			pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+			break;
+		}
 
-		float width = (cmd.srcRect.right > cmd.srcRect.left) ? (cmd.srcRect.right - cmd.srcRect.left) : 300.0f;
-		float height = (cmd.srcRect.bottom > cmd.srcRect.top) ? (cmd.srcRect.bottom - cmd.srcRect.top) : 100.0f;
+		float width = (cmd.text.size.x > 0.0f) ? cmd.text.size.x : ((cmd.srcRect.right > cmd.srcRect.left) ? (cmd.srcRect.right - cmd.srcRect.left) : 300.0f);
+		float height = (cmd.text.size.y > 0.0f) ? cmd.text.size.y : ((cmd.srcRect.bottom > cmd.srcRect.top) ? (cmd.srcRect.bottom - cmd.srcRect.top) : 100.0f);
 
 		pRT->SetTransform(CalculateSRTMatrix(cmd, width, height));
 

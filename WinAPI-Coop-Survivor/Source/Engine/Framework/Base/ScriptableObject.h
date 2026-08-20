@@ -63,6 +63,15 @@ protected:
 		m_properties.push_back(prop);
 	}
 
+	void ExposeAnimClip(const std::string& name, std::string* ptr)
+	{
+		ExposedProperty prop;
+		prop.name = name;
+		prop.data = ptr;
+		prop.type = PropType::AnimClip;
+		m_properties.push_back(prop);
+	}
+
 protected:
 	uint32 m_assetID = 0;
 	std::string m_assetName = "";

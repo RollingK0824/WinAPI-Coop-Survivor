@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Engine/Framework/Components/Physics/ColliderComponent.h"
 
 class BoxCollider : public ColliderComponent
@@ -12,11 +12,19 @@ public:
 	virtual void Awake() override;
 	virtual void PostDeserialize(Scene* pScene) override;
 
+	Vector2 GetSize() const { return m_size; }
+
 	void SetSize(float width, float height)
 	{
 		m_size.x = width;
 		m_size.y = height;
 
+		RebuildShape();
+	}
+
+	void SetSize(Vector2 size)
+	{
+		m_size = size;
 		RebuildShape();
 	}
 

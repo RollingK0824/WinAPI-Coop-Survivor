@@ -20,6 +20,13 @@
 #include "Engine/Framework/Components/UI/UIImageComponent.h"
 #include "Engine/Framework/Components/UI/UITextComponent.h"
 #include "Game/Player/NetworkController.h"
+#include "Game/UI/SkillChoiceController.h"
+#include "Game/UI/DamagePopupComponent.h"
+#include "Game/Manager/GameEvents.h"
+#include "Engine/Core/EventBus.h"
+#include "Engine/Manager/SceneManager.h"
+#include "Game/Player/Coffin.h"
+
 
 InGameManager* InGameManager::s_instance = nullptr;
 
@@ -33,6 +40,8 @@ InGameManager::InGameManager(GameObject* owner, TransformComponent* transform) :
 	ExposeVariable("TeamExp", &m_teamExp);
 	ExposeVariable("TeamMaxExp", &m_teamMaxExp);
 	ExposeVariable("IsSimulationPaused", &m_bIsSimulationPaused);
+	ExposeComponent("EXP Bar Fill Image", &m_pExpBarFillImg);
+	ExposeComponent("EXP Text Component", &m_pExpTextComp);
 }
 
 InGameManager::~InGameManager()
@@ -43,16 +52,18 @@ InGameManager::~InGameManager()
 void InGameManager::OnDestroy()
 {
 	ScriptComponent::OnDestroy();
-	if (s_instance == this) s_instance = nullptr;
-
-	Scene* pScene = gameObject.GetOwnerScene();
-	if (pScene)
+	if (NetworkManager::GetInstance())
 	{
-		if (m_pExpBarBgObj.IsValid()) pScene->DestroyObjects(m_pExpBarBgObj.Get());
-		if (m_pExpBarFillObj.IsValid()) pScene->DestroyObjects(m_pExpBarFillObj.Get());
-		if (m_pExpTextObj.IsValid()) pScene->DestroyObjects(m_pExpTextObj.Get());
+		NetworkManager::GetInstance()->ClearPacketHandlers();
+		NetworkManager::GetInstance()->ClearNetworkObjects();
 	}
+	if (PoolManager::GetInstance())
+	{
+		PoolManager::GetInstance()->ClearAll();
+	}
+	if (s_instance == this) s_instance = nullptr;
 }
+
 
 void InGameManager::Start()
 {
@@ -73,52 +84,35 @@ void InGameManager::Start()
 	{
 		DebugManager::GetInstance()->CreateDebugUIOverlay(pScene);
 
-		auto initSkillPool = [pScene](const std::string& key, size_t cap) {
+		auto initPool = [pScene](const std::string& key, size_t defaultCapacity, size_t maxSize) {
 			PoolManager::GetInstance()->CreatePool<GameObject>(
 				key,
 				[key, pScene]() { return PrefabManager::GetInstance()->Instantiate(key, pScene); },
 				[](GameObject* obj) { if (obj) obj->SetActive(true); },
 				[](GameObject* obj) { if (obj) obj->SetActive(false); },
 				nullptr,
-				cap, 300
+				defaultCapacity, maxSize
 			);
 		};
 
-		initSkillPool("GenericProjectilePrefab", 300);
-		initSkillPool("GenericAuraPrefab", 20);
-		initSkillPool("GenericAoEPrefab", 50);
-
-		// ExpGem 오브젝트 풀 초기화 (미등록 시 런타임 자동 생성 폴백 백업)
-		PoolManager::GetInstance()->CreatePool<GameObject>(
-			"ExpGemPrefab",
-			[pScene]() {
-				GameObject* pObj = PrefabManager::GetInstance()->Instantiate("ExpGemPrefab", pScene);
-				if (!pObj)
-				{
-					pObj = pScene->CreateGameObject("ExpGem");
-					pObj->AddComponent<ExpGem>();
-					UIImageComponent* pImg = pObj->AddComponent<UIImageComponent>();
-					if (pImg)
-					{
-						pImg->SetIsUI(false);
-						pImg->SetSize({ 12.0f, 12.0f });
-						pImg->SetColor(D2D1::ColorF(0.1f, 0.85f, 1.0f, 1.0f));
-						pImg->SetZOrder(150);
-					}
-				}
-				return pObj;
-			},
-			[](GameObject* obj) { if (obj) obj->SetActive(true); },
-			[](GameObject* obj) { if (obj) obj->SetActive(false); },
-			nullptr,
-			300, 1000
-		);
+		initPool("GenericProjectilePrefab", 300, 300);
+		initPool("GenericAuraPrefab", 20, 300);
+		initPool("GenericAoEPrefab", 50, 300);
+		initPool("PetalSlashAoEPrefab", 50, 300);
+		initPool("ExpGemPrefab", 300, 1000);
+		initPool("DamageTextPrefab", 100, 500);
 	}
 
 	if (!gameObject.GetComponent<MonsterSpawner>())
 	{
 		gameObject.AddComponent<MonsterSpawner>();
 	}
+
+	if (!gameObject.GetComponent<SkillChoiceController>())
+	{
+		gameObject.AddComponent<SkillChoiceController>();
+	}
+
 
 	NetworkManager* net = NetworkManager::GetInstance();
 	uint32 myNetID = net->GetMyNetID();
@@ -150,7 +144,6 @@ void InGameManager::Start()
 					expectedSize += (snapshot->monsterCount - 1) * sizeof(MonsterSnapshotData);
 				if (size < static_cast<int>(expectedSize)) return;
 
-				// MonsterSpawner 탐색
 				MonsterSpawner* spawner = nullptr;
 				Scene* pScene = gameObject.GetOwnerScene();
 				if (pScene)
@@ -176,11 +169,10 @@ void InGameManager::Start()
 						pMonster = spawner->GetMonsterByNetID(monsterNetID);
 						if (!pMonster)
 						{
-							pMonster = spawner->SpawnMonsterClient(monsterNetID, targetPos);
+							pMonster = spawner->SpawnMonsterClient(monsterNetID, snapshot->monsters[i].monsterAssetID, targetPos);
 						}
 						else
 						{
-							// 컬링 후 재진입 등 거리 차이가 큰 경우 즉시 위치 세팅(Snap)하여 대각선 고속 이동/텔레포트 방지
 							float dist = Vector2::Distance(pMonster->transform.GetPosition(), targetPos);
 							if (dist > 150.0f)
 							{
@@ -202,7 +194,6 @@ void InGameManager::Start()
 				auto killPkt = reinterpret_cast<const MonsterKillPacket*>(packet);
 				this->SpawnExpGem(killPkt->dropItemPos, 10);
 
-				// Client 몬스터 Despawn 처리
 				Scene* pScene = gameObject.GetOwnerScene();
 				if (pScene)
 				{
@@ -213,7 +204,15 @@ void InGameManager::Start()
 							auto* spawner = obj->GetComponent<MonsterSpawner>();
 							if (spawner)
 							{
-								spawner->DespawnMonsterByNetID(killPkt->monsterNetID);
+								Monster* pMonster = spawner->GetMonsterByNetID(killPkt->monsterNetID);
+								if (pMonster)
+								{
+									pMonster->ClientDie();
+								}
+								else
+								{
+									spawner->DespawnMonsterByNetID(killPkt->monsterNetID);
+								}
 								break;
 							}
 						}
@@ -229,12 +228,79 @@ void InGameManager::Start()
 				this->m_teamExp = syncPkt->teamExp;
 				this->m_teamMaxExp = syncPkt->teamMaxExp;
 
-				if (leveledUp && this->m_onTeamLevelUp)
+				if (leveledUp)
 				{
-					this->m_onTeamLevelUp(this->m_teamLevel);
+					if (this->m_onTeamLevelUp)
+					{
+						this->m_onTeamLevelUp(this->m_teamLevel);
+					}
+
+					if (auto* choiceCtrl = gameObject.GetComponent<SkillChoiceController>())
+					{
+						uint32 myID = NetworkManager::GetInstance()->GetMyNetID();
+						GameObject* myPlayerObj = NetworkManager::GetInstance()->GetNetworkObject(myID != 0 ? myID : 1);
+						if (myPlayerObj)
+						{
+							Player* pPlayer = myPlayerObj->GetComponent<Player>();
+							if (pPlayer)
+							{
+								choiceCtrl->PresentChoices(pPlayer);
+							}
+						}
+					}
 				}
 
 				this->UpdateTeamExpBarUI();
+			});
+
+		net->RegisterPacketHandler(PacketType::SIMULATION_RESUME_SIGNAL,
+			[this](const PacketHeader* packet, const sockaddr_in& sender) {
+				this->PauseSimulation(false);
+			});
+
+		net->RegisterPacketHandler(PacketType::GAME_STATE_SYNC,
+			[this](const PacketHeader* packet, const sockaddr_in& sender) {
+				auto statePkt = reinterpret_cast<const GameStateSyncPacket*>(packet);
+				TimeManager::GetInstance()->SetGameTime(statePkt->gameElapsedTime);
+			});
+
+		net->RegisterPacketHandler(PacketType::GAME_OVER_SIGNAL,
+			[this](const PacketHeader* packet, const sockaddr_in& sender) {
+				this->m_bIsGameStarted = false;
+				NetworkManager::GetInstance()->StopNetwork();
+				SceneManager::GetInstance()->LoadSceneFromFile("Resources/Scenes/GameOver.scene");
+			});
+
+		net->RegisterPacketHandler(PacketType::SKILL_CHOICE_COMPLETE,
+			[this](const PacketHeader* packet, const sockaddr_in& sender) {
+				auto choicePkt = reinterpret_cast<const SkillChoiceCompletePacket*>(packet);
+				uint32 netID = choicePkt->playerNetID;
+				uint32 myNetID = NetworkManager::GetInstance()->GetMyNetID();
+
+				GameObject* playerObj = NetworkManager::GetInstance()->GetNetworkObject(netID);
+				if (playerObj)
+				{
+					SkillComponent* pSkillComp = playerObj->GetComponent<SkillComponent>();
+					Player* pPlayer = playerObj->GetComponent<Player>();
+
+					if (netID != myNetID)
+					{
+						if (choicePkt->choiceType == 0 || choicePkt->choiceType == 1)
+						{
+							if (pSkillComp) pSkillComp->AddSkill(choicePkt->chosenSkillID);
+						}
+						else if (choicePkt->choiceType == 2)
+						{
+							if (pPlayer) pPlayer->Heal(pPlayer->GetMaxHP() * 0.5f);
+						}
+						else if (choicePkt->choiceType == 3)
+						{
+							if (pPlayer) pPlayer->Heal(pPlayer->GetMaxHP());
+						}
+					}
+				}
+
+				this->m_clientSkillChoiceMap[netID] = true;
 			});
 	}
 
@@ -246,7 +312,14 @@ void InGameManager::Start()
 			SpawnPlayer(clientNetID, false, { startX, 0.0f });
 		}
 
+		net->RegisterPacketHandler(PacketType::SKILL_CHOICE_COMPLETE,
+			[this](const PacketHeader* packet, const sockaddr_in& sender) {
+				auto choicePkt = reinterpret_cast<const SkillChoiceCompletePacket*>(packet);
+				this->NotifySkillChoiceComplete(choicePkt->playerNetID, choicePkt->chosenSkillID, choicePkt->choiceType);
+			});
+
 		net->RegisterPacketHandler(PacketType::CLIENT_READY_REQ,
+
 			[this](const PacketHeader* packet, const sockaddr_in& sender) {
 				auto readyPkt = reinterpret_cast<const ClientReadyReqPacket*>(packet);
 				this->m_clientReadyMap[readyPkt->netId] = readyPkt->isReady;
@@ -316,9 +389,68 @@ void InGameManager::Start()
 
 				if (obj)
 				{
-					if (auto* player = obj->GetComponent<Player>())
+					Player* player = obj->GetComponent<Player>();
+					if (player)
 					{
 						player->SyncHP(entity.hp);
+					}
+
+					if (entity.isDead)
+					{
+						Scene* pScene = obj->GetOwnerScene();
+						if (pScene && player)
+						{
+							bool coffinExists = false;
+							for (GameObject* sceneObj : pScene->GetGameObjects())
+							{
+								if (sceneObj && sceneObj->IsActive())
+								{
+									Coffin* c = sceneObj->GetComponent<Coffin>();
+									if (c && c->GetTargetPlayer() == player)
+									{
+										coffinExists = true;
+										break;
+									}
+								}
+							}
+
+							if (!coffinExists)
+							{
+								GameObject* coffinObj = PrefabManager::GetInstance()->Instantiate("Coffin", pScene);
+								if (coffinObj)
+								{
+									coffinObj->transform.SetPosition(entity.pos);
+									Coffin* pCoffinComp = coffinObj->GetComponent<Coffin>();
+									if (!pCoffinComp)
+									{
+										pCoffinComp = coffinObj->AddComponent<Coffin>();
+									}
+									if (pCoffinComp)
+									{
+										pCoffinComp->SetTargetPlayer(player);
+									}
+								}
+							}
+						}
+					}
+					else
+					{
+						Scene* pScene = obj->GetOwnerScene();
+						if (pScene && player)
+						{
+							for (GameObject* sceneObj : pScene->GetGameObjects())
+							{
+								if (sceneObj && sceneObj->IsActive())
+								{
+									Coffin* c = sceneObj->GetComponent<Coffin>();
+									if (c && c->GetTargetPlayer() == player)
+									{
+										sceneObj->Destroy();
+										player->SetInvincible(5.0f);
+									}
+								}
+							}
+						}
 					}
 
 					if (entity.netID != myID)
@@ -377,6 +509,7 @@ void InGameManager::Update(float dt)
 			}
 
 			TimeManager::GetInstance()->SetPaused(false);
+			TimeManager::GetInstance()->ResetGameTime();
 
 			if (m_onGameStarted)
 			{
@@ -387,6 +520,40 @@ void InGameManager::Update(float dt)
 
 	NetworkManager* net = NetworkManager::GetInstance();
 	if (!net->IsConnected()) return;
+
+	if (m_bIsGameStarted && !m_vCachedPlayer.empty())
+	{
+		bool anyAlive = false;
+		for (GameObject* playerObj : m_vCachedPlayer)
+		{
+			if (playerObj && playerObj->IsActive())
+			{
+				Player* pPlayer = playerObj->GetComponent<Player>();
+				if (pPlayer && !pPlayer->IsDead())
+				{
+					anyAlive = true;
+					break;
+				}
+			}
+		}
+
+		if (!anyAlive)
+		{
+			m_bIsGameStarted = false;
+
+			if (net->GetRole() == NetRole::HOST)
+			{
+				GameOverSignalPacket pk{};
+				pk.header.type = PacketType::GAME_OVER_SIGNAL;
+				pk.header.size = sizeof(GameOverSignalPacket);
+				net->SendPacket(&pk, sizeof(pk));
+			}
+
+			net->StopNetwork();
+			SceneManager::GetInstance()->LoadSceneFromFile("Resources/Scenes/GameOver.scene");
+			return;
+		}
+	}
 }
 
 void InGameManager::FixedUpdate(float fixedDt)
@@ -409,49 +576,45 @@ void InGameManager::BroadcastPlayerEntityState()
 	syncPacket.header.tick = net->GetCurrentTick();
 	syncPacket.entityCount = 0;
 
-	for (auto* obj : scene->GetGameObjects())
+	for (const auto& [netID, playerObj] : m_playerObjects)
 	{
-		if (obj && obj->IsActive())
+		if (!playerObj) continue;
+
+		int idx = syncPacket.entityCount;
+		if (idx >= 32) break;
+
+		syncPacket.entities[idx].netID = static_cast<uint8>(netID);
+
+		Player* pPlayer = playerObj->GetComponent<Player>();
+		bool isDead = (pPlayer != nullptr) ? (pPlayer->IsDead() || !playerObj->IsActive()) : !playerObj->IsActive();
+		syncPacket.entities[idx].isDead = isDead;
+		syncPacket.entities[idx].hp = pPlayer ? pPlayer->GetCurrentHP() : 0.0f;
+
+		ColliderComponent* pCollider = playerObj->GetComponent<ColliderComponent>();
+		if (pCollider && b2Body_IsValid(pCollider->GetBodyId()))
 		{
-			NetworkIdentity* netIdComp = obj->GetComponent<NetworkIdentity>();
-			// 몬스터 제외, 플레이어 객체만 ENTITY_STATE_SYNC로 동기화 (NetID < 1000)
-			if (netIdComp && netIdComp->GetNetID() > 0 && netIdComp->GetNetID() < 1000)
-			{
-				int idx = syncPacket.entityCount;
-				if (idx >= 32) break;
+			b2Vec2 pos = b2Body_GetPosition(pCollider->GetBodyId());
+			b2Vec2 vel = b2Body_GetLinearVelocity(pCollider->GetBodyId());
+			float angle = b2Rot_GetAngle(b2Body_GetRotation(pCollider->GetBodyId()));
 
-				syncPacket.entities[idx].netID = netIdComp->GetNetID();
-
-				ColliderComponent* pCollider = obj->GetComponent<ColliderComponent>();
-				if (pCollider && b2Body_IsValid(pCollider->GetBodyId()))
-				{
-					b2Vec2 pos = b2Body_GetPosition(pCollider->GetBodyId());
-					b2Vec2 vel = b2Body_GetLinearVelocity(pCollider->GetBodyId());
-					float angle = b2Rot_GetAngle(b2Body_GetRotation(pCollider->GetBodyId()));
-
-					syncPacket.entities[idx].pos = Vector2(MeterToPixel(pos.x), MeterToPixel(pos.y));
-					syncPacket.entities[idx].vel = Vector2(MeterToPixel(vel.x), MeterToPixel(vel.y));
-					syncPacket.entities[idx].angle = angle;
-				}
-				else
-				{
-					TransformComponent* transform = &obj->transform;
-					syncPacket.entities[idx].pos = transform->GetPosition();
-					syncPacket.entities[idx].vel = Vector2(0.0f, 0.0f);
-					syncPacket.entities[idx].angle = transform->GetRotation().angle;
-				}
-
-				Player* pPlayer = obj->GetComponent<Player>();
-				syncPacket.entities[idx].hp = pPlayer ? pPlayer->GetCurrentHP() : 100.0f;
-
-				syncPacket.entityCount++;
-			}
+			syncPacket.entities[idx].pos = Vector2(MeterToPixel(pos.x), MeterToPixel(pos.y));
+			syncPacket.entities[idx].vel = Vector2(MeterToPixel(vel.x), MeterToPixel(vel.y));
+			syncPacket.entities[idx].angle = angle;
 		}
+		else
+		{
+			TransformComponent* transform = &playerObj->transform;
+			syncPacket.entities[idx].pos = transform->GetPosition();
+			syncPacket.entities[idx].vel = Vector2(0.0f, 0.0f);
+			syncPacket.entities[idx].angle = transform->GetRotation().angle;
+		}
+
+		syncPacket.entityCount++;
 	}
 
 	if (syncPacket.entityCount > 0)
 	{
-		int packetSize = sizeof(PacketHeader) + sizeof(int) + sizeof(EntitySyncData) * syncPacket.entityCount;
+		int packetSize = sizeof(PacketHeader) + sizeof(int32) + sizeof(EntitySyncData) * syncPacket.entityCount;
 		net->SendPacket(&syncPacket, packetSize);
 	}
 }
@@ -496,7 +659,6 @@ GameObject* InGameManager::SpawnPlayer(uint32 netId, bool isLocal, Vector2 spawn
 		return nullptr;
 	}
 
-	// 스폰 좌표가 0,0 기본값이면 NetID에 따라 가로 120px 간격으로 일렬 스폰
 	if (spawnPos.x == 0.0f && spawnPos.y == 0.0f)
 	{
 		spawnPos.x = (static_cast<float>(netId) - 1.0f) * 120.0f;
@@ -504,7 +666,6 @@ GameObject* InGameManager::SpawnPlayer(uint32 netId, bool isLocal, Vector2 spawn
 
 	pPlayerObj->transform.SetPosition(spawnPos);
 
-	// Box2D 물리 강체 좌표도 스폰 위치로 즉시 동기화 (0,0 겹침 방지)
 	ColliderComponent* pCollider = pPlayerObj->GetComponent<ColliderComponent>();
 	if (pCollider && b2Body_IsValid(pCollider->GetBodyId()))
 	{
@@ -520,7 +681,6 @@ GameObject* InGameManager::SpawnPlayer(uint32 netId, bool isLocal, Vector2 spawn
 	netIdentity->SetNetID(netId);
 	netIdentity->SetLocalPlayer(isLocal);
 
-	// SkillComponent 가져오기 (없으면 추가)
 	SkillComponent* pSkillComp = pPlayerObj->GetComponent<SkillComponent>();
 	if (!pSkillComp)
 	{
@@ -549,6 +709,8 @@ void InGameManager::SendClientReadyStatus(bool isReady)
 void InGameManager::SendHostStartSignal()
 {
 	if (!IsAllClientsReady())return;
+
+	NetworkManager::GetInstance()->SetCanJoin(false);
 
 	uint32 newSeed = RandomManager::GetInstance()->GenerateNewSeed();
 
@@ -593,23 +755,32 @@ void InGameManager::AddTeamExp(float amount)
 		m_onExpChanged(m_teamExp, m_teamMaxExp);
 	}
 
-	// 팀 경험치가 목표치를 달성할 때까지 반복 레벨업 처리 (경험치 이월 지원)
 	while (m_teamExp >= m_teamMaxExp)
 	{
 		m_teamExp -= m_teamMaxExp;
 		m_teamLevel++;
-		m_teamMaxExp *= 1.25f; // 다음 레벨업 필요 경험치 25% 증가
+		m_teamMaxExp *= 1.25f;
 
 		if (m_onTeamLevelUp)
 		{
 			m_onTeamLevelUp(m_teamLevel);
 		}
 
-		// 결정론적 시뮬레이션 일시정지 (5단계 UI 연동 전 테스트를 위해 임시 비활성화)
-		// PauseSimulation(true);
+		if (auto* choiceCtrl = gameObject.GetComponent<SkillChoiceController>())
+		{
+			uint32 myID = NetworkManager::GetInstance()->GetMyNetID();
+			GameObject* myPlayerObj = NetworkManager::GetInstance()->GetNetworkObject(myID != 0 ? myID : 1);
+			if (myPlayerObj)
+			{
+				Player* pPlayer = myPlayerObj->GetComponent<Player>();
+				if (pPlayer)
+				{
+					choiceCtrl->PresentChoices(pPlayer);
+				}
+			}
+		}
 	}
 
-	// Host 권한 기반 팀 레벨/경험치 상태 패킷 동기화 전송
 	if (NetworkManager::GetInstance()->GetRole() == NetRole::HOST)
 	{
 		TeamExpSyncPacket syncPkt{};
@@ -638,10 +809,6 @@ void InGameManager::SpawnExpGem(Vector2 pos, int32 expAmount)
 	{
 		pGemObj->transform.SetPosition(pos);
 		ExpGem* pGem = pGemObj->GetComponent<ExpGem>();
-		if (!pGem)
-		{
-			pGem = pGemObj->AddComponent<ExpGem>();
-		}
 		if (pGem)
 		{
 			pGem->Init(expAmount);
@@ -655,51 +822,19 @@ void InGameManager::CreateTeamExpBarUI()
 	Scene* pScene = gameObject.GetOwnerScene();
 	if (!pScene) return;
 
-	Vector2 barPos = { 710.0f, 15.0f }; // 화면 상단 중앙 (1920 / 2 - 250 = 710)
-	Vector2 barSize = { 500.0f, 16.0f };
-
-	// 1. 팀 경험치 바 배경 (UIImageComponent)
-	m_pExpBarBgObj = pScene->CreateGameObject("TeamEXPBar_BG");
-	if (m_pExpBarBgObj.IsValid())
+	if (!m_pExpBarFillImg)
 	{
-		m_pExpBarBgObj->transform.SetPosition(barPos);
-		UIImageComponent* pBgImg = m_pExpBarBgObj->AddComponent<UIImageComponent>();
-		if (pBgImg)
+		if (GameObject* fillObj = pScene->FindGameObjectByName("TeamEXPBar_Fill"))
 		{
-			pBgImg->SetIsUI(true);
-			pBgImg->SetSize(barSize);
-			pBgImg->SetColor(D2D1::ColorF(0.1f, 0.1f, 0.15f, 0.85f));
-			pBgImg->SetZOrder(900);
+			m_pExpBarFillImg = fillObj->GetComponent<UIImageComponent>();
 		}
 	}
 
-	// 2. 팀 경험치 바 Fill (UIImageComponent)
-	m_pExpBarFillObj = pScene->CreateGameObject("TeamEXPBar_Fill");
-	if (m_pExpBarFillObj.IsValid())
+	if (!m_pExpTextComp)
 	{
-		m_pExpBarFillObj->transform.SetPosition(barPos);
-		m_pExpBarFillImg = m_pExpBarFillObj->AddComponent<UIImageComponent>();
-		if (m_pExpBarFillImg.IsValid())
+		if (GameObject* textObj = pScene->FindGameObjectByName("TeamEXP_Text"))
 		{
-			m_pExpBarFillImg->SetIsUI(true);
-			m_pExpBarFillImg->SetSize(barSize);
-			m_pExpBarFillImg->SetColor(D2D1::ColorF(0.2f, 0.85f, 1.0f, 1.0f)); // 민트/하늘색
-			m_pExpBarFillImg->SetFillAmount(0.0f);
-			m_pExpBarFillImg->SetZOrder(901);
-		}
-	}
-
-	// 3. 레벨/경험치 수치 텍스트 (UITextComponent)
-	m_pExpTextObj = pScene->CreateGameObject("TeamEXP_Text");
-	if (m_pExpTextObj.IsValid())
-	{
-		m_pExpTextObj->transform.SetPosition(barPos.x + 180.0f, barPos.y - 2.0f);
-		m_pExpTextComp = m_pExpTextObj->AddComponent<UITextComponent>();
-		if (m_pExpTextComp.IsValid())
-		{
-			m_pExpTextComp->SetFontSize(13.0f);
-			m_pExpTextComp->SetColor(D2D1::ColorF(D2D1::ColorF::White));
-			m_pExpTextComp->SetZOrder(902);
+			m_pExpTextComp = textObj->GetComponent<UITextComponent>();
 		}
 	}
 
@@ -708,12 +843,12 @@ void InGameManager::CreateTeamExpBarUI()
 
 void InGameManager::UpdateTeamExpBarUI()
 {
-	if (m_pExpBarFillImg.IsValid())
+	if (m_pExpBarFillImg)
 	{
 		m_pExpBarFillImg->SetFillAmount(GetTeamExpRatio());
 	}
 
-	if (m_pExpTextComp.IsValid())
+	if (m_pExpTextComp)
 	{
 		std::wstring text = L"LV." + std::to_wstring(m_teamLevel) + L"  ("
 			+ std::to_wstring(static_cast<int>(m_teamExp)) + L" / "
@@ -721,6 +856,7 @@ void InGameManager::UpdateTeamExpBarUI()
 		m_pExpTextComp->SetText(text);
 	}
 }
+
 
 void InGameManager::RegisterGem(ExpGem* gem)
 {
@@ -741,3 +877,140 @@ void InGameManager::UnregisterGem(ExpGem* gem)
 		m_activeGems.erase(it);
 	}
 }
+
+void InGameManager::SendSkillChoiceCompletePacket(uint32 chosenSkillID, uint8 choiceType)
+{
+	uint32 myNetID = NetworkManager::GetInstance()->GetMyNetID();
+	if (myNetID == 0) myNetID = 1;
+
+	if (NetworkManager::GetInstance()->GetRole() == NetRole::CLIENT)
+	{
+		SkillChoiceCompletePacket pk{};
+		pk.header.type = PacketType::SKILL_CHOICE_COMPLETE;
+		pk.header.size = sizeof(SkillChoiceCompletePacket);
+		pk.playerNetID = myNetID;
+		pk.chosenSkillID = chosenSkillID;
+		pk.choiceType = choiceType;
+
+		NetworkManager::GetInstance()->SendPacket(&pk, sizeof(pk));
+	}
+	else
+	{
+		NotifySkillChoiceComplete(myNetID, chosenSkillID, choiceType);
+	}
+}
+
+void InGameManager::NotifySkillChoiceComplete(uint32 netID, uint32 chosenSkillID, uint8 choiceType)
+{
+	m_clientSkillChoiceMap[netID] = true;
+
+	GameObject* playerObj = NetworkManager::GetInstance()->GetNetworkObject(netID);
+	if (playerObj)
+	{
+		SkillComponent* pSkillComp = playerObj->GetComponent<SkillComponent>();
+		Player* pPlayer = playerObj->GetComponent<Player>();
+
+		uint32 myNetID = NetworkManager::GetInstance()->GetMyNetID();
+		if (NetworkManager::GetInstance()->GetRole() != NetRole::HOST || netID != (myNetID != 0 ? myNetID : 1))
+		{
+			if (choiceType == 0 || choiceType == 1)
+			{
+				if (pSkillComp) pSkillComp->AddSkill(chosenSkillID);
+			}
+			else if (choiceType == 2)
+			{
+				if (pPlayer) pPlayer->Heal(pPlayer->GetMaxHP() * 0.5f);
+			}
+			else if (choiceType == 3)
+			{
+				if (pPlayer) pPlayer->Heal(pPlayer->GetMaxHP());
+			}
+		}
+	}
+
+	NetworkManager* net = NetworkManager::GetInstance();
+	if (net->GetRole() == NetRole::HOST)
+	{
+		SkillChoiceCompletePacket pk{};
+		pk.header.type = PacketType::SKILL_CHOICE_COMPLETE;
+		pk.header.size = sizeof(SkillChoiceCompletePacket);
+		pk.playerNetID = netID;
+		pk.chosenSkillID = chosenSkillID;
+		pk.choiceType = choiceType;
+
+		net->SendPacket(&pk, sizeof(pk));
+	}
+
+	CheckAndResumeSimulationIfAllChosen();
+}
+
+bool InGameManager::IsAllClientsSkillChoiceComplete() const
+{
+	NetworkManager* net = NetworkManager::GetInstance();
+	if (net->GetRole() != NetRole::HOST) return true;
+
+	uint32 hostID = net->GetMyNetID();
+	if (hostID == 0) hostID = 1;
+	auto hostIter = m_clientSkillChoiceMap.find(hostID);
+	if (hostIter == m_clientSkillChoiceMap.end() || !hostIter->second)
+	{
+		return false;
+	}
+
+	const auto& clients = net->GetConnectedClients();
+	for (const auto& [netID, info] : clients)
+	{
+		auto iter = m_clientSkillChoiceMap.find(netID);
+		if (iter == m_clientSkillChoiceMap.end() || !iter->second)
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+void InGameManager::CheckAndResumeSimulationIfAllChosen()
+{
+	NetRole role = NetworkManager::GetInstance()->GetRole();
+
+	if (role == NetRole::NONE)
+	{
+		// 솔로 플레이: 바로 재개
+		m_clientSkillChoiceMap.clear();
+		PauseSimulation(false);
+		return;
+	}
+
+	if (role != NetRole::HOST) return;
+
+	if (IsAllClientsSkillChoiceComplete())
+	{
+		SimulationResumeSignalPacket resumePkt{};
+		resumePkt.header.type = PacketType::SIMULATION_RESUME_SIGNAL;
+		resumePkt.header.size = sizeof(SimulationResumeSignalPacket);
+		NetworkManager::GetInstance()->SendPacket(&resumePkt, sizeof(resumePkt));
+
+		m_clientSkillChoiceMap.clear();
+		PauseSimulation(false);
+	}
+}
+
+void InGameManager::SpawnDamageText(int damage, const Vector2& pos, bool isCritical)
+{
+	if (damage <= 0) return;
+
+	GameObject* pObj = PoolManager::GetInstance()->Spawn<GameObject>("DamageTextPrefab");
+	if (pObj)
+	{
+		DamagePopupComponent* pPopup = pObj->GetComponent<DamagePopupComponent>();
+		if (!pPopup)
+		{
+			pPopup = pObj->AddComponent<DamagePopupComponent>();
+		}
+		if (pPopup)
+		{
+			pPopup->Init(damage, pos, isCritical, "DamageTextPrefab");
+		}
+	}
+}
+

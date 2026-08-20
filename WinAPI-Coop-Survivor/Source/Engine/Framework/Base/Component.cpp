@@ -1,10 +1,28 @@
-﻿#include "Engine/Core/pch.h"
+#include "Engine/Core/pch.h"
 #include "Component.h"
 #include "Engine/Framework/GameObject.h"
 #include "Engine/Framework/Scene.h"
 
 namespace
 {
+	std::string WStringToUtf8(const std::wstring& wstr)
+	{
+		if (wstr.empty()) return "";
+		int sizeNeeded = WideCharToMultiByte(CP_UTF8, 0, wstr.data(), static_cast<int>(wstr.size()), nullptr, 0, nullptr, nullptr);
+		std::string str(sizeNeeded, 0);
+		WideCharToMultiByte(CP_UTF8, 0, wstr.data(), static_cast<int>(wstr.size()), &str[0], sizeNeeded, nullptr, nullptr);
+		return str;
+	}
+
+	std::wstring Utf8ToWString(const std::string& str)
+	{
+		if (str.empty()) return L"";
+		int sizeNeeded = MultiByteToWideChar(CP_UTF8, 0, str.data(), static_cast<int>(str.size()), nullptr, 0);
+		std::wstring wstr(sizeNeeded, 0);
+		MultiByteToWideChar(CP_UTF8, 0, str.data(), static_cast<int>(str.size()), &wstr[0], sizeNeeded);
+		return wstr;
+	}
+
 	const json* FindJsonField(const json& inJson, const std::string& name)
 	{
 		if (inJson.contains(name)) return &inJson[name];
@@ -81,7 +99,7 @@ void Component::Serialize(json& outJson) const
 		case PropType::WString:
 		{
 			std::wstring* wstr = static_cast<std::wstring*>(prop.data);
-			outJson[prop.name] = std::string(wstr->begin(), wstr->end());
+			outJson[prop.name] = WStringToUtf8(*wstr);
 		}
 		break;
 		case PropType::Vector2:
@@ -114,7 +132,7 @@ void Component::Serialize(json& outJson) const
 		case PropType::Texture:
 		{
 			std::wstring* wKey = static_cast<std::wstring*>(prop.data);
-			outJson[prop.name] = std::string(wKey->begin(), wKey->end());
+			outJson[prop.name] = WStringToUtf8(*wKey);
 		}
 		break;
 		case PropType::ObjectRef:
@@ -163,8 +181,7 @@ void Component::Deserialize(const json& inJson)
 		{
 			if (pVal->is_string())
 			{
-				std::string str = pVal->get<std::string>();
-				*static_cast<std::wstring*>(prop.data) = std::wstring(str.begin(), str.end());
+				*static_cast<std::wstring*>(prop.data) = Utf8ToWString(pVal->get<std::string>());
 			}
 		}
 		break;
@@ -209,6 +226,13 @@ void Component::Deserialize(const json& inJson)
 				if (pVal->contains("top")) rect->top = (*pVal)["top"].get<float>();
 				if (pVal->contains("right")) rect->right = (*pVal)["right"].get<float>();
 				if (pVal->contains("bottom")) rect->bottom = (*pVal)["bottom"].get<float>();
+			}
+			else if (pVal->is_array() && pVal->size() >= 4)
+			{
+				rect->left = (*pVal)[0].get<float>();
+				rect->top = (*pVal)[1].get<float>();
+				rect->right = (*pVal)[2].get<float>();
+				rect->bottom = (*pVal)[3].get<float>();
 			}
 		}
 		break;

@@ -1,0 +1,147 @@
+{
+    "Name": "HpBar",
+    "InstanceID": 1231,
+    "ParentInstanceID": 0,
+    "IsActive": true,
+    "Components": [
+        {
+            "Type": "TransformComponent",
+            "Data": {
+                "IsEnabled": true,
+                "Position": {
+                    "x": 0.0,
+                    "y": 25.0
+                },
+                "Rotation": 0.0,
+                "Scale": {
+                    "x": 1.0,
+                    "y": 1.0
+                }
+            }
+        }
+    ],
+    "Children": [
+        {
+            "Name": "HpBar_Bg",
+            "InstanceID": 1232,
+            "ParentInstanceID": 1231,
+            "IsActive": true,
+            "Components": [
+                {
+                    "Type": "TransformComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Position": {
+                            "x": -20.0,
+                            "y": 0.0
+                        },
+                        "Rotation": 0.0,
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        }
+                    }
+                },
+                {
+                    "Type": "UIImageComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "RenderType": 0,
+                        "ZOrder": 500,
+                        "Opacity": 0.800000011920929,
+                        "Color": {
+                            "r": 0.15000000596046448,
+                            "g": 0.15000000596046448,
+                            "b": 0.15000000596046448,
+                            "a": 0.800000011920929
+                        },
+                        "SpriteKey": "",
+                        "Size": {
+                            "x": 40.0,
+                            "y": 5.0
+                        },
+                        "Pivot": {
+                            "x": 0.0,
+                            "y": 0.5
+                        },
+                        "Offset": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "Border": {
+                            "left": 0.0,
+                            "top": 0.0,
+                            "right": 0.0,
+                            "bottom": 0.0
+                        },
+                        "FillAmount": 1.0,
+                        "IsUI": false,
+                        "FlipX": false,
+                        "FlipY": false
+                    }
+                }
+            ]
+        },
+        {
+            "Name": "HpBar_Filled",
+            "InstanceID": 1233,
+            "ParentInstanceID": 1231,
+            "IsActive": true,
+            "Components": [
+                {
+                    "Type": "TransformComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Position": {
+                            "x": -20.0,
+                            "y": 0.0
+                        },
+                        "Rotation": 0.0,
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        }
+                    }
+                },
+                {
+                    "Type": "UIImageComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "RenderType": 0,
+                        "ZOrder": 501,
+                        "Opacity": 1.0,
+                        "Color": {
+                            "r": 1.0,
+                            "g": 0.0784313753247261,
+                            "b": 0.0784313753247261,
+                            "a": 1.0
+                        },
+                        "SpriteKey": "",
+                        "Size": {
+                            "x": 40.0,
+                            "y": 5.0
+                        },
+                        "Pivot": {
+                            "x": 0.0,
+                            "y": 0.5
+                        },
+                        "Offset": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "Border": {
+                            "left": 0.0,
+                            "top": 0.0,
+                            "right": 0.0,
+                            "bottom": 0.0
+                        },
+                        "FillAmount": 1.0,
+                        "IsUI": false,
+                        "FlipX": false,
+                        "FlipY": false
+                    }
+                }
+            ]
+        }
+    ]
+}

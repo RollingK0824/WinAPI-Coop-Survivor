@@ -1,0 +1,596 @@
+{
+  "frames": [
+    {
+      "filename": "CoffinRezBarSpritesheet_0.png",
+      "frame": {
+        "x": 12,
+        "y": 19,
+        "w": 8,
+        "h": 28
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 28
+      },
+      "sourceSize": {
+        "w": 8,
+        "h": 28
+      }
+    },
+    {
+      "filename": "CoffinRezBarSpritesheet_1.png",
+      "frame": {
+        "x": 44,
+        "y": 19,
+        "w": 8,
+        "h": 28
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 28
+      },
+      "sourceSize": {
+        "w": 8,
+        "h": 28
+      }
+    },
+    {
+      "filename": "CoffinRezBarSpritesheet_2.png",
+      "frame": {
+        "x": 76,
+        "y": 19,
+        "w": 8,
+        "h": 28
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 28
+      },
+      "sourceSize": {
+        "w": 8,
+        "h": 28
+      }
+    },
+    {
+      "filename": "CoffinRezBarSpritesheet_3.png",
+      "frame": {
+        "x": 108,
+        "y": 19,
+        "w": 8,
+        "h": 28
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 28
+      },
+      "sourceSize": {
+        "w": 8,
+        "h": 28
+      }
+    },
+    {
+      "filename": "CoffinRezBarSpritesheet_4.png",
+      "frame": {
+        "x": 140,
+        "y": 19,
+        "w": 8,
+        "h": 28
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 28
+      },
+      "sourceSize": {
+        "w": 8,
+        "h": 28
+      }
+    },
+    {
+      "filename": "CoffinRezBarSpritesheet_5.png",
+      "frame": {
+        "x": 172,
+        "y": 19,
+        "w": 8,
+        "h": 28
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 28
+      },
+      "sourceSize": {
+        "w": 8,
+        "h": 28
+      }
+    },
+    {
+      "filename": "CoffinRezBarSpritesheet_6.png",
+      "frame": {
+        "x": 204,
+        "y": 19,
+        "w": 8,
+        "h": 28
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 28
+      },
+      "sourceSize": {
+        "w": 8,
+        "h": 28
+      }
+    },
+    {
+      "filename": "CoffinRezBarSpritesheet_7.png",
+      "frame": {
+        "x": 236,
+        "y": 19,
+        "w": 8,
+        "h": 28
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 28
+      },
+      "sourceSize": {
+        "w": 8,
+        "h": 28
+      }
+    },
+    {
+      "filename": "CoffinRezBarSpritesheet_8.png",
+      "frame": {
+        "x": 268,
+        "y": 19,
+        "w": 8,
+        "h": 28
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 28
+      },
+      "sourceSize": {
+        "w": 8,
+        "h": 28
+      }
+    },
+    {
+      "filename": "CoffinRezBarSpritesheet_9.png",
+      "frame": {
+        "x": 300,
+        "y": 19,
+        "w": 8,
+        "h": 28
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 28
+      },
+      "sourceSize": {
+        "w": 8,
+        "h": 28
+      }
+    },
+    {
+      "filename": "CoffinRezBarSpritesheet_10.png",
+      "frame": {
+        "x": 332,
+        "y": 19,
+        "w": 8,
+        "h": 28
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 28
+      },
+      "sourceSize": {
+        "w": 8,
+        "h": 28
+      }
+    },
+    {
+      "filename": "CoffinRezBarSpritesheet_11.png",
+      "frame": {
+        "x": 364,
+        "y": 19,
+        "w": 8,
+        "h": 28
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 28
+      },
+      "sourceSize": {
+        "w": 8,
+        "h": 28
+      }
+    },
+    {
+      "filename": "CoffinRezBarSpritesheet_12.png",
+      "frame": {
+        "x": 396,
+        "y": 19,
+        "w": 8,
+        "h": 28
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 28
+      },
+      "sourceSize": {
+        "w": 8,
+        "h": 28
+      }
+    },
+    {
+      "filename": "CoffinRezBarSpritesheet_13.png",
+      "frame": {
+        "x": 428,
+        "y": 19,
+        "w": 8,
+        "h": 28
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 28
+      },
+      "sourceSize": {
+        "w": 8,
+        "h": 28
+      }
+    },
+    {
+      "filename": "CoffinRezBarSpritesheet_14.png",
+      "frame": {
+        "x": 460,
+        "y": 19,
+        "w": 8,
+        "h": 28
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 28
+      },
+      "sourceSize": {
+        "w": 8,
+        "h": 28
+      }
+    },
+    {
+      "filename": "CoffinRezBarSpritesheet_15.png",
+      "frame": {
+        "x": 492,
+        "y": 19,
+        "w": 8,
+        "h": 28
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 28
+      },
+      "sourceSize": {
+        "w": 8,
+        "h": 28
+      }
+    },
+    {
+      "filename": "CoffinRezBarSpritesheet_16.png",
+      "frame": {
+        "x": 524,
+        "y": 19,
+        "w": 8,
+        "h": 28
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 28
+      },
+      "sourceSize": {
+        "w": 8,
+        "h": 28
+      }
+    },
+    {
+      "filename": "CoffinRezBarSpritesheet_17.png",
+      "frame": {
+        "x": 556,
+        "y": 19,
+        "w": 8,
+        "h": 28
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 28
+      },
+      "sourceSize": {
+        "w": 8,
+        "h": 28
+      }
+    },
+    {
+      "filename": "CoffinRezBarSpritesheet_18.png",
+      "frame": {
+        "x": 588,
+        "y": 19,
+        "w": 8,
+        "h": 28
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 28
+      },
+      "sourceSize": {
+        "w": 8,
+        "h": 28
+      }
+    },
+    {
+      "filename": "CoffinRezBarSpritesheet_19.png",
+      "frame": {
+        "x": 620,
+        "y": 19,
+        "w": 8,
+        "h": 28
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 28
+      },
+      "sourceSize": {
+        "w": 8,
+        "h": 28
+      }
+    },
+    {
+      "filename": "CoffinRezBarSpritesheet_20.png",
+      "frame": {
+        "x": 652,
+        "y": 19,
+        "w": 8,
+        "h": 28
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 28
+      },
+      "sourceSize": {
+        "w": 8,
+        "h": 28
+      }
+    },
+    {
+      "filename": "CoffinRezBarSpritesheet_21.png",
+      "frame": {
+        "x": 684,
+        "y": 19,
+        "w": 8,
+        "h": 28
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 28
+      },
+      "sourceSize": {
+        "w": 8,
+        "h": 28
+      }
+    },
+    {
+      "filename": "CoffinRezBarSpritesheet_22.png",
+      "frame": {
+        "x": 716,
+        "y": 19,
+        "w": 8,
+        "h": 28
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 28
+      },
+      "sourceSize": {
+        "w": 8,
+        "h": 28
+      }
+    },
+    {
+      "filename": "CoffinRezBarSpritesheet_23.png",
+      "frame": {
+        "x": 748,
+        "y": 19,
+        "w": 8,
+        "h": 28
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 28
+      },
+      "sourceSize": {
+        "w": 8,
+        "h": 28
+      }
+    },
+    {
+      "filename": "CoffinRezBarSpritesheet_24.png",
+      "frame": {
+        "x": 780,
+        "y": 19,
+        "w": 8,
+        "h": 28
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 28
+      },
+      "sourceSize": {
+        "w": 8,
+        "h": 28
+      }
+    },
+    {
+      "filename": "CoffinRezBarSpritesheet_25.png",
+      "frame": {
+        "x": 812,
+        "y": 19,
+        "w": 8,
+        "h": 28
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 28
+      },
+      "sourceSize": {
+        "w": 8,
+        "h": 28
+      }
+    }
+  ],
+  "meta": {
+    "app": "https://www.codeandweb.com/texturepacker",
+    "version": "1.0",
+    "image": "CoffinRezBarSpritesheet.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 832,
+      "h": 64
+    },
+    "scale": "1",
+    "custom_clips": [
+      {
+        "name": "CoffinRezBar_Effect",
+        "frameDuration": 0.4,
+        "isLoop": false,
+        "frames": [
+          "CoffinRezBarSpritesheet_0.png",
+          "CoffinRezBarSpritesheet_1.png",
+          "CoffinRezBarSpritesheet_2.png",
+          "CoffinRezBarSpritesheet_3.png",
+          "CoffinRezBarSpritesheet_4.png",
+          "CoffinRezBarSpritesheet_5.png",
+          "CoffinRezBarSpritesheet_6.png",
+          "CoffinRezBarSpritesheet_7.png",
+          "CoffinRezBarSpritesheet_8.png",
+          "CoffinRezBarSpritesheet_9.png",
+          "CoffinRezBarSpritesheet_10.png",
+          "CoffinRezBarSpritesheet_11.png",
+          "CoffinRezBarSpritesheet_12.png",
+          "CoffinRezBarSpritesheet_13.png",
+          "CoffinRezBarSpritesheet_14.png",
+          "CoffinRezBarSpritesheet_15.png",
+          "CoffinRezBarSpritesheet_16.png",
+          "CoffinRezBarSpritesheet_17.png",
+          "CoffinRezBarSpritesheet_18.png",
+          "CoffinRezBarSpritesheet_19.png",
+          "CoffinRezBarSpritesheet_20.png",
+          "CoffinRezBarSpritesheet_21.png",
+          "CoffinRezBarSpritesheet_22.png",
+          "CoffinRezBarSpritesheet_23.png",
+          "CoffinRezBarSpritesheet_24.png",
+          "CoffinRezBarSpritesheet_25.png"
+        ]
+      }
+    ]
+  }
+}

@@ -70,6 +70,9 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Label="Vcpkg">
+    <VcpkgEnableManifest>false</VcpkgEnableManifest>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -78,6 +81,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)Resources;$(ProjectDir)Source;$(ProjectDir)Source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -98,6 +102,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)Resources;$(ProjectDir)Source;</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -116,6 +121,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)Resources;$(ProjectDir)Source;$(ProjectDir)Source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>Engine/Core/pch.h</PrecompiledHeaderFile>
     </ClCompile>
@@ -125,8 +131,9 @@
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>
-      </Command>
+      <Command>xcopy /y /d "C:\vcpkg\installed\x64-windows\debug\bin\box2dd.dll" "$(OutDir)"
+xcopy /y /d "C:\vcpkg\installed\x64-windows\debug\bin\box2dd.dll" "$(ProjectDir)"
+xcopy /s /e /y /d /i "$(ProjectDir)Resources" "$(OutDir)Resources"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -139,6 +146,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)Resources;$(ProjectDir)Source;</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>Engine/Core/pch.h</PrecompiledHeaderFile>
     </ClCompile>
@@ -148,8 +156,9 @@
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>
-      </Command>
+      <Command>xcopy /y /d "C:\vcpkg\installed\x64-windows\bin\box2d.dll" "$(OutDir)"
+xcopy /y /d "C:\vcpkg\installed\x64-windows\bin\box2d.dll" "$(ProjectDir)"
+xcopy /s /e /y /d /i "$(ProjectDir)Resources" "$(OutDir)Resources"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -164,10 +173,12 @@
     <ClInclude Include="Source\Engine\Editor\Panels\InspectorPanel.h" />
     <ClInclude Include="Source\Engine\Editor\Panels\MainMenuBarPanel.h" />
     <ClInclude Include="Source\Engine\Framework\Components\Core\CameraComponent.h" />
+    <ClInclude Include="Source\Engine\Framework\Components\Physics\RigidBodyComponent.h" />
     <ClInclude Include="Source\Engine\Framework\Components\Render\SpriteRendererComponent.h" />
     <ClInclude Include="Source\Engine\Framework\Components\UI\DebugHUDComponent.h" />
     <ClInclude Include="Source\Engine\Framework\Components\UI\HUDPresenter.h" />
     <ClInclude Include="Source\Engine\Framework\Components\UI\UIButtonComponent.h" />
+    <ClInclude Include="Source\Engine\Framework\Components\UI\UIInputFieldComponent.h" />
     <ClInclude Include="Source\Engine\Framework\Components\UI\UIPanelComponent.h" />
     <ClInclude Include="Source\Engine\Framework\Components\UI\UITextComponent.h" />
     <ClInclude Include="Source\Engine\Framework\Components\Network\NetworkIdentity.h" />
@@ -216,14 +227,21 @@
     <ClInclude Include="Source\Engine\Renderer\Sprite.h" />
     <ClInclude Include="Source\Engine\Framework\Components\UI\UIImageComponent.h" />
     <ClInclude Include="Source\Game\Item\ExpGem.h" />
+    <ClInclude Include="Source\Game\Manager\GameEvents.h" />
     <ClInclude Include="Source\Game\Manager\InGameManager.h" />
     <ClInclude Include="Source\Game\Player\Controller.h" />
     <ClInclude Include="Source\Game\Player\LocalController.h" />
     <ClInclude Include="Source\Game\Player\NetworkController.h" />
     <ClInclude Include="Source\Game\Player\Player.h" />
+    <ClInclude Include="Source\Game\Player\Coffin.h" />
     <ClInclude Include="Source\Game\Scripts\UI\TitleSceneController.h" />
     <ClInclude Include="Source\Engine\Core\ExposedProperty.h" />
+    <ClInclude Include="Source\Game\UI\ErrorPopupController.h" />
+    <ClInclude Include="Source\Game\UI\GameOverSceneController.h" />
     <ClInclude Include="Source\Game\UI\InGameSceneController.h" />
+    <ClInclude Include="Source\Game\UI\SkillChoiceController.h" />
+    <ClInclude Include="Source\Game\UI\SkillSlotHUDController.h" />
+    <ClInclude Include="Source\Game\UI\DamagePopupComponent.h" />
     <ClInclude Include="Source\Game\UI\TitleSceneController.h" />
     <ClInclude Include="Source\Engine\Framework\Base\ScriptableObject.h" />
     <ClInclude Include="Source\Engine\Core\ScriptableObjectRegister.h" />
@@ -244,11 +262,13 @@
     <ClCompile Include="Source\Engine\Editor\Panels\InspectorPanel.cpp" />
     <ClCompile Include="Source\Engine\Editor\Panels\MainMenuBarPanel.cpp" />
     <ClCompile Include="Source\Engine\Framework\Components\Core\CameraComponent.cpp" />
+    <ClCompile Include="Source\Engine\Framework\Components\Physics\RigidBodyComponent.cpp" />
     <ClCompile Include="Source\Engine\Framework\Components\Render\SpriteRendererComponent.cpp" />
     <ClCompile Include="Source\Engine\Framework\Components\UI\DebugHUDComponent.cpp" />
     <ClCompile Include="Source\Engine\Framework\Components\UI\HUDPresenter.cpp" />
     <ClCompile Include="Source\Engine\Framework\Components\Network\NetworkIdentity.cpp" />
     <ClCompile Include="Source\Engine\Framework\Components\UI\UIButtonComponent.cpp" />
+    <ClCompile Include="Source\Engine\Framework\Components\UI\UIInputFieldComponent.cpp" />
     <ClCompile Include="Source\Engine\Framework\Components\UI\UIPanelComponent.cpp" />
     <ClCompile Include="Source\Engine\Framework\Components\UI\UITextComponent.cpp" />
     <ClCompile Include="Source\Engine\Manager\CameraManager.cpp" />
@@ -290,7 +310,13 @@
     <ClCompile Include="Source\Game\Player\LocalController.cpp" />
     <ClCompile Include="Source\Game\Player\NetworkController.cpp" />
     <ClCompile Include="Source\Game\Player\Player.cpp" />
+    <ClCompile Include="Source\Game\Player\Coffin.cpp" />
+    <ClCompile Include="Source\Game\UI\ErrorPopupController.cpp" />
+    <ClCompile Include="Source\Game\UI\GameOverSceneController.cpp" />
     <ClCompile Include="Source\Game\UI\InGameSceneController.cpp" />
+    <ClCompile Include="Source\Game\UI\SkillChoiceController.cpp" />
+    <ClCompile Include="Source\Game\UI\SkillSlotHUDController.cpp" />
+    <ClCompile Include="Source\Game\UI\DamagePopupComponent.cpp" />
     <ClCompile Include="Source\Game\UI\TitleSceneController.cpp" />
     <ClCompile Include="Source\Engine\Framework\Base\ScriptableObject.cpp" />
     <ClCompile Include="Source\Game\Monster\MonsterSO.cpp" />

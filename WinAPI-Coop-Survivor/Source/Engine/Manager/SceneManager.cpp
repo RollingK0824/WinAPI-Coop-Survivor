@@ -20,7 +20,6 @@ void SceneManager::Release()
 	{
 		if (pair.second != nullptr)
 		{
-			pair.second->Release();
 			delete pair.second;
 		}
 	}
@@ -119,8 +118,6 @@ bool SceneManager::CreateScene(const std::string& sceneName)
 	}
 	newScene->SetSceneName(sceneName);
 	m_mapScenes[sceneName] = newScene;
-	m_pActiveScene = newScene;
-	EditorSystem::GetInstance()->SetSelectedObject(nullptr);
 
 	return true;
 }
@@ -128,9 +125,14 @@ bool SceneManager::CreateScene(const std::string& sceneName)
 Scene* SceneManager::CreateDefaultTemplateScene(const std::string& sceneName)
 {
 	if (!CreateScene(sceneName)) return nullptr;
-	GameObject* pCameraObj = m_pActiveScene->CreateGameObject("Main Camera");
+	Scene* pScene = m_mapScenes[sceneName];
+	pScene->SetScenePath("Resources/Scenes/" + sceneName + ".scene");
+	m_pActiveScene = pScene;
+	EditorSystem::GetInstance()->SetSelectedObject(nullptr);
+
+	GameObject* pCameraObj = pScene->CreateGameObject("Main Camera");
 	pCameraObj->AddComponent<CameraComponent>();
-	return m_pActiveScene;
+	return pScene;
 }
 
 bool SceneManager::LoadScene(const std::string& sceneName)
@@ -157,54 +159,71 @@ bool SceneManager::SaveActiveScene(const std::string& jsonFilePath)
 {
 	if (!m_pActiveScene) return false;
 	std::string targetPath = jsonFilePath;
-	if (targetPath.empty() ||
-		targetPath == "Resources/Json/DefaultScene.json" ||
-		targetPath == "Resources/Scenes/DefaultScene.scene")
+	if (targetPath.empty())
 	{
-		std::string sceneName = m_pActiveScene->GetSceneName();
-		if (sceneName.empty()) sceneName = "DefaultScene";
-
-		targetPath = "Resources/Scenes/" + sceneName + ".scene";
+		targetPath = m_pActiveScene->GetScenePath();
+		if (targetPath.empty())
+		{
+			std::string sceneName = m_pActiveScene->GetSceneName();
+			if (sceneName.empty()) sceneName = "DefaultScene";
+			targetPath = "Resources/Scenes/" + sceneName + ".scene";
+		}
 	}
 	std::filesystem::path p(targetPath);
 	m_pActiveScene->SetSceneName(p.stem().string());
+	m_pActiveScene->SetScenePath(targetPath);
 
 	return JsonSerializer::SaveScene(m_pActiveScene, targetPath);
 }
 
 bool SceneManager::LoadSceneFromFile(const std::string& jsonFilePath)
 {
-	if (m_pActiveScene)
-	{
-		SaveActiveScene();
-	}
-
 	json sceneJson;
 	if (!FileSystem::ReadJson(jsonFilePath, sceneJson)) return false;
 
 	std::filesystem::path p(jsonFilePath);
 	std::string sceneName = p.stem().string();
-	Scene* targetScene = nullptr;
+
+	// 이미 동일한 이름의 씬이 맵에 존재하면 해제 후 새로 생성
 	auto iter = m_mapScenes.find(sceneName);
-	if (iter == m_mapScenes.end())
+	if (iter != m_mapScenes.end())
 	{
-		CreateScene(sceneName);
-		targetScene = m_mapScenes[sceneName];
+		if (m_pActiveScene == iter->second)
+		{
+			m_pActiveScene = nullptr;
+		}
+		iter->second->Release();
+		delete iter->second;
+		m_mapScenes.erase(iter);
 	}
-	else
+
+	Scene* targetScene = new Scene();
+	if (!targetScene->Initialize())
 	{
-		targetScene = iter->second;
-		EditorSystem::GetInstance()->SetSelectedObject(nullptr);
-		targetScene->Release();
-		targetScene->Initialize();
+		delete targetScene;
+		return false;
 	}
 
 	targetScene->SetSceneName(sceneName);
+	targetScene->SetScenePath(jsonFilePath);
+	m_mapScenes[sceneName] = targetScene;
+
 	if (!JsonSerializer::LoadScene(targetScene, sceneJson))
 	{
 		return false;
 	}
-	return LoadScene(sceneName);
+
+	if (m_pActiveScene == nullptr)
+	{
+		m_pActiveScene = targetScene;
+		EditorSystem::GetInstance()->SetSelectedObject(nullptr);
+	}
+	else
+	{
+		m_pNextScene = targetScene;
+	}
+
+	return true;
 }
 
 void SceneManager::SavePlaySnapshot()
@@ -227,11 +246,27 @@ void SceneManager::RestorePlaySnapshot()
 
 void SceneManager::ChangeSceneInternal()
 {
-	if (m_pNextScene == nullptr)return;
+	if (m_pNextScene == nullptr) return;
 
 	EditorSystem::GetInstance()->SetSelectedObject(nullptr);
 
-	if (m_pActiveScene != nullptr && m_pActiveScene != m_pNextScene)m_pActiveScene->Release();
+	if (m_pActiveScene != nullptr && m_pActiveScene != m_pNextScene)
+	{
+		// 이전 씬 맵에서 찾아서 해제 및 메모리 정리
+		for (auto it = m_mapScenes.begin(); it != m_mapScenes.end(); )
+		{
+			if (it->second == m_pActiveScene)
+			{
+				it->second->Release();
+				delete it->second;
+				it = m_mapScenes.erase(it);
+			}
+			else
+			{
+				++it;
+			}
+		}
+	}
 
 	m_pActiveScene = m_pNextScene;
 	m_pNextScene = nullptr;

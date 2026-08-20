@@ -19,19 +19,6 @@ ExpGem::ExpGem(GameObject* owner, TransformComponent* transform)
 void ExpGem::Start()
 {
 	ScriptComponent::Start();
-
-	UIImageComponent* pImg = gameObject.GetComponent<UIImageComponent>();
-	if (!pImg)
-	{
-		pImg = gameObject.AddComponent<UIImageComponent>();
-	}
-	if (pImg)
-	{
-		pImg->SetIsUI(false);
-		pImg->SetSize({ 12.0f, 12.0f });
-		pImg->SetColor(D2D1::ColorF(0.1f, 0.85f, 1.0f, 1.0f));
-		pImg->SetZOrder(150);
-	}
 }
 
 void ExpGem::OnEnable()
@@ -75,7 +62,6 @@ void ExpGem::Update(float dt)
 	InGameManager* mgr = InGameManager::GetInstance();
 	if (!mgr || mgr->IsSimulationPaused()) return;
 
-	// Player 주체가 타깃으로 지정한 경우 플레이어 방향으로 이동만 수행 (획득/경험치 연산은 Player가 담당)
 	if (m_targetPlayer.IsValid())
 	{
 		Vector2 myPos = transform.GetPosition();

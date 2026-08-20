@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Engine/Core/Singleton.h"
 #include "Engine/Core/Define.h"
 

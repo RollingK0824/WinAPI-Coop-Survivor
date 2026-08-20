@@ -14,7 +14,21 @@ enum class PacketType : uint8 {
 	MONSTER_SNAPSHOT,
 	MONSTER_KILL,
 	SKILL_FIRE,
-	TEAM_EXP_SYNC
+	TEAM_EXP_SYNC,
+	CLIENT_CONN_RES,
+	SKILL_SLOT_SYNC,
+	PARTY_HP_SYNC,
+	SKILL_CHOICE_COMPLETE,
+	SIMULATION_RESUME_SIGNAL,
+	GAME_OVER_SIGNAL
+};
+
+enum class ConnResultCode : uint8 {
+	SUCCESS = 0,
+	ROOM_FULL,
+	GAME_ALREADY_STARTED,
+	INVALID_VERSION,
+	REJECTED
 };
 
 #pragma pack(push, 1)
@@ -23,6 +37,41 @@ struct PacketHeader {
 	uint16 size;
 	uint32 tick; // 패킷 생성 시점의 고정 Tick 카운터
 };
+
+struct SkillChoiceCompletePacket {
+	PacketHeader header;
+	uint32 playerNetID;
+	uint32 chosenSkillID;
+	uint8 choiceType;
+};
+
+struct SimulationResumeSignalPacket {
+	PacketHeader header;
+};
+
+
+struct ClientConnResPacket {
+	PacketHeader header;
+	ConnResultCode resultCode;
+	uint32 assignedNetID;
+};
+
+struct SkillSlotSyncPacket {
+	PacketHeader header;
+	uint8 playerNetID;
+	uint8 slotIndex;
+	uint32 skillID;
+	uint8 level;
+};
+
+
+struct PartyHPSyncPacket {
+	PacketHeader header;
+	uint8 playerNetID;
+	float currentHP;
+	float maxHP;
+};
+
 
 struct WelcomePacket {
 	PacketHeader header;
@@ -44,6 +93,7 @@ struct EntitySyncData {
 	Vector2 vel;
 	float angle;
 	float hp;
+	bool isDead;
 };
 
 struct HeartbeatPacket
@@ -91,6 +141,7 @@ struct GameStartSignalPacket
 struct MonsterSnapshotData
 {
 	uint16 monsterNetID;
+	uint32 monsterAssetID;
 	Vector2 pos;
 };
 
@@ -123,5 +174,10 @@ struct TeamExpSyncPacket
 	int32 teamLevel;
 	float teamExp;
 	float teamMaxExp;
+};
+
+struct GameOverSignalPacket
+{
+	PacketHeader header;
 };
 #pragma pack(pop)

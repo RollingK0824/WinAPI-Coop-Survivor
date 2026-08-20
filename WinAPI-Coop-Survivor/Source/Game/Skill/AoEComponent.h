@@ -20,7 +20,8 @@ public:
 
 	virtual void FixedUpdate(float fixedDt) override;
 
-	void Init(const SkillLevelData& data, const SkillSO* pSO, GameObject* attacker = nullptr, const std::string& poolKey = "GenericAoEPrefab");
+	void Init(const SkillLevelData& data, const SkillSO* pSO, GameObject* attacker = nullptr, const std::string& poolKey = "GenericAoEPrefab", bool flipX = false);
+	void InitWithAnim(const std::string& animKey, const SkillLevelData& data, GameObject* attacker = nullptr, const std::string& poolKey = "GenericAoEPrefab", bool flipX = false);
 
 	void SetPoolKey(const std::string& key) { m_poolKey = key; }
 	const std::string& GetPoolKey() const { return m_poolKey; }
@@ -33,6 +34,8 @@ private:
 	float m_range = 120.0f;
 	float m_duration = 0.5f;
 	float m_lifeTimer = 0.0f;
+	float m_tickInterval = 0.0f;
+	float m_tickTimer = 0.0f;
 	bool m_hasAppliedDamage = false;
 
 	std::string m_poolKey = "GenericAoEPrefab";

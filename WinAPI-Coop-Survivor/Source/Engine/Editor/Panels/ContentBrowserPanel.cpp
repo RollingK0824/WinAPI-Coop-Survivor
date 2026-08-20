@@ -79,7 +79,6 @@ void ContentBrowserPanel::DrawContentGrid()
             {
                 if (isSOAssetFile)
                 {
-                    // 해당 .asset 파일의 SO 찾기
                     const auto& assets = DataManager::GetInstance()->GetAllAssets();
                     bool found = false;
                     for (const auto& [id, pAsset] : assets)
@@ -192,7 +191,7 @@ void ContentBrowserPanel::DrawContentGrid()
     }
     if (ImGui::BeginDragDropTarget())
     {
-        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("HIERARCHY_REORDER_OBJ"))
+        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("HIERARCHY_GO"))
         {
             GameObject* draggedObj = *(GameObject**)payload->Data;
             if (draggedObj)

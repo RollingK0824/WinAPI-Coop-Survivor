@@ -5,7 +5,6 @@
 
 class GameObject;
 
-// 몬스터 처치 시 드롭되는 경험치 보석 컴포넌트 (Player 흡수 전용 수동 피전달체)
 class ExpGem : public ScriptComponent
 {
 public:
@@ -34,7 +33,7 @@ public:
 
 private:
 	int32 m_expAmount = 10;
-	float m_flySpeed = 650.0f; // 플레이어 방향으로 흡수 날아가는 속도
+	float m_flySpeed = 650.0f;
 
 	ObserverPtr<GameObject> m_targetPlayer;
 };

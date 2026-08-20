@@ -1,4 +1,4 @@
-﻿#include "Engine/Core/pch.h"
+#include "Engine/Core/pch.h"
 #include "BoxCollider.h"
 #include "Engine/Core/ComponentRegister.h"
 #include "Engine/Renderer/RenderCommand.h"
@@ -7,6 +7,7 @@
 #include "Engine/Framework/Components/UI/UIImageComponent.h"
 
 static ComponentRegistrar<BoxCollider> registrar(EngineKey::Component::BoxCollider.data());
+static ComponentRegistrar<BoxCollider> registrarAlias("BoxCollider");
 
 BoxCollider::BoxCollider(GameObject* owner, TransformComponent* transform) 
 	: ColliderComponent(owner, transform)

@@ -1,4 +1,4 @@
-﻿#include "Engine/Core/pch.h"
+#include "Engine/Core/pch.h"
 #include "MainMenuBarPanel.h"
 #include "Engine/Core/EngineKernel.h"
 #include "Engine/Manager/SceneManager.h"
@@ -32,7 +32,7 @@ void MainMenuBarPanel::OnDrawGUI()
             ImGui::EndMenu();
         }
 
-        ImGui::SameLine(ImGui::GetWindowWidth() * 0.45f);
+        ImGui::SameLine(ImGui::GetWindowWidth() * 0.48f);
 
         EnginePlayState playState = EngineKernel::GetInstance()->GetPlayState();
 

@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Engine/Core/Singleton.h"
 #include "Engine/Framework/Base/ISystem.h"
 #include "Engine/Framework/Base/IUpdatable.h"
@@ -44,6 +44,7 @@ public:
 	void SetPaused(bool pause) { m_bIsPaused = pause; }
 	void TogglePause() { m_bIsPaused = !m_bIsPaused; }
 	void ResetGameTime() { m_gameTime = 0.0f; m_unScaledGameTime = 0.0f; }
+	void SetGameTime(float time) { m_gameTime = time; }
 
 private:
 	TimeManager() = default;

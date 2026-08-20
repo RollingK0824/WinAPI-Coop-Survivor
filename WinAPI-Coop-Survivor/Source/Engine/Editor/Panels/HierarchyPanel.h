@@ -16,10 +16,10 @@ public:
 private:
     void DrawSceneHeader(Scene* pActiveScene);
     void DrawGameObjectList(Scene* pActiveScene);
-    void DrawGameObjectNode(Scene* pActiveScene, GameObject* pObj, int index);
+    void DrawGameObjectNode(Scene* pActiveScene, GameObject* pObj);
 
     void HandleItemContextMenu(Scene* pActiveScene, GameObject* pObj);
-    void HandleDragAndDropReorder(GameObject* pTargetObj, int targetIndex);
+    void HandleDragAndDropParenting(Scene* pActiveScene, GameObject* pTargetObj);
     void HandlePrefabDrop(Scene* pActiveScene);
     void HandleWindowContextMenu(Scene* pActiveScene);
 };

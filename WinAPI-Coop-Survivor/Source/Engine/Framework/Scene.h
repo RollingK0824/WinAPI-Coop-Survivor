@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Engine/Framework/Base/ISystem.h"
 #include "Engine/Framework/Base/IUpdatable.h"
 #include "Engine/Framework/Base/IRenderable.h"
@@ -41,6 +41,7 @@ public:
 	void PostFrameCleanUp();
 
 	void ReorderGameObject(GameObject* targetObj, int newIndex);
+	
 	void UpdateGameObjectIndices();
 
 	GameObject* FindGameObjectByName(const std::string& name) const;
@@ -53,6 +54,9 @@ public:
 	void SetSceneName(const std::string& name) { m_SceneName = name; }
 	const std::string& GetSceneName() const { return m_SceneName; }
 
+	void SetScenePath(const std::string& path) { m_ScenePath = path; }
+	const std::string& GetScenePath() const { return m_ScenePath; }
+
 private:
 	std::vector<GameObject*> m_vGameObjects;
 	std::vector<ScriptComponent*> m_vUpdatableComponents;
@@ -64,4 +68,5 @@ private:
 	std::vector<GameObject*> m_vDestroyQueue;
 
 	std::string m_SceneName = "";
+	std::string m_ScenePath = "";
 };

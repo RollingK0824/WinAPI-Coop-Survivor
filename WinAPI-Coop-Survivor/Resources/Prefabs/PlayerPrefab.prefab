@@ -1,6 +1,7 @@
 {
     "Name": "PlayerPrefab",
-    "InstanceID": 55,
+    "InstanceID": 1198,
+    "ParentInstanceID": 0,
     "IsActive": true,
     "Components": [
         {
@@ -31,10 +32,10 @@
                     "b": 1.0,
                     "a": 1.0
                 },
-                "SpriteKey": "Imeldat/Imeldat.png",
+                "SpriteKey": "character_antonio/newAntonio_01.png",
                 "Size": {
-                    "x": 320.0,
-                    "y": 340.0
+                    "x": 34.0,
+                    "y": 34.0
                 },
                 "Pivot": {
                     "x": 0.5,
@@ -43,6 +44,12 @@
                 "Offset": {
                     "x": 0.0,
                     "y": 0.0
+                },
+                "Border": {
+                    "left": 0.0,
+                    "top": 0.0,
+                    "right": 0.0,
+                    "bottom": 0.0
                 },
                 "FlipX": false,
                 "FlipY": false
@@ -63,21 +70,44 @@
                 "CategoryBits": 1,
                 "MaskBits": -1,
                 "Size": {
-                    "x": 0.0,
-                    "y": 0.0
+                    "x": 10.0,
+                    "y": 15.0
                 }
+            }
+        },
+        {
+            "Type": "RigidBodyComponent",
+            "Data": {
+                "IsEnabled": true,
+                "BodyType": 2,
+                "FixedRotation": true
             }
         },
         {
             "Type": "Player",
             "Data": {
-                "IsEnabled": true
+                "IsEnabled": true,
+                "MaxHP": 1.0,
+                "IFrameDuration": 0.30000001192092896
             }
         },
         {
             "Type": "SkillComponent",
             "Data": {
                 "IsEnabled": true
+            }
+        },
+        {
+            "Type": "AnimatorComponent",
+            "Data": {
+                "IsEnabled": true,
+                "IsPlaying": false,
+                "CurrentFrameIdx": 0,
+                "PlaySpeed": 0.25,
+                "ClipKeys": [
+                    "newAntonio_Run"
+                ],
+                "DefaultPlay": "newAntonio_Run"
             }
         }
     ]

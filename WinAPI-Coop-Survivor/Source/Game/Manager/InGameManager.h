@@ -47,19 +47,24 @@ public:
 	void SetOnTeamLevelUpCallback(std::function<void(int32)> cb) { m_onTeamLevelUp = cb; }
 	void SetOnExpChangedCallback(std::function<void(float, float)> cb) { m_onExpChanged = cb; }
 
-	// 팀 경험치 & 레벨 시스템
 	void AddTeamExp(float amount);
 	void PauseSimulation(bool pause);
 	bool IsSimulationPaused() const { return m_bIsSimulationPaused; }
 
+	void NotifySkillChoiceComplete(uint32 netID, uint32 chosenSkillID, uint8 choiceType);
+	void SendSkillChoiceCompletePacket(uint32 chosenSkillID, uint8 choiceType);
+	bool IsAllClientsSkillChoiceComplete() const;
+	void CheckAndResumeSimulationIfAllChosen();
+
 	int32 GetTeamLevel() const { return m_teamLevel; }
+
 	float GetTeamExp() const { return m_teamExp; }
 	float GetTeamMaxExp() const { return m_teamMaxExp; }
 	float GetTeamExpRatio() const { return (m_teamMaxExp > 0.0f) ? (m_teamExp / m_teamMaxExp) : 0.0f; }
 
 	void SpawnExpGem(Vector2 pos, int32 expAmount);
+	void SpawnDamageText(int damage, const Vector2& pos, bool isCritical = false);
 
-	// 활성 경험치 보석 등록 및 관리 (Player 주체 자력 흡수를 위한 최적화)
 	void RegisterGem(ExpGem* gem);
 	void UnregisterGem(ExpGem* gem);
 	const std::vector<ExpGem*>& GetActiveGems() const { return m_activeGems; }
@@ -74,27 +79,24 @@ private:
 	std::vector<GameObject*> m_vCachedPlayer;
 
 	std::unordered_map<uint32, bool> m_clientReadyMap;
+	std::unordered_map<uint32, bool> m_clientSkillChoiceMap;
 	bool m_bIsMyReady = false;
+
 
 	bool m_bIsCountDown = false;
 	bool m_bIsGameStarted = false;
 	float m_countdownTimer = 0.0f;
 
-	// 팀 공용 레벨 & 경험치
 	int32 m_teamLevel = 1;
 	float m_teamExp = 0.0f;
 	float m_teamMaxExp = 100.0f;
 	bool m_bIsSimulationPaused = false;
 
-	// 활성 보석 관리 리스트
 	std::vector<ExpGem*> m_activeGems;
 
-	// 팀 경험치 바 UI (UIImage, UIText 조립)
-	ObserverPtr<GameObject> m_pExpBarBgObj;
-	ObserverPtr<GameObject> m_pExpBarFillObj;
-	ObserverPtr<class UIImageComponent> m_pExpBarFillImg;
-	ObserverPtr<GameObject> m_pExpTextObj;
-	ObserverPtr<class UITextComponent> m_pExpTextComp;
+	class UIImageComponent* m_pExpBarFillImg = nullptr;
+	class UITextComponent* m_pExpTextComp = nullptr;
+
 
 	std::function<void(float)> m_onCountdownTick;
 	std::function<void()> m_onGameStarted;

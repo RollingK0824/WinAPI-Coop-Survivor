@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Engine/Framework/Base/Component.h"
 #include "Engine/Renderer/RenderCommand.h"
 #include "Engine/Renderer/Sprite.h"
@@ -14,9 +14,12 @@ public:
 	virtual const RenderCommand& GetRenderCommand() { return m_RenderCommand; }
 	void SetZOrder(int zOrder) { m_RenderCommand.zOrder = zOrder; }
 	void SetOpacity(float opacity) { m_RenderCommand.bitmap.opacity = opacity; }
+	void SetColor(const D2D1_COLOR_F& color) { m_RenderCommand.color = color; }
 	void SetColor(const D2D1::ColorF& color) { m_RenderCommand.color = color; }
 	void SetPivot(D2D1_POINT_2F pivot) { m_RenderCommand.pivot = pivot; }
 	void SetPivot(float x, float y) { m_RenderCommand.pivot = { x, y }; }
+	void SetIsUI(bool isUI) { m_RenderCommand.isUI = isUI; }
+	bool IsUI() const { return m_RenderCommand.isUI; }
 
 	virtual std::string_view GetComponentType() const override { return EngineKey::Component::Render; }
 

@@ -1,4 +1,4 @@
-﻿#include "Engine/Core/pch.h"
+#include "Engine/Core/pch.h"
 #include "GameObject.h"
 #include "Engine/Editor/EditorSystem.h"
 #include "Engine/Framework/Scene.h"
@@ -33,10 +33,28 @@ GameObject::~GameObject()
 		EditorSystem::GetInstance()->SetSelectedObject(nullptr);
 	}
 
+	if (m_pParent != nullptr)
+	{
+		auto& siblings = m_pParent->m_vChildren;
+		siblings.erase(std::remove(siblings.begin(), siblings.end(), this), siblings.end());
+		m_pParent = nullptr;
+	}
+
+	std::vector<GameObject*> childrenToDelete = m_vChildren;
+	m_vChildren.clear();
+
+	for (GameObject* pChild : childrenToDelete)
+	{
+		if (pChild != nullptr)
+		{
+			pChild->m_pParent = nullptr; 
+			delete pChild;
+		}
+	}
+
 	for (Component* pComp : m_vComponents)
 	{
 		if (pComp == nullptr) continue;
-
 		pComp->OnDestroy();
 	}
 	for (Component* pComp : m_vComponents)
@@ -61,9 +79,9 @@ GameObject* GameObject::Clone(Scene* pNewOwnerScene)
 	clone->SetName(this->GetName());
 	clone->SetActive(this->IsActive());
 	
-	clone->m_pTransform->SetPosition(this->m_pTransform->GetPosition());
-	clone->m_pTransform->SetRotation(this->m_pTransform->GetRotation());
-	clone->m_pTransform->SetScale(this->m_pTransform->GetScale());
+	clone->m_pTransform->SetLocalPosition(this->m_pTransform->GetLocalPosition());
+	clone->m_pTransform->SetLocalRotation(this->m_pTransform->GetLocalRotation());
+	clone->m_pTransform->SetLocalScale(this->m_pTransform->GetLocalScale());
 
 	for (Component* comp : m_vComponents)
 	{
@@ -76,13 +94,20 @@ GameObject* GameObject::Clone(Scene* pNewOwnerScene)
 		clone->RegisterComponentToScene(clonedComp);
 	}
 
+	for (GameObject* pChild : m_vChildren)
+	{
+		if (pChild == nullptr) continue;
+		GameObject* clonedChild = pChild->Clone(pNewOwnerScene);
+		clonedChild->SetParent(clone, false);
+	}
+
 	return clone;
 }
 
 void GameObject::OnCollision(ColliderComponent* other)
 {
-	if (!m_bIsActive)return;
-	if (other == nullptr)return;
+	if (!m_bIsActive) return;
+	if (other == nullptr) return;
 
 	for (auto* pComponent : m_vComponents)
 	{
@@ -91,6 +116,11 @@ void GameObject::OnCollision(ColliderComponent* other)
 			pComponent->OnCollision(other);
 		}
 	}
+
+	if (m_pParent != nullptr)
+	{
+		m_pParent->OnCollision(other);
+	}
 }
 
 void GameObject::Destroy()
@@ -98,6 +128,14 @@ void GameObject::Destroy()
 	if (m_bIsDead) return;
 
 	m_bIsDead = true;
+
+	for (GameObject* pChild : m_vChildren)
+	{
+		if (pChild && !pChild->m_bIsDead)
+		{
+			pChild->Destroy();
+		}
+	}
 
 	if (m_pOwnerScene)
 	{
@@ -138,12 +176,12 @@ void GameObject::Serialize(json& outJson) const
 {
 	outJson[EngineKey::Property::Name.data()] = m_name;
 	outJson["InstanceID"] = m_instanceID;
+	outJson["ParentInstanceID"] = (m_pParent != nullptr) ? m_pParent->GetInstanceID() : 0;
 	outJson[EngineKey::Property::IsActive.data()] = m_bIsActive;
 	outJson[EngineKey::Property::Components.data()] = std::vector<json>();
 
 	json transformJson;
 	std::string trName = EngineKey::Component::Trnasform.data();
-	if (trName.empty()) trName = EngineKey::Component::Trnasform.data();
 
 	transformJson[EngineKey::Property::Type.data()] = trName;
 
@@ -180,6 +218,11 @@ void GameObject::Deserialize(const json& inJson)
 		SetInstanceID(inJson["InstanceID"].get<uint64>());
 	}
 
+	if (inJson.contains("ParentInstanceID"))
+	{
+		m_parentInstanceID = inJson["ParentInstanceID"].get<uint64>();
+	}
+
 	if (inJson.contains(EngineKey::Property::IsActive.data()))
 	{
 		m_bIsActive = inJson[EngineKey::Property::IsActive.data()].get<bool>();
@@ -188,6 +231,15 @@ void GameObject::Deserialize(const json& inJson)
 
 void GameObject::PostDeserialize(Scene* pScene)
 {
+	if (m_parentInstanceID != 0 && pScene != nullptr)
+	{
+		GameObject* pParentObj = pScene->FindGameObjectByInstanceID(m_parentInstanceID);
+		if (pParentObj != nullptr)
+		{
+			SetParent(pParentObj, false);
+		}
+	}
+
 	transform.PostDeserialize(pScene);
 	for (auto* comp : m_vComponents)
 	{
@@ -260,6 +312,109 @@ void GameObject::SetActive(bool active)
 				comp->OnDisable();
 			}
 		}
+	}
+
+	for (GameObject* pChild : m_vChildren)
+	{
+		if (pChild) pChild->OnHierarchyActiveChanged(active);
+	}
+}
+
+void GameObject::OnHierarchyActiveChanged(bool parentActive)
+{
+	bool wasActiveInHierarchy = m_bIsActive; 
+	bool isNowActiveInHierarchy = m_bIsActive && parentActive;
+
+	if (wasActiveInHierarchy != isNowActiveInHierarchy)
+	{
+		for (auto* comp : m_vComponents)
+		{
+			if (!comp || !comp->IsEnabled()) continue;
+			if (isNowActiveInHierarchy)
+				comp->OnEnable();
+			else
+				comp->OnDisable();
+		}
+	}
+
+	for (GameObject* pChild : m_vChildren)
+	{
+		if (pChild) pChild->OnHierarchyActiveChanged(isNowActiveInHierarchy);
+	}
+}
+
+bool GameObject::IsActiveInHierarchy() const
+{
+	if (!m_bIsActive) return false;
+	if (m_pParent != nullptr) return m_pParent->IsActiveInHierarchy();
+	return true;
+}
+
+
+bool GameObject::IsDescendantOf(const GameObject* potentialAncestor) const
+{
+	if (potentialAncestor == nullptr) return false;
+	const GameObject* curr = m_pParent;
+	while (curr != nullptr)
+	{
+		if (curr == potentialAncestor) return true;
+		curr = curr->m_pParent;
+	}
+	return false;
+}
+
+void GameObject::SetParent(GameObject* pNewParent, bool keepWorldTransform)
+{
+	if (pNewParent == this) return;
+	if (pNewParent == m_pParent) return;
+	if (IsDescendantOf(pNewParent)) return; 
+
+	Vector2 worldPosBefore = { 0.0f, 0.0f };
+	float   worldRotBefore = 0.0f;
+	Vector2 worldScaleBefore = { 1.0f, 1.0f };
+
+	if (keepWorldTransform)
+	{
+		worldPosBefore    = m_pTransform->GetWorldPosition();
+		worldRotBefore    = m_pTransform->GetWorldRotation();
+		worldScaleBefore  = m_pTransform->GetWorldScale();
+	}
+
+	if (m_pParent != nullptr)
+	{
+		auto& siblings = m_pParent->m_vChildren;
+		siblings.erase(std::remove(siblings.begin(), siblings.end(), this), siblings.end());
+		m_pTransform->DetachFromParent();
+		m_pParent = nullptr;
+	}
+
+	m_pParent = pNewParent;
+	if (m_pParent != nullptr)
+	{
+		m_pParent->m_vChildren.push_back(this);
+		m_pTransform->AttachToParent(m_pParent->m_pTransform);
+	}
+
+	if (keepWorldTransform && m_pTransform)
+	{
+		if (m_pParent != nullptr)
+		{
+			Vector2 localPos = m_pTransform->WorldToLocal(worldPosBefore);
+			m_pTransform->SetLocalPosition(localPos);
+			
+			float parentWorldRot = m_pParent->m_pTransform->GetWorldRotation();
+			m_pTransform->SetLocalRotation(worldRotBefore - parentWorldRot);
+		}
+		else
+		{
+			m_pTransform->SetLocalPosition(worldPosBefore);
+			m_pTransform->SetLocalRotation(worldRotBefore);
+		}
+	}
+
+	if (m_pOwnerScene)
+	{
+		m_pOwnerScene->UpdateGameObjectIndices();
 	}
 }
 

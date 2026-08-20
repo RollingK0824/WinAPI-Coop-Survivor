@@ -13,6 +13,8 @@ MonsterSO::MonsterSO()
 	ExposeVariable("ColliderRadius", &m_colliderRadius);
 	ExposeVariable("ExpAmount", &m_expAmount);
 	ExposeTexture("SpriteKey", &m_spriteKey);
+	ExposeAnimClip("AnimClipKey", &m_animClipKey);
+	ExposeAnimClip("DieClipKey", &m_dieClipKey);
 }
 
 void MonsterSO::OnLoadFromJson(const json& j)
@@ -35,6 +37,9 @@ void MonsterSO::OnLoadFromJson(const json& j)
 		std::string keyStr = j["TextureKey"].get<std::string>();
 		m_spriteKey = std::wstring(keyStr.begin(), keyStr.end());
 	}
+
+	if (j.contains("AnimClipKey")) m_animClipKey = j["AnimClipKey"].get<std::string>();
+	if (j.contains("DieClipKey")) m_dieClipKey = j["DieClipKey"].get<std::string>();
 }
 
 void MonsterSO::OnSaveToJson(json& j) const
@@ -47,4 +52,6 @@ void MonsterSO::OnSaveToJson(json& j) const
 
 	std::string keyStr(m_spriteKey.begin(), m_spriteKey.end());
 	j["SpriteKey"] = keyStr;
+	j["AnimClipKey"] = m_animClipKey;
+	j["DieClipKey"] = m_dieClipKey;
 }

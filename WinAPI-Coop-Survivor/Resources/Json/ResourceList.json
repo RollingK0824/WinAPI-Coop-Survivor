@@ -29,6 +29,61 @@
       "Key": "Effect.png",
       "Path": "Resources/Texture/Effect.png",
       "AtlasPath": "Resources/Texture/Effect.json"
+    },
+    {
+      "Key": "enemies.png",
+      "Path": "Resources/Texture/enemies.png",
+      "AtlasPath": "Resources/Texture/enemies.json"
+    },
+    {
+      "Key": "vfx.png",
+      "Path": "Resources/Texture/vfx.png",
+      "AtlasPath": "Resources/Texture/vfx.json"
+    },
+    {
+      "Key": "character_c01crewmate.png",
+      "Path": "Resources/Texture/character_c01crewmate.png",
+      "AtlasPath": "Resources/Texture/character_c01crewmate.json"
+    },
+    {
+      "Key": "ui.png",
+      "Path": "Resources/Texture/ui.png",
+      "AtlasPath": "Resources/Texture/ui.json"
+    },
+    {
+      "Key": "illustrations.png.png",
+      "Path": "Resources/Texture/illustrations.png.png",
+      "AtlasPath": "Resources/Texture/illustrations.png.json"
+    },
+    {
+      "Key": "character_antonio.png",
+      "Path": "Resources/Texture/character_antonio.png",
+      "AtlasPath": "Resources/Texture/character_antonio.json"
+    },
+    {
+      "Key": "gameOver.png",
+      "Path": "Resources/Texture/gameOver.png",
+      "AtlasPath": "Resources/Texture/gameOver.json"
+    },
+    {
+      "Key": "tps_lossless_icons.png",
+      "Path": "Resources/Texture/tps_lossless_icons.png",
+      "AtlasPath": "Resources/Texture/tps_lossless_icons.json"
+    },
+    {
+      "Key": "bg_forest.png",
+      "Path": "Resources/Texture/bg_forest.png",
+      "AtlasPath": "Resources/Texture/bg_forest.json"
+    },
+    {
+      "Key": "Coffin.png",
+      "Path": "Resources/Texture/Coffin.png",
+      "AtlasPath": "Resources/Texture/Coffin.json"
+    },
+    {
+      "Key": "CoffinRezBarSpritesheet.png",
+      "Path": "Resources/Texture/CoffinRezBarSpritesheet.png",
+      "AtlasPath": "Resources/Texture/CoffinRezBarSpritesheet.json"
     }
   ]
 }

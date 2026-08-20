@@ -1,0 +1,397 @@
+{
+  "frames": [
+    {
+      "filename": "Antonio_01.png",
+      "frame": {
+        "x": 73,
+        "y": 73,
+        "w": 32,
+        "h": 32
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 32
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 32
+      }
+    },
+    {
+      "filename": "Antonio_02.png",
+      "frame": {
+        "x": 34,
+        "y": 143,
+        "w": 31,
+        "h": 31
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 31,
+        "h": 31
+      },
+      "sourceSize": {
+        "w": 31,
+        "h": 31
+      }
+    },
+    {
+      "filename": "Antonio_03.png",
+      "frame": {
+        "x": 69,
+        "y": 141,
+        "w": 31,
+        "h": 32
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 31,
+        "h": 32
+      },
+      "sourceSize": {
+        "w": 31,
+        "h": 32
+      }
+    },
+    {
+      "filename": "Antonio_04.png",
+      "frame": {
+        "x": 73,
+        "y": 107,
+        "w": 32,
+        "h": 32
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 32
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 32
+      }
+    },
+    {
+      "filename": "madAntonio_01.png",
+      "frame": {
+        "x": 1,
+        "y": 109,
+        "w": 32,
+        "h": 32
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 32
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 32
+      }
+    },
+    {
+      "filename": "madAntonio_02.png",
+      "frame": {
+        "x": 67,
+        "y": 175,
+        "w": 31,
+        "h": 31
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 31,
+        "h": 31
+      },
+      "sourceSize": {
+        "w": 31,
+        "h": 31
+      }
+    },
+    {
+      "filename": "madAntonio_03.png",
+      "frame": {
+        "x": 1,
+        "y": 143,
+        "w": 31,
+        "h": 32
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 31,
+        "h": 32
+      },
+      "sourceSize": {
+        "w": 31,
+        "h": 32
+      }
+    },
+    {
+      "filename": "madAntonio_04.png",
+      "frame": {
+        "x": 35,
+        "y": 109,
+        "w": 32,
+        "h": 32
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 32
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 32
+      }
+    },
+    {
+      "filename": "madnewAntonio_01.png",
+      "frame": {
+        "x": 1,
+        "y": 1,
+        "w": 34,
+        "h": 34
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 34,
+        "h": 34
+      },
+      "sourceSize": {
+        "w": 34,
+        "h": 34
+      }
+    },
+    {
+      "filename": "madnewAntonio_02.png",
+      "frame": {
+        "x": 37,
+        "y": 1,
+        "w": 34,
+        "h": 34
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 34,
+        "h": 34
+      },
+      "sourceSize": {
+        "w": 34,
+        "h": 34
+      }
+    },
+    {
+      "filename": "madnewAntonio_03.png",
+      "frame": {
+        "x": 73,
+        "y": 1,
+        "w": 34,
+        "h": 34
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 34,
+        "h": 34
+      },
+      "sourceSize": {
+        "w": 34,
+        "h": 34
+      }
+    },
+    {
+      "filename": "madnewAntonio_04.png",
+      "frame": {
+        "x": 1,
+        "y": 37,
+        "w": 34,
+        "h": 34
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 34,
+        "h": 34
+      },
+      "sourceSize": {
+        "w": 34,
+        "h": 34
+      }
+    },
+    {
+      "filename": "newAntonio_01.png",
+      "frame": {
+        "x": 37,
+        "y": 37,
+        "w": 34,
+        "h": 34
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 34,
+        "h": 34
+      },
+      "sourceSize": {
+        "w": 34,
+        "h": 34
+      }
+    },
+    {
+      "filename": "newAntonio_02.png",
+      "frame": {
+        "x": 73,
+        "y": 37,
+        "w": 34,
+        "h": 34
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 34,
+        "h": 34
+      },
+      "sourceSize": {
+        "w": 34,
+        "h": 34
+      }
+    },
+    {
+      "filename": "newAntonio_03.png",
+      "frame": {
+        "x": 1,
+        "y": 73,
+        "w": 34,
+        "h": 34
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 34,
+        "h": 34
+      },
+      "sourceSize": {
+        "w": 34,
+        "h": 34
+      }
+    },
+    {
+      "filename": "newAntonio_04.png",
+      "frame": {
+        "x": 37,
+        "y": 73,
+        "w": 34,
+        "h": 34
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 34,
+        "h": 34
+      },
+      "sourceSize": {
+        "w": 34,
+        "h": 34
+      }
+    }
+  ],
+  "meta": {
+    "app": "https://www.codeandweb.com/texturepacker",
+    "version": "1.0",
+    "image": "character_antonio.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 128,
+      "h": 256
+    },
+    "scale": "1",
+    "custom_clips": [
+      {
+        "name": "Antonio_Run",
+        "frameRate": 0.1,
+        "isLoop": true,
+        "frames": [
+          "Antonio_01.png",
+          "Antonio_02.png",
+          "Antonio_03.png",
+          "Antonio_04.png"
+        ]
+      },
+      {
+        "name": "madAntonio_Run",
+        "frameRate": 0.1,
+        "isLoop": true,
+        "frames": [
+          "madAntonio_01.png",
+          "madAntonio_02.png",
+          "madAntonio_03.png",
+          "madAntonio_04.png"
+        ]
+      },
+      {
+        "name": "madnewAntonio_Run",
+        "frameRate": 0.1,
+        "isLoop": true,
+        "frames": [
+          "madnewAntonio_01.png",
+          "madnewAntonio_02.png",
+          "madnewAntonio_03.png",
+          "madnewAntonio_04.png"
+        ]
+      },
+      {
+        "name": "newAntonio_Run",
+        "frameRate": 0.1,
+        "isLoop": true,
+        "frames": [
+          "newAntonio_01.png",
+          "newAntonio_02.png",
+          "newAntonio_03.png",
+          "newAntonio_04.png"
+        ]
+      }
+    ]
+  }
+}

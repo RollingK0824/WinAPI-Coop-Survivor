@@ -42,7 +42,7 @@ private:
 private:
 	GameObject* m_pSelectedObject = nullptr;
 	ScriptableObject* m_pSelectedSO = nullptr;
-	// 분리된 패널 모듈 인스턴스 소유
+	
 	std::unique_ptr<MainMenuBarPanel> m_pMainMenuBarPanel;
 	std::unique_ptr<HierarchyPanel> m_pHierarchyPanel;
 	std::unique_ptr<InspectorPanel> m_pInspectorPanel;

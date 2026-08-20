@@ -1,6 +1,6 @@
 {
-    "Name": "TempMonster",
-    "InstanceID": 48,
+    "Name": "TempPlayerPrefab",
+    "InstanceID": 55,
     "IsActive": true,
     "Components": [
         {
@@ -31,10 +31,10 @@
                     "b": 1.0,
                     "a": 1.0
                 },
-                "SpriteKey": "Characeter_Green/Character0.png",
+                "SpriteKey": "Imeldat/Imeldat.png",
                 "Size": {
-                    "x": 16.0,
-                    "y": 16.0
+                    "x": 320.0,
+                    "y": 340.0
                 },
                 "Pivot": {
                     "x": 0.5,
@@ -49,21 +49,7 @@
             }
         },
         {
-            "Type": "AnimatorComponent",
-            "Data": {
-                "IsEnabled": true,
-                "IsPlaying": true,
-                "CurrentFrameIdx": 0,
-                "AccumulatedTime": 0.0,
-                "ClipKeys": [
-                    "Green_Player_Run",
-                    "Green_Player_Die"
-                ],
-                "DefaultPlay": "Green_Player_Run"
-            }
-        },
-        {
-            "Type": "CircleColliderComponent",
+            "Type": "BoxColliderComponent",
             "Data": {
                 "IsEnabled": true,
                 "Offset": {
@@ -74,22 +60,24 @@
                 "IsSensor": false,
                 "BodyType": 2,
                 "FixedRotation": true,
-                "CategoryBits": 4,
+                "CategoryBits": 1,
                 "MaskBits": -1,
-                "Radius": 0.0
+                "Size": {
+                    "x": 0.0,
+                    "y": 0.0
+                }
             }
         },
         {
-            "Type": "Monster",
+            "Type": "Player",
             "Data": {
-                "IsEnabled": true,
-                "MonsterSO": 101,
-                "CurrentHP": 100.0,
-                "MaxHP": 100.0,
-                "MoveSpeed": 120.0,
-                "AttackDamage": 10.0,
-                "AttackRange": 40.0,
-                "AttackCooldown": 1.0
+                "IsEnabled": true
+            }
+        },
+        {
+            "Type": "SkillComponent",
+            "Data": {
+                "IsEnabled": true
             }
         }
     ]

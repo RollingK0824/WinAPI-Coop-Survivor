@@ -23,6 +23,9 @@ public:
 	void SetScale(float scaleX, float scaleY) { m_RenderCommand.scaleX = scaleX; m_RenderCommand.scaleY = scaleY; }
 
 	void SetFillAmount(float fill) { m_fillAmount = (fill < 0.0f) ? 0.0f : (fill > 1.0f) ? 1.0f : fill; }
+	void SetBorder(const D2D1_RECT_F& border) { m_RenderCommand.bitmap.sprite.border = border; }
+	void SetBorder(float left, float top, float right, float bottom) { m_RenderCommand.bitmap.sprite.border = D2D1::RectF(left, top, right, bottom); }
+	const D2D1_RECT_F& GetBorder() const { return m_RenderCommand.bitmap.sprite.border; }
 	void SetSize(Vector2 size) { m_size = size; }
 	void SetIsUI(bool isUI) { m_RenderCommand.isUI = isUI; }
 	bool IsUI() const { return m_RenderCommand.isUI; }

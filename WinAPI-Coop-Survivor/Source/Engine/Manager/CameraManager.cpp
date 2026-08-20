@@ -55,7 +55,6 @@ bool CameraManager::IsActiveCameraValid() const
 
 void CameraManager::PanEditorCamera(Vector2 delta)
 {
-    // 줌 배율을 고려한 이동 델타 처리
     m_editorCamPos.x -= (delta.x / m_editorCamZoom);
     m_editorCamPos.y -= (delta.y / m_editorCamZoom);
 }

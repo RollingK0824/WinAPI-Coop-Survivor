@@ -1,10 +1,11 @@
-﻿#pragma once
+#pragma once
 #include "Engine/Core/Singleton.h"
 #include "Engine/Core/Define.h"
 #include "Engine/Framework/Base/ISystem.h"
 #include "Engine/Framework/Base/IUpdatable.h"
 
 class ColliderComponent;
+class RigidBodyComponent;
 
 class PhysicsManager : public Singleton<PhysicsManager>, public ISystem, public IUpdatable
 {
@@ -19,6 +20,9 @@ public:
 
 	b2BodyId CreateBody(const b2BodyDef* def);
 	void DestoryBody(b2BodyId bodyId);
+
+	void RegisterRigidBody(RigidBodyComponent* pRigidBody);
+	void UnRegisterRigidBody(RigidBodyComponent* pRigidBody);
 
 	void RegisterCollider(ColliderComponent* pCollider);
 	void UnRegisterCollider(ColliderComponent* pCollider);
@@ -38,8 +42,7 @@ private:
 	int32_t m_subStepCount = 4;
 	bool m_bEnableDebugDraw = false;
 
-	std::vector<ColliderComponent*> m_vColliders;
-
-
+	std::vector<ColliderComponent*>   m_vColliders;
+	std::vector<RigidBodyComponent*>  m_vRigidBodies;
 };
 

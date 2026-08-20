@@ -1,0 +1,85 @@
+{
+    "Name": "Btn_Template",
+    "InstanceID": 79,
+    "ParentInstanceID": 0,
+    "IsActive": true,
+    "Components": [
+        {
+            "Type": "TransformComponent",
+            "Data": {
+                "IsEnabled": true,
+                "Position": {
+                    "x": 960.0,
+                    "y": 540.0
+                },
+                "Rotation": 0.0,
+                "Scale": {
+                    "x": 1.0,
+                    "y": 1.0
+                }
+            }
+        },
+        {
+            "Type": "UIImageComponent",
+            "Data": {
+                "IsEnabled": true,
+                "RenderType": 256,
+                "ZOrder": 9999,
+                "Opacity": 1.0,
+                "Color": {
+                    "r": 1.0,
+                    "g": 1.0,
+                    "b": 1.0,
+                    "a": 1.0
+                },
+                "SpriteKey": "UI/button_c5_mouseover.png",
+                "Size": {
+                    "x": 250.0,
+                    "y": 40.0
+                },
+                "Pivot": {
+                    "x": 0.5,
+                    "y": 0.5
+                },
+                "Offset": {
+                    "x": 0.0,
+                    "y": 0.0
+                },
+                "Border": {
+                    "left": 14.0,
+                    "top": 14.0,
+                    "right": 14.0,
+                    "bottom": 14.0
+                },
+                "FillAmount": 1.0,
+                "IsUI": true,
+                "FlipX": false,
+                "FlipY": false
+            }
+        },
+        {
+            "Type": "UITextComponent",
+            "Data": {
+                "IsEnabled": true,
+                "RenderType": 257,
+                "ZOrder": 9999,
+                "Opacity": 1.0,
+                "Color": {
+                    "r": 1.0,
+                    "g": 1.0,
+                    "b": 1.0,
+                    "a": 1.0
+                },
+                "Text": "New Text",
+                "FontSize": 15.0
+            }
+        },
+        {
+            "Type": "UIButtonComponent",
+            "Data": {
+                "IsEnabled": true,
+                "IsHovered": false
+            }
+        }
+    ]
+}

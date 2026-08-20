@@ -4,6 +4,7 @@
 #include "Engine/Framework/GameObject.h"
 #include "Engine/Framework/Components/Core/TransformComponent.h"
 #include "Engine/Framework/Components/Physics/ColliderComponent.h"
+#include "Engine/Framework/Components/Physics/RigidBodyComponent.h"
 
 bool PhysicsManager::Initialize()
 {
@@ -34,33 +35,50 @@ void PhysicsManager::FixedUpdate(float fixedDt)
 
 	ProcessContanctEvents();
 
+	for (auto* pRigidBody : m_vRigidBodies)
+	{
+		if (pRigidBody == nullptr || !pRigidBody->IsEnabled()) continue;
+		if (!pRigidBody->gameObject.IsActiveInHierarchy()) continue;
+		if (pRigidBody->GetBodyType() == b2_staticBody) continue;
+
+		pRigidBody->SyncTransformFromBody();
+	}
+
 	for (auto* pCollider : m_vColliders)
 	{
-		if (pCollider == nullptr || !pCollider->IsEnabled())continue;
-
-		GameObject* pOwner = &pCollider->gameObject;
-		if (pOwner == nullptr || !pOwner->IsActive()) continue;
-
+		if (pCollider == nullptr || !pCollider->IsEnabled()) continue;
+		if (pCollider->IsAttachedToRigidBody()) continue;
+		if (!pCollider->gameObject.IsActiveInHierarchy()) continue;
 		if (pCollider->GetBodyType() == b2_staticBody) continue;
 
-		b2BodyId bodyId = pCollider->GetBodyId();
-		if (!b2Body_IsValid(bodyId))continue;
-
-		b2Vec2 b2Pos = b2Body_GetPosition(bodyId);
-		b2Rot b2Rot = b2Body_GetRotation(bodyId);
-
-		TransformComponent* pTransform = &pOwner->transform;
-		if (pTransform != nullptr)
-		{
-			pTransform->SetPosition(MeterToPixel(b2Pos.x), MeterToPixel(b2Pos.y));
-			float angleRadian = b2Rot_GetAngle(b2Rot);
-			pTransform->SetRotation(RadianToDegree(angleRadian));
-		}
+		pCollider->SyncTransformFromBody();
 	}
 }
 
 void PhysicsManager::Update(float dt)
 {
+}
+
+static ColliderComponent* GetColliderFromShapeId(b2ShapeId shapeId)
+{
+	if (!b2Shape_IsValid(shapeId)) return nullptr;
+	ColliderComponent* col = reinterpret_cast<ColliderComponent*>(b2Shape_GetUserData(shapeId));
+	if (col) return col;
+
+	b2BodyId bodyId = b2Shape_GetBody(shapeId);
+	if (b2Body_IsValid(bodyId))
+	{
+		void* bodyUserData = b2Body_GetUserData(bodyId);
+		if (bodyUserData)
+		{
+			Component* comp = reinterpret_cast<Component*>(bodyUserData);
+			if (comp)
+			{
+				col = comp->gameObject.GetComponent<ColliderComponent>();
+			}
+		}
+	}
+	return col;
 }
 
 void PhysicsManager::ProcessContanctEvents()
@@ -70,11 +88,8 @@ void PhysicsManager::ProcessContanctEvents()
 	{
 		b2ContactBeginTouchEvent event = contactEvents.beginEvents[i];
 
-		b2BodyId bodyA = b2Shape_GetBody(event.shapeIdA);
-		b2BodyId bodyB = b2Shape_GetBody(event.shapeIdB);
-
-		ColliderComponent* colA = reinterpret_cast<ColliderComponent*>(b2Body_GetUserData(bodyA));
-		ColliderComponent* colB = reinterpret_cast<ColliderComponent*>(b2Body_GetUserData(bodyB));
+		ColliderComponent* colA = GetColliderFromShapeId(event.shapeIdA);
+		ColliderComponent* colB = GetColliderFromShapeId(event.shapeIdB);
 
 		if (colA && colB 
 			&& colA->IsEnabled() && colB->IsEnabled()
@@ -90,11 +105,8 @@ void PhysicsManager::ProcessContanctEvents()
 	{
 		b2SensorBeginTouchEvent event = sensorEvents.beginEvents[i];
 
-		b2BodyId bodyVisitor = b2Shape_GetBody(event.visitorShapeId);
-		b2BodyId bodySensor = b2Shape_GetBody(event.sensorShapeId);
-
-		ColliderComponent* colVisitor = reinterpret_cast<ColliderComponent*>(b2Body_GetUserData(bodyVisitor));
-		ColliderComponent* colSensor = reinterpret_cast<ColliderComponent*>(b2Body_GetUserData(bodySensor));
+		ColliderComponent* colVisitor = GetColliderFromShapeId(event.visitorShapeId);
+		ColliderComponent* colSensor = GetColliderFromShapeId(event.sensorShapeId);
 
 		if (colVisitor && colSensor 
 			&& colVisitor->IsEnabled() && colSensor->IsEnabled()
@@ -118,49 +130,137 @@ void PhysicsManager::DestoryBody(b2BodyId bodyId)
 	}
 }
 
+void PhysicsManager::RegisterRigidBody(RigidBodyComponent* pRigidBody)
+{
+	if (pRigidBody == nullptr) return;
+	if (b2Body_IsValid(pRigidBody->GetBodyId())) return;
+
+	TransformComponent* pTf = &pRigidBody->transform;
+
+	b2BodyDef bodyDef = b2DefaultBodyDef();
+	bodyDef.type          = pRigidBody->GetBodyType();
+	bodyDef.fixedRotation = pRigidBody->IsFixedRotation();
+	bodyDef.position      = { PixelToMeter(pTf->GetWorldPosition().x), PixelToMeter(pTf->GetWorldPosition().y) };
+	bodyDef.rotation      = b2MakeRot(DegreeToRadian(pTf->GetWorldRotation()));
+	bodyDef.userData      = pRigidBody;
+
+	bool shouldBeActive = pRigidBody->gameObject.IsActiveInHierarchy() && pRigidBody->IsEnabled();
+	bodyDef.isEnabled = shouldBeActive;
+
+	b2BodyId bodyId = CreateBody(&bodyDef);
+	pRigidBody->m_bodyId = bodyId;
+
+	if (!shouldBeActive)
+		b2Body_Disable(bodyId);
+
+	m_vRigidBodies.push_back(pRigidBody);
+
+	// 만약 이 오브젝트나 자식 오브젝트의 Collider들이 이미 등록되어 있다면 해당 Collider들을 이 Body로 재연결
+	for (auto* pCollider : m_vColliders)
+	{
+		if (pCollider == nullptr) continue;
+		if (pCollider->gameObject.GetComponentInParent<RigidBodyComponent>() == pRigidBody ||
+			pCollider->gameObject.GetComponent<RigidBodyComponent>() == pRigidBody)
+		{
+			if (!pCollider->IsAttachedToRigidBody())
+			{
+				if (b2Body_IsValid(pCollider->GetBodyId()))
+				{
+					DestoryBody(pCollider->GetBodyId());
+				}
+				pCollider->SetBodyId(bodyId);
+				pCollider->SetAttachedToRigidBody(true);
+				pCollider->RebuildShape();
+			}
+		}
+	}
+}
+
+void PhysicsManager::UnRegisterRigidBody(RigidBodyComponent* pRigidBody)
+{
+	if (pRigidBody == nullptr) return;
+
+	if (b2Body_IsValid(pRigidBody->m_bodyId))
+	{
+		b2DestroyBody(pRigidBody->m_bodyId);
+		pRigidBody->m_bodyId = b2_nullBodyId;
+	}
+
+	auto it = std::find(m_vRigidBodies.begin(), m_vRigidBodies.end(), pRigidBody);
+	if (it != m_vRigidBodies.end())
+		m_vRigidBodies.erase(it);
+}
+
 void PhysicsManager::RegisterCollider(ColliderComponent* pCollider)
 {
 	if (pCollider == nullptr) return;
 
-	if (b2Body_IsValid(pCollider->GetBodyId())) return;
+	RigidBodyComponent* pRigidBody = pCollider->gameObject.GetComponentInParent<RigidBodyComponent>();
+	if (pRigidBody == nullptr)
+		pRigidBody = pCollider->gameObject.GetComponent<RigidBodyComponent>();
 
-	TransformComponent* pTransform = &pCollider->transform;
-	if (pTransform == nullptr) return;
+	b2BodyId bodyId = b2_nullBodyId;
 
-	b2BodyDef bodyDef = b2DefaultBodyDef();
-	bodyDef.type = pCollider->GetBodyType();
-	bodyDef.fixedRotation = pCollider->IsFixedRotation();
-
-	bodyDef.position = b2Vec2{ PixelToMeter(pTransform->GetPosition().x), PixelToMeter(pTransform->GetPosition().y) };
-	bodyDef.rotation = b2MakeRot(pTransform->GetRotation().angle);
-
-	bodyDef.userData = pCollider;
-
-	// Set isEnabled on BodyDef directly to prevent 1-frame overlap impulse during body creation
-	bool shouldBeActive = pCollider->gameObject.IsActive() && pCollider->IsEnabled();
-	bodyDef.isEnabled = shouldBeActive;
-
-	b2BodyId bodyId = CreateBody(&bodyDef);
-	pCollider->SetBodyId(bodyId);
-
-	if (!shouldBeActive)
+	if (pRigidBody != nullptr)
 	{
-		b2Body_Disable(bodyId);
+		// RigidBody가 아직 초기화되지 않았다면 먼저 Body 생성을 보장
+		if (!b2Body_IsValid(pRigidBody->GetBodyId()))
+		{
+			RegisterRigidBody(pRigidBody);
+		}
+
+		bodyId = pRigidBody->GetBodyId();
+		pCollider->SetBodyId(bodyId);
+		pCollider->SetAttachedToRigidBody(true);
+	}
+	else
+	{
+		pCollider->SetAttachedToRigidBody(false);
+		if (b2Body_IsValid(pCollider->GetBodyId())) return;
+
+		TransformComponent* pTf = &pCollider->transform;
+
+		b2BodyDef bodyDef = b2DefaultBodyDef();
+		bodyDef.type          = pCollider->GetBodyType();
+		bodyDef.fixedRotation = pCollider->IsFixedRotation();
+		bodyDef.position      = { PixelToMeter(pTf->GetWorldPosition().x), PixelToMeter(pTf->GetWorldPosition().y) };
+		bodyDef.rotation      = b2MakeRot(DegreeToRadian(pTf->GetWorldRotation()));
+		bodyDef.userData      = pCollider;
+
+		bool shouldBeActive = pCollider->gameObject.IsActiveInHierarchy() && pCollider->IsEnabled();
+		bodyDef.isEnabled = shouldBeActive;
+
+		bodyId = CreateBody(&bodyDef);
+		pCollider->SetBodyId(bodyId);
+
+		if (!shouldBeActive)
+			b2Body_Disable(bodyId);
 	}
 
 	pCollider->SetPhysicsVectorIndex(m_vColliders.size());
 	m_vColliders.push_back(pCollider);
+	pCollider->RebuildShape();
 }
 
 void PhysicsManager::UnRegisterCollider(ColliderComponent* pCollider)
 {
 	if (pCollider == nullptr) return;
 
-	if (b2Body_IsValid(pCollider->GetBodyId()))
+	if (b2Shape_IsValid(pCollider->GetShapeId()))
 	{
-		b2DestroyBody(pCollider->GetBodyId());
-		pCollider->SetBodyId(b2_nullBodyId);
+		b2DestroyShape(pCollider->GetShapeId(), false);
+		pCollider->SetShapeId(b2_nullShapeId);
 	}
+
+	if (!pCollider->IsAttachedToRigidBody())
+	{
+		if (b2Body_IsValid(pCollider->GetBodyId()))
+		{
+			b2DestroyBody(pCollider->GetBodyId());
+		}
+	}
+	pCollider->SetBodyId(b2_nullBodyId);
+	pCollider->SetAttachedToRigidBody(false);
 
 	if (m_vColliders.empty()) return;
 
@@ -192,8 +292,7 @@ struct OverlapContext
 
 static bool OverlapCallback(b2ShapeId shapeId, void* context)
 {
-	b2BodyId bodyId = b2Shape_GetBody(shapeId);
-	ColliderComponent* col = reinterpret_cast<ColliderComponent*>(b2Body_GetUserData(bodyId));
+	ColliderComponent* col = GetColliderFromShapeId(shapeId);
 	if (col && col->IsEnabled() && col->gameObject.IsActive())
 	{
 		OverlapContext* ctx = static_cast<OverlapContext*>(context);

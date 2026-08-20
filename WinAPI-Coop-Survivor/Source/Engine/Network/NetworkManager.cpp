@@ -28,18 +28,25 @@ bool NetworkManager::Initialize() {
 void NetworkManager::Release() {
 	GUISystem::GetInstance()->UnRegisterPanel(this);
 
+	if (m_Role == NetRole::CLIENT && m_bConnected && m_Socket != INVALID_SOCKET) {
+		ClientDisconnPacket disconnPacket;
+		disconnPacket.header.type = PacketType::CLIENT_DISCONN;
+		disconnPacket.header.size = sizeof(ClientDisconnPacket);
+		disconnPacket.disconnectedNetID = m_MyNetID;
+		SendPacket(&disconnPacket, sizeof(ClientDisconnPacket));
+	}
+
+	StopNetwork();
+
+	WSACleanup();
+	m_networkObjects.clear();
+	m_ConnectedClients.clear();
+}
+
+void NetworkManager::StopNetwork() {
 	m_bNetworkThreadRunning = false;
 
 	if (m_Socket != INVALID_SOCKET) {
-		// 클라이언트인 경우 종료 알림 전송
-		if (m_Role == NetRole::CLIENT && m_bConnected) {
-			ClientDisconnPacket disconnPacket;
-			disconnPacket.header.type = PacketType::CLIENT_DISCONN;
-			disconnPacket.header.size = sizeof(ClientDisconnPacket);
-			disconnPacket.disconnectedNetID = m_MyNetID;
-			SendPacket(&disconnPacket, sizeof(ClientDisconnPacket));
-		}
-
 		closesocket(m_Socket);
 		m_Socket = INVALID_SOCKET;
 	}
@@ -48,12 +55,11 @@ void NetworkManager::Release() {
 		m_networkThread.join();
 	}
 
-	WSACleanup();
 	m_Role = NetRole::NONE;
 	m_bConnected = false;
-	m_networkObjects.clear();
-	m_ConnectedClients.clear();
-	
+	m_connRetryTimer = 0.0f;
+	m_connTimeoutTimer = 0.0f;
+
 	{
 		std::lock_guard<std::mutex> lock(m_queueMutex);
 		m_incomingPacketQueue.clear();
@@ -61,17 +67,19 @@ void NetworkManager::Release() {
 }
 
 bool NetworkManager::StartHost(int port) {
+	StopNetwork();
+
 	m_Socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (m_Socket == INVALID_SOCKET) {
 		std::cerr << "Socket creation failed: " << WSAGetLastError() << std::endl;
 		return false;
 	}
 
-	// 논블로킹 설정
 	u_long mode = 1;
 	if (ioctlsocket(m_Socket, FIONBIO, &mode) != 0) {
 		std::cerr << "ioctlsocket failed: " << WSAGetLastError() << std::endl;
 		closesocket(m_Socket);
+		m_Socket = INVALID_SOCKET;
 		return false;
 	}
 
@@ -83,12 +91,14 @@ bool NetworkManager::StartHost(int port) {
 	if (::bind(m_Socket, (sockaddr*)&localAddr, sizeof(localAddr)) == SOCKET_ERROR) {
 		std::cerr << "Bind failed: " << WSAGetLastError() << std::endl;
 		closesocket(m_Socket);
+		m_Socket = INVALID_SOCKET;
 		return false;
 	}
 
 	m_Role = NetRole::HOST;
-	m_MyNetID = 1; // Host의 NetID는 항상 1로 지정
+	m_MyNetID = 1;
 	m_bConnected = true;
+	m_bCanJoin = true;
 	uint32 newSeed = RandomManager::GetInstance()->GenerateNewSeed();
 	m_ConnectedClients.clear();
 	m_NextNetID = 2;
@@ -110,30 +120,28 @@ bool NetworkManager::StartHost(int port) {
 	std::cout << "Host started on port " << port << std::endl;
 
 	m_bNetworkThreadRunning = true;
-	if (m_networkThread.joinable()) {
-		m_networkThread.join();
-	}
 	m_networkThread = std::thread(&NetworkManager::NetworkThreadLoop, this);
 
 	return true;
 }
 
 bool NetworkManager::ConnectToHost(const std::string& ip, int port) {
+	StopNetwork();
+
 	m_Socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (m_Socket == INVALID_SOCKET) {
 		std::cerr << "Socket creation failed: " << WSAGetLastError() << std::endl;
 		return false;
 	}
 
-	// 논블로킹 설정
 	u_long mode = 1;
 	if (ioctlsocket(m_Socket, FIONBIO, &mode) != 0) {
 		std::cerr << "ioctlsocket failed: " << WSAGetLastError() << std::endl;
 		closesocket(m_Socket);
+		m_Socket = INVALID_SOCKET;
 		return false;
 	}
 
-	// 클라이언트 소켓 바인딩 (임의 포트)
 	sockaddr_in localAddr;
 	localAddr.sin_family = AF_INET;
 	localAddr.sin_addr.s_addr = INADDR_ANY;
@@ -142,6 +150,7 @@ bool NetworkManager::ConnectToHost(const std::string& ip, int port) {
 	if (::bind(m_Socket, (sockaddr*)&localAddr, sizeof(localAddr)) == SOCKET_ERROR) {
 		std::cerr << "Client socket bind failed: " << WSAGetLastError() << std::endl;
 		closesocket(m_Socket);
+		m_Socket = INVALID_SOCKET;
 		return false;
 	}
 
@@ -152,8 +161,8 @@ bool NetworkManager::ConnectToHost(const std::string& ip, int port) {
 	m_Role = NetRole::CLIENT;
 	m_bConnected = false;
 	m_connRetryTimer = 0.0f;
+	m_connTimeoutTimer = 0.0f;
 
-	// Host에 접속 요청 발송
 	PacketHeader connPacket;
 	connPacket.type = PacketType::CLIENT_CONN_REQ;
 	connPacket.size = sizeof(PacketHeader);
@@ -162,9 +171,6 @@ bool NetworkManager::ConnectToHost(const std::string& ip, int port) {
 	std::cout << "Sent connection request to Host " << ip << ":" << port << std::endl;
 
 	m_bNetworkThreadRunning = true;
-	if (m_networkThread.joinable()) {
-		m_networkThread.join();
-	}
 	m_networkThread = std::thread(&NetworkManager::NetworkThreadLoop, this);
 
 	return true;
@@ -173,12 +179,26 @@ bool NetworkManager::ConnectToHost(const std::string& ip, int port) {
 void NetworkManager::Update(float dt) {
 	if (m_Role == NetRole::NONE) return;
 
-	// 1. 패킷 수신 및 처리
 	ProcessIncomingPackets();
 
-	// 2. 연결 재시도 (미연결 클라이언트)
 	if (m_Role == NetRole::CLIENT && !m_bConnected)
 	{
+		m_connTimeoutTimer += dt;
+		if (m_connTimeoutTimer >= CONN_TIMEOUT)
+		{
+			std::cout << "[NetworkManager] Connection timed out (" << CONN_TIMEOUT << "s). Stopping retry." << std::endl;
+			m_connTimeoutTimer = 0.0f;
+			m_connRetryTimer = 0.0f;
+			m_bConnected = false;
+			m_Role = NetRole::NONE;
+
+			if (m_onConnResultCallback)
+			{
+				m_onConnResultCallback(ConnResultCode::REJECTED);
+			}
+			return;
+		}
+
 		m_connRetryTimer += dt;
 		if (m_connRetryTimer >= 0.5f)
 		{
@@ -192,7 +212,6 @@ void NetworkManager::Update(float dt) {
 			std::cout << "Retrying connection to Host..." << std::endl;
 		}
 	}
-
 }
 
 void NetworkManager::FixedUpdate(float fixedDt) {
@@ -204,7 +223,6 @@ void NetworkManager::FixedUpdate(float fixedDt) {
 
 void NetworkManager::TickUpdate() {
 	if (m_Role == NetRole::CLIENT && m_bConnected) {
-		// Heartbeat 전송
 		QueryPerformanceCounter(&m_LastHeartbeatSentTick);
 
 		PacketHeader hb;
@@ -214,7 +232,6 @@ void NetworkManager::TickUpdate() {
 		SendPacket(&hb, sizeof(PacketHeader));
 	}
 	else if (m_Role == NetRole::HOST) {
-		// 클라이언트 타임아웃 검사 (30초 무반응 시 제거)
 		float currentTime = TimeManager::GetInstance()->GetRealTime();
 		for (auto it = m_ConnectedClients.begin(); it != m_ConnectedClients.end();) {
 			if (currentTime - it->second.lastHeartbeatTime > 30.0f) {
@@ -235,7 +252,6 @@ void NetworkManager::TickUpdate() {
 			}
 		}
 
-		// 0.5초 주기로 GameStateSync 브로드캐스트
 		m_stateBroadcastTimer += FIXED_DT;
 		if (m_stateBroadcastTimer >= 0.5f) {
 			m_stateBroadcastTimer = 0.0f;
@@ -298,7 +314,6 @@ void NetworkManager::SendPacket(const void* data, int size, const sockaddr_in* t
 	if (m_Socket == INVALID_SOCKET) return;
 
 	if (m_Role == NetRole::CLIENT) {
-		// Client는 항상 Host에게 보냄
 		sendto(m_Socket, (const char*)data, size, 0, (const sockaddr*)&m_HostAddr, sizeof(m_HostAddr));
 	}
 	else if (m_Role == NetRole::HOST) {
@@ -306,7 +321,6 @@ void NetworkManager::SendPacket(const void* data, int size, const sockaddr_in* t
 			sendto(m_Socket, (const char*)data, size, 0, (const sockaddr*)targetAddr, sizeof(sockaddr_in));
 		}
 		else {
-			// 브로드캐스트 (모든 클라이언트에게 전송)
 			for (const auto& client : m_ConnectedClients) {
 				sendto(m_Socket, (const char*)data, size, 0, (const sockaddr*)&client.second.address, sizeof(sockaddr_in));
 			}
@@ -403,7 +417,6 @@ void NetworkManager::HandlePacket(const char* buffer, int size, const sockaddr_i
 	{
 		if (m_Role != NetRole::HOST) break;
 
-		// 이미 등록된 클라이언트인지 검사 (동일한 Address 포트 비교)
 		uint32 clientNetID = 0;
 		for (const auto& client : m_ConnectedClients)
 		{
@@ -415,9 +428,38 @@ void NetworkManager::HandlePacket(const char* buffer, int size, const sockaddr_i
 			}
 		}
 
-		// 신규 클라이언트라면 NetID 생성 및 등록
 		if (clientNetID == 0)
 		{
+			// 게임이 이미 시작된 방 검사
+			if (!m_bCanJoin)
+			{
+				std::cout << "[NetworkManager] Rejecting connection: Game Already Started" << std::endl;
+				ClientConnResPacket rejectPkt;
+				rejectPkt.header.type = PacketType::CLIENT_CONN_RES;
+				rejectPkt.header.size = sizeof(ClientConnResPacket);
+				rejectPkt.header.tick = m_currentTick;
+				rejectPkt.resultCode = ConnResultCode::GAME_ALREADY_STARTED;
+				rejectPkt.assignedNetID = 0;
+
+				SendPacket(&rejectPkt, sizeof(ClientConnResPacket), &senderAddr);
+				break;
+			}
+
+			// 정원 초과(Max Clients) 검사
+			if (m_ConnectedClients.size() >= m_maxClients)
+			{
+				std::cout << "[NetworkManager] Rejecting connection: Room Full (" << m_ConnectedClients.size() << "/" << m_maxClients << ")" << std::endl;
+				ClientConnResPacket rejectPkt;
+				rejectPkt.header.type = PacketType::CLIENT_CONN_RES;
+				rejectPkt.header.size = sizeof(ClientConnResPacket);
+				rejectPkt.header.tick = m_currentTick;
+				rejectPkt.resultCode = ConnResultCode::ROOM_FULL;
+				rejectPkt.assignedNetID = 0;
+
+				SendPacket(&rejectPkt, sizeof(ClientConnResPacket), &senderAddr);
+				break;
+			}
+
 			clientNetID = m_NextNetID++;
 			NetClientInfo newClient;
 			newClient.address = senderAddr;
@@ -427,6 +469,15 @@ void NetworkManager::HandlePacket(const char* buffer, int size, const sockaddr_i
 
 			std::cout << "New client connected. Assigned NetID: " << clientNetID << std::endl;
 		}
+
+		// 접속 성공 응답 패킷 전송
+		ClientConnResPacket connResPkt;
+		connResPkt.header.type = PacketType::CLIENT_CONN_RES;
+		connResPkt.header.size = sizeof(ClientConnResPacket);
+		connResPkt.header.tick = m_currentTick;
+		connResPkt.resultCode = ConnResultCode::SUCCESS;
+		connResPkt.assignedNetID = clientNetID;
+		SendPacket(&connResPkt, sizeof(ClientConnResPacket), &senderAddr);
 
 		// Welcome 패킷 전송
 		WelcomePacket welcome;
@@ -439,18 +490,45 @@ void NetworkManager::HandlePacket(const char* buffer, int size, const sockaddr_i
 		break;
 	}
 
+	case PacketType::CLIENT_CONN_RES:
+	{
+		if (m_Role != NetRole::CLIENT) break;
+		const ClientConnResPacket* resPkt = (const ClientConnResPacket*)buffer;
+		if (resPkt->resultCode != ConnResultCode::SUCCESS)
+		{
+			m_bConnected = false;
+			m_Role = NetRole::NONE;
+			m_connRetryTimer = 0.0f;
+			m_connTimeoutTimer = 0.0f;
+
+			std::cout << "[NetworkManager] Connection failed. ResultCode: " << static_cast<int>(resPkt->resultCode) << std::endl;
+			if (m_onConnResultCallback)
+			{
+				m_onConnResultCallback(resPkt->resultCode);
+			}
+		}
+		break;
+	}
+
 	case PacketType::HOST_WELCOME:
 	{
 		if (m_Role != NetRole::CLIENT) break;
 		const WelcomePacket* welcome = (const WelcomePacket*)buffer;
 		m_MyNetID = welcome->assignedNetID;
 		m_bConnected = true;
+		m_connRetryTimer = 0.0f;
+		m_connTimeoutTimer = 0.0f;
 
 		RandomManager::GetInstance()->SetSharedSeed(welcome->randomSeed);
 
+		if (m_onConnResultCallback)
+		{
+			m_onConnResultCallback(ConnResultCode::SUCCESS);
+		}
+
 		std::cout << "Successfully connected to Host. Assigned NetID: " << m_MyNetID << std::endl;
 
-		// Bind player controllers when WELCOME packet arrives with assigned NetID
+
 		Scene* scene = SceneManager::GetInstance()->GetActiveScene();
 		if (scene)
 		{

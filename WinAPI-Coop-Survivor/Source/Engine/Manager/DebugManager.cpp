@@ -94,13 +94,13 @@ GameObject* DebugManager::CreateDebugUIOverlay(Scene* pScene)
     if (m_pDebugUIRoot) return m_pDebugUIRoot;
 
     GameObject* pDebugObj = pScene->CreateGameObject("DebugHUD_Root");
-    pDebugObj->transform.SetPosition(10.0f, 10.0f);
+    pDebugObj->transform.SetPosition(1670.0f, 40.0f);
 
     auto* pPanel = pDebugObj->AddComponent<UIPanelComponent>();
     if (pPanel)
     {
         pPanel->SetPivot(0.0f, 0.0f);
-        pPanel->SetSize({ 240.0f, 160.0f });
+        pPanel->SetSize({ 240.0f, 180.0f });
         pPanel->SetColor(D2D1::ColorF(0.0f, 0.0f, 0.0f, 0.6f)); // 반투명 검은색
     }
 
@@ -110,6 +110,7 @@ GameObject* DebugManager::CreateDebugUIOverlay(Scene* pScene)
         pText->SetPivot(0.0f, 0.0f);
         pText->SetFontSize(14.0f);
         pText->SetColor(D2D1::ColorF(D2D1::ColorF::Green)); // 연두색 텍스트
+        pText->SetSize({ 230.0f, 170.0f });
     }
 
     pDebugObj->AddComponent<HUDPresenter>();

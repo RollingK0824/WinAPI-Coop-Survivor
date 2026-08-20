@@ -45,6 +45,19 @@ public:
 		return nullptr;
 	}
 
+	template<typename T>
+	T* GetComponentInParent()
+	{
+		GameObject* curr = m_pParent;
+		while (curr != nullptr)
+		{
+			T* comp = curr->GetComponent<T>();
+			if (comp) return comp;
+			curr = curr->m_pParent;
+		}
+		return nullptr;
+	}
+
 	void RemoveComponent(Component* comp);
 
 	const std::vector<Component*>& GetComponents()const { return m_vComponents; }
@@ -57,8 +70,11 @@ public:
 	void SetAsFirstSibling();
 	void SetAsLastSibling();
 
+	// ---- Active ----
 	bool IsActive() const { return m_bIsActive; }
+	bool IsActiveInHierarchy() const;
 	void SetActive(bool active);
+
 	Scene* GetOwnerScene() const { return m_pOwnerScene; }
 
 	void OnCollision(ColliderComponent* other);
@@ -79,7 +95,20 @@ public:
 
 	void RegisterObserverPtr(void** pObserverPtr);
 	void UnregisterObserverPtr(void** pObserverPtr);
+
+	void SetParent(GameObject* pNewParent, bool keepWorldTransform = true);
+	GameObject* GetParent() const { return m_pParent; }
+	const std::vector<GameObject*>& GetChildren() const { return m_vChildren; }
+	bool IsDescendantOf(const GameObject* potentialAncestor) const;
+
+	void SetHierarchyIndex(size_t index) { m_hierarchyIndex = index; }
+	size_t GetHierarchyIndex() const { return m_hierarchyIndex; }
+
+	void SetParentInstanceID(uint64 id) { m_parentInstanceID = id; }
+	uint64 GetParentInstanceID() const { return m_parentInstanceID; }
+
 private:
+	void OnHierarchyActiveChanged(bool parentActive);
 	std::vector<void**> m_vObservers;
 	void RegisterComponentToScene(Component* comp);
 
@@ -96,6 +125,11 @@ private:
 	bool m_bIsDead = false;
 
 	size_t m_sceneIndex = 0;
+	size_t m_hierarchyIndex = 0;
+
+	GameObject* m_pParent = nullptr;
+	std::vector<GameObject*> m_vChildren;
+	uint64 m_parentInstanceID = 0;
 };
 
 template<typename T>

@@ -1,5 +1,5 @@
 {
-  "Name": "MagicMissilePrefab",
+  "Name": "PetalSlashAoEPrefab",
   "IsActive": true,
   "Components": [
     {
@@ -11,9 +11,19 @@
       }
     },
     {
-      "Type": "CircleCollider",
+      "Type": "SpriteRendererComponent",
       "Data": {
-        "Radius": 10.0,
+        "SpriteKey": "",
+        "Color": [1.0, 1.0, 1.0, 0.8]
+      }
+    },
+    {
+      "Type": "BoxColliderComponent",
+      "Data": {
+        "Size": {
+          "x": 160.0,
+          "y": 50.0
+        },
         "Offset": [0.0, 0.0],
         "Density": 1.0,
         "IsSensor": true,
@@ -24,7 +34,7 @@
       }
     },
     {
-      "Type": "ProjectileComponent",
+      "Type": "AoEComponent",
       "Data": {}
     }
   ]

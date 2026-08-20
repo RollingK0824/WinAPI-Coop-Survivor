@@ -1,0 +1,127 @@
+{
+    "Name": "Coffin",
+    "InstanceID": 1320,
+    "ParentInstanceID": 0,
+    "IsActive": true,
+    "Components": [
+        {
+            "Type": "TransformComponent",
+            "Data": {
+                "IsEnabled": true,
+                "Position": {
+                    "x": 0.0,
+                    "y": 0.0
+                },
+                "Rotation": 0.0,
+                "Scale": {
+                    "x": 1.0,
+                    "y": 1.0
+                }
+            }
+        },
+        {
+            "Type": "SpriteRendererComponent",
+            "Data": {
+                "IsEnabled": true,
+                "RenderType": 0,
+                "ZOrder": 100,
+                "Opacity": 1.0,
+                "Color": {
+                    "r": 1.0,
+                    "g": 1.0,
+                    "b": 1.0,
+                    "a": 1.0
+                },
+                "SpriteKey": "Coffin/Coffin.png",
+                "Size": {
+                    "x": 32.0,
+                    "y": 63.0
+                },
+                "Pivot": {
+                    "x": 0.5,
+                    "y": 0.5
+                },
+                "Offset": {
+                    "x": 0.0,
+                    "y": 0.0
+                },
+                "Border": {
+                    "left": 0.0,
+                    "top": 0.0,
+                    "right": 0.0,
+                    "bottom": 0.0
+                },
+                "FlipX": false,
+                "FlipY": false
+            }
+        },
+        {
+            "Type": "Coffin",
+            "Data": {
+                "IsEnabled": true,
+                "MaxRezTime": 10.0
+            }
+        }
+    ],
+    "Children": [
+        {
+            "Name": "ProgressBar",
+            "InstanceID": 1321,
+            "ParentInstanceID": 1320,
+            "IsActive": true,
+            "Components": [
+                {
+                    "Type": "TransformComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Position": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "Rotation": 0.0,
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        }
+                    }
+                },
+                {
+                    "Type": "SpriteRendererComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "RenderType": 0,
+                        "ZOrder": 102,
+                        "Opacity": 1.0,
+                        "Color": {
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 1.0,
+                            "a": 1.0
+                        },
+                        "SpriteKey": "CoffinRezBarSpritesheet/CoffinRezBarSpritesheet_0.png",
+                        "Size": {
+                            "x": 8.0,
+                            "y": 28.0
+                        },
+                        "Pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "Offset": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "Border": {
+                            "left": 0.0,
+                            "top": 0.0,
+                            "right": 0.0,
+                            "bottom": 0.0
+                        },
+                        "FlipX": false,
+                        "FlipY": false
+                    }
+                }
+            ]
+        }
+    ]
+}

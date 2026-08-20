@@ -1,0 +1,317 @@
+{
+    "SceneName": "GameOver",
+    "GameObjects": [
+        {
+            "Name": "Main Camera",
+            "InstanceID": 1,
+            "ParentInstanceID": 0,
+            "IsActive": true,
+            "Components": [
+                {
+                    "Type": "TransformComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Position": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "Rotation": 0.0,
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        }
+                    }
+                },
+                {
+                    "Type": "CameraComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Zoom": 1.0,
+                        "Enable Follow": false,
+                        "Smooth Follow": true,
+                        "Follow Speed": 5.0,
+                        "Use Map Bounds": false,
+                        "Map Bounds": {
+                            "left": 0.0,
+                            "top": 0.0,
+                            "right": 0.0,
+                            "bottom": 0.0
+                        },
+                        "Follow Target": 0
+                    }
+                }
+            ]
+        },
+        {
+            "Name": "GameOverBackground",
+            "InstanceID": 2,
+            "ParentInstanceID": 0,
+            "IsActive": true,
+            "Components": [
+                {
+                    "Type": "TransformComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Position": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "Rotation": 0.0,
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        }
+                    }
+                },
+                {
+                    "Type": "SpriteRendererComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "RenderType": 0,
+                        "ZOrder": -1000,
+                        "Opacity": 1.0,
+                        "Color": {
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 1.0,
+                            "a": 1.0
+                        },
+                        "SpriteKey": "introBG/introBG.png",
+                        "Size": {
+                            "x": 1920.0,
+                            "y": 1080.0
+                        },
+                        "Pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "Offset": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "Border": {
+                            "left": 0.0,
+                            "top": 0.0,
+                            "right": 0.0,
+                            "bottom": 0.0
+                        },
+                        "FlipX": false,
+                        "FlipY": false
+                    }
+                }
+            ]
+        },
+        {
+            "Name": "GameOverLogo",
+            "InstanceID": 3,
+            "ParentInstanceID": 0,
+            "IsActive": true,
+            "Components": [
+                {
+                    "Type": "TransformComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Position": {
+                            "x": 0.0,
+                            "y": -200.0
+                        },
+                        "Rotation": 0.0,
+                        "Scale": {
+                            "x": 1.5,
+                            "y": 1.5
+                        }
+                    }
+                },
+                {
+                    "Type": "SpriteRendererComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "RenderType": 0,
+                        "ZOrder": 100,
+                        "Opacity": 1.0,
+                        "Color": {
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 1.0,
+                            "a": 1.0
+                        },
+                        "SpriteKey": "gameOver/gameOver.png",
+                        "Size": {
+                            "x": 332.0,
+                            "y": 133.0
+                        },
+                        "Pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "Offset": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "Border": {
+                            "left": 0.0,
+                            "top": 0.0,
+                            "right": 0.0,
+                            "bottom": 0.0
+                        },
+                        "FlipX": false,
+                        "FlipY": false
+                    }
+                }
+            ]
+        },
+        {
+            "Name": "GameOverSceneController",
+            "InstanceID": 4,
+            "ParentInstanceID": 0,
+            "IsActive": true,
+            "Components": [
+                {
+                    "Type": "TransformComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Position": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "Rotation": 0.0,
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        }
+                    }
+                },
+                {
+                    "Type": "GameOverSceneController",
+                    "Data": {
+                        "IsEnabled": true,
+                        "OK Button": 5
+                    }
+                }
+            ]
+        },
+        {
+            "Name": "OK_Btn",
+            "InstanceID": 5,
+            "ParentInstanceID": 0,
+            "IsActive": true,
+            "Components": [
+                {
+                    "Type": "TransformComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "Position": {
+                            "x": 960.0,
+                            "y": 680.0
+                        },
+                        "Rotation": 0.0,
+                        "Scale": {
+                            "x": 1.0,
+                            "y": 1.0
+                        }
+                    }
+                },
+                {
+                    "Type": "UIImageComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "RenderType": 256,
+                        "ZOrder": 9999,
+                        "Opacity": 1.0,
+                        "Color": {
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 1.0,
+                            "a": 1.0
+                        },
+                        "SpriteKey": "UI/button_c5_mouseover.png",
+                        "Size": {
+                            "x": 200.0,
+                            "y": 50.0
+                        },
+                        "Pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        },
+                        "Offset": {
+                            "x": 0.0,
+                            "y": 0.0
+                        },
+                        "Border": {
+                            "left": 14.0,
+                            "top": 14.0,
+                            "right": 14.0,
+                            "bottom": 14.0
+                        },
+                        "FillAmount": 1.0,
+                        "IsUI": true,
+                        "FlipX": false,
+                        "FlipY": false
+                    }
+                },
+                {
+                    "Type": "UITextComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "RenderType": 257,
+                        "ZOrder": 9999,
+                        "Opacity": 1.0,
+                        "Color": {
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 1.0,
+                            "a": 1.0
+                        },
+                        "Text": "확인",
+                        "FontSize": 20.0,
+                        "Alignment": 257,
+                        "ParagraphAlignment": 1,
+                        "Size": {
+                            "x": 200.0,
+                            "y": 50.0
+                        },
+                        "Pivot": {
+                            "x": 0.5,
+                            "y": 0.5
+                        }
+                    }
+                },
+                {
+                    "Type": "UIButtonComponent",
+                    "Data": {
+                        "IsEnabled": true,
+                        "IsHovered": false,
+                        "Normal Sprite": "UI/button_c5_mouseover.png",
+                        "Hover Sprite": "UI/button_c5_normal.png",
+                        "Pressed Sprite": "UI/button_c5_pressed.png",
+                        "Disabled Sprite": "",
+                        "Normal Color": {
+                            "r": 1.0,
+                            "g": 1.0,
+                            "b": 1.0,
+                            "a": 1.0
+                        },
+                        "Hover Color": {
+                            "r": 0.9,
+                            "g": 0.9,
+                            "b": 0.9,
+                            "a": 1.0
+                        },
+                        "Pressed Color": {
+                            "r": 0.7,
+                            "g": 0.7,
+                            "b": 0.7,
+                            "a": 1.0
+                        },
+                        "Disabled Color": {
+                            "r": 0.5,
+                            "g": 0.5,
+                            "b": 0.5,
+                            "a": 1.0
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}

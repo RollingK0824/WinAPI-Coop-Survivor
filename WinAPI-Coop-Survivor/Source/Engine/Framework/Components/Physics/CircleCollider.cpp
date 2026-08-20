@@ -1,4 +1,4 @@
-﻿#include "Engine/Core/pch.h"
+#include "Engine/Core/pch.h"
 #include "CircleCollider.h"
 #include "Engine/Core/ComponentRegister.h"
 #include "Engine/Framework/GameObject.h"
@@ -8,6 +8,7 @@
 #include "Engine/Framework/Components/UI/UIImageComponent.h"
 
 static ComponentRegistrar<CircleCollider> registrar(EngineKey::Component::CircleCollider.data());
+static ComponentRegistrar<CircleCollider> registrarAlias("CircleCollider");
 
 CircleCollider::CircleCollider(GameObject* owner, TransformComponent* transform)
 	: ColliderComponent(owner, transform)

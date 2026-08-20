@@ -142,7 +142,7 @@
     "custom_clips": [
       {
         "name": "Effect_Play",
-        "frameRate": 0.1,
+        "frameDuration": 0.1,
         "isLoop": false,
         "frames": [
           "Effect1.png",

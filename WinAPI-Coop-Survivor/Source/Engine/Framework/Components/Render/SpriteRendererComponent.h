@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Engine/Framework/Components/Core/RenderComponent.h"
 #include "Engine/Renderer/Sprite.h"
 
@@ -30,7 +30,15 @@ public:
 	Vector2 GetSpriteSize() const;
 
 	void SetFlip(bool flipX, bool flipY) { m_RenderCommand.bitmap.flipX = flipX; m_RenderCommand.bitmap.flipY = flipY; }
+	void SetFlipX(bool flipX) { m_RenderCommand.bitmap.flipX = flipX; }
+	void SetFlipY(bool flipY) { m_RenderCommand.bitmap.flipY = flipY; }
+	bool GetFlipX() const { return m_RenderCommand.bitmap.flipX; }
+	bool GetFlipY() const { return m_RenderCommand.bitmap.flipY; }
 	void SetScale(float scaleX, float scaleY) { m_RenderCommand.scaleX = scaleX; m_RenderCommand.scaleY = scaleY; }
+
+	void SetBorder(const D2D1_RECT_F& border) { m_RenderCommand.bitmap.sprite.border = border; }
+	void SetBorder(float left, float top, float right, float bottom) { m_RenderCommand.bitmap.sprite.border = D2D1::RectF(left, top, right, bottom); }
+	const D2D1_RECT_F& GetBorder() const { return m_RenderCommand.bitmap.sprite.border; }
 
 	virtual const RenderCommand& GetRenderCommand() override
 	{

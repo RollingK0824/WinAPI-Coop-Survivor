@@ -1,4 +1,4 @@
-﻿#include "Engine/Core/pch.h"
+#include "Engine/Core/pch.h"
 #include "HierarchyPanel.h"
 #include "Engine/Editor/EditorSystem.h"
 #include "Engine/Manager/SceneManager.h"
@@ -44,33 +44,55 @@ void HierarchyPanel::DrawSceneHeader(Scene* pActiveScene)
 void HierarchyPanel::DrawGameObjectList(Scene* pActiveScene)
 {
     const auto& objects = pActiveScene->GetGameObjects();
-    for (int i = 0; i < (int)objects.size(); ++i)
+    for (GameObject* pObj : objects)
     {
-        GameObject* pObj = objects[i];
         if (!pObj || pObj->IsDead()) continue;
-        DrawGameObjectNode(pActiveScene, pObj, i);
+        
+        if (pObj->GetParent() != nullptr) continue;
+        DrawGameObjectNode(pActiveScene, pObj);
     }
 }
 
-void HierarchyPanel::DrawGameObjectNode(Scene* pActiveScene, GameObject* pObj, int index)
+void HierarchyPanel::DrawGameObjectNode(Scene* pActiveScene, GameObject* pObj)
 {
+    if (!pObj || pObj->IsDead()) return;
+
     ImGui::PushID(pObj);
 
     bool isSelected = (EditorSystem::GetInstance()->GetSelectedObject() == pObj);
+    bool hasChildren = !pObj->GetChildren().empty();
 
-    if (ImGui::Selectable(pObj->GetName().c_str(), isSelected))
+    ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow
+                             | ImGuiTreeNodeFlags_SpanAvailWidth;
+    if (isSelected)    flags |= ImGuiTreeNodeFlags_Selected;
+    if (!hasChildren)  flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+
+    bool nodeOpen = ImGui::TreeNodeEx(pObj->GetName().c_str(), flags);
+
+    if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Left) && !ImGui::IsItemToggledOpen() && ImGui::GetDragDropPayload() == nullptr)
     {
         EditorSystem::GetInstance()->SetSelectedObject(pObj);
     }
 
     HandleItemContextMenu(pActiveScene, pObj);
+
     if (ImGui::BeginDragDropSource())
     {
-        ImGui::SetDragDropPayload("HIERARCHY_REORDER_OBJ", &pObj, sizeof(GameObject*));
-        ImGui::Text("Move %s", pObj->GetName().c_str());
+        ImGui::SetDragDropPayload("HIERARCHY_GO", &pObj, sizeof(GameObject*));
+        ImGui::Text("Move: %s", pObj->GetName().c_str());
         ImGui::EndDragDropSource();
     }
-    HandleDragAndDropReorder(pObj, index);
+    
+    HandleDragAndDropParenting(pActiveScene, pObj);
+
+    if (nodeOpen && hasChildren)
+    {
+        for (GameObject* pChild : pObj->GetChildren())
+        {
+            DrawGameObjectNode(pActiveScene, pChild);
+        }
+        ImGui::TreePop();
+    }
 
     ImGui::PopID();
 }
@@ -95,20 +117,38 @@ void HierarchyPanel::HandleItemContextMenu(Scene* pActiveScene, GameObject* pObj
             std::string prefabPath = "Resources/Prefabs/" + pObj->GetName() + ".prefab";
             JsonSerializer::SavePrefab(pObj, prefabPath);
         }
+
+        ImGui::Separator();
+
+        if (ImGui::MenuItem("Create Empty Child"))
+        {
+            GameObject* pChild = pActiveScene->CreateGameObject("New GameObject");
+            if (pChild)
+                pChild->SetParent(pObj, false);
+        }
+
+        if (pObj->GetParent() != nullptr)
+        {
+            if (ImGui::MenuItem("Unparent"))
+            {
+                pObj->SetParent(nullptr, true);
+            }
+        }
+
         ImGui::EndPopup();
     }
 }
 
-void HierarchyPanel::HandleDragAndDropReorder(GameObject* pTargetObj, int targetIndex)
+void HierarchyPanel::HandleDragAndDropParenting(Scene* pActiveScene, GameObject* pTargetObj)
 {
     if (ImGui::BeginDragDropTarget())
     {
-        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("HIERARCHY_REORDER_OBJ"))
+        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("HIERARCHY_GO"))
         {
-            GameObject* draggedObj = *(GameObject**)payload->Data;
-            if (draggedObj && draggedObj != pTargetObj)
+            GameObject* pDragged = *(GameObject**)payload->Data;
+            if (pDragged && pDragged != pTargetObj && !pTargetObj->IsDescendantOf(pDragged))
             {
-                draggedObj->transform.SetSiblingIndex(targetIndex);
+                pDragged->SetParent(pTargetObj, true);
             }
         }
         ImGui::EndDragDropTarget();
@@ -137,6 +177,17 @@ void HierarchyPanel::HandlePrefabDrop(Scene* pActiveScene)
 
 void HierarchyPanel::HandleWindowContextMenu(Scene* pActiveScene)
 {
+    if (ImGui::BeginDragDropTarget())
+    {
+        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("HIERARCHY_GO"))
+        {
+            GameObject* pDragged = *(GameObject**)payload->Data;
+            if (pDragged)
+                pDragged->SetParent(nullptr, true);
+        }
+        ImGui::EndDragDropTarget();
+    }
+
     if (ImGui::BeginPopupContextWindow(nullptr, ImGuiPopupFlags_NoOpenOverItems | ImGuiPopupFlags_MouseButtonRight))
     {
         if (ImGui::MenuItem("Create Empty GameObject"))

@@ -1,0 +1,67 @@
+{
+    "Name": "ExpGem",
+    "InstanceID": 1269,
+    "ParentInstanceID": 0,
+    "IsActive": true,
+    "Components": [
+        {
+            "Type": "TransformComponent",
+            "Data": {
+                "IsEnabled": true,
+                "Position": {
+                    "x": 0.0,
+                    "y": 0.0
+                },
+                "Rotation": 0.0,
+                "Scale": {
+                    "x": 1.0,
+                    "y": 1.0
+                }
+            }
+        },
+        {
+            "Type": "SpriteRendererComponent",
+            "Data": {
+                "IsEnabled": true,
+                "RenderType": 0,
+                "ZOrder": 150,
+                "Opacity": 1.0,
+                "Color": {
+                    "r": 1.0,
+                    "g": 1.0,
+                    "b": 1.0,
+                    "a": 1.0
+                },
+                "SpriteKey": "UI/GemBlue.png",
+                "Size": {
+                    "x": 11.0,
+                    "y": 14.0
+                },
+                "Pivot": {
+                    "x": 0.5,
+                    "y": 0.5
+                },
+                "Offset": {
+                    "x": 0.0,
+                    "y": 0.0
+                },
+                "Border": {
+                    "left": 0.0,
+                    "top": 0.0,
+                    "right": 0.0,
+                    "bottom": 0.0
+                },
+                "FlipX": false,
+                "FlipY": false
+            }
+        },
+        {
+            "Type": "ExpGem",
+            "Data": {
+                "IsEnabled": true,
+                "ExpAmount": 10,
+                "FlySpeed": 650.0
+            }
+        }
+    ]
+}

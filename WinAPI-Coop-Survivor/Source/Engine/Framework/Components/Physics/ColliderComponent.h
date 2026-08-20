@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Engine/Framework/Base/Component.h"
 #include "Engine/Core/Define.h"
 
@@ -16,9 +16,13 @@ public:
 	virtual void DrawDebug() {}
 
 	void RebuildShape();
+	void SyncTransformFromBody();
 
 	b2BodyId GetBodyId() const { return m_BodyId; }
 	void SetBodyId(b2BodyId id) { m_BodyId = id; }
+
+	bool IsAttachedToRigidBody() const { return m_bAttachedToRigidBody; }
+	void SetAttachedToRigidBody(bool attached) { m_bAttachedToRigidBody = attached; }
 
 	b2ShapeId GetShapeId() const { return m_ShapeId; }
 	void SetShapeId(b2ShapeId id) { m_ShapeId = id; }
@@ -53,6 +57,7 @@ protected:
 	b2BodyId m_BodyId = b2_nullBodyId;
 	b2ShapeId m_ShapeId = b2_nullShapeId;
 	b2BodyType m_BodyType = b2_dynamicBody;
+	bool m_bAttachedToRigidBody = false;
 
 	bool m_bFixedRotation = true;
 	uint32 m_categoryBits = PhysicsLayer::Default;

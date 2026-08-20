@@ -1,0 +1,13 @@
+﻿{
+    "Type": "MonsterSO",
+    "AssetID": 102,
+    "AssetName": "Monster_Skeleton1",
+    "MaxHP": 150.0,
+    "MoveSpeed": 30.0,
+    "AttackDamage": 8.0,
+    "ColliderRadius": 10.0,
+    "ExpAmount": 20,
+    "SpriteKey": "enemies/Skeleton1_i01.png",
+    "AnimClipKey": "Skeleton1_Run",
+    "DieClipKey": "Skeleton1_Die"
+}

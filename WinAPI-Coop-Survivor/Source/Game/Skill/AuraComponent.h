@@ -36,6 +36,7 @@ private:
 
 	float m_tickInterval = 0.5f;
 	float m_tickTimer = 0.0f;
+	float m_rotSpeed = 2.5f;
 
 	std::string m_poolKey = "GenericAuraPrefab";
 	ObserverPtr<GameObject> m_pCaster;

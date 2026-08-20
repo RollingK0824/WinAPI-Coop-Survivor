@@ -8,19 +8,46 @@
 #include "Engine/Framework/Components/Core/TransformComponent.h"
 #include "Engine/Framework/Components/Network/NetworkIdentity.h"
 #include "Engine/Framework/Components/Physics/BoxCollider.h"
+#include "Engine/Framework/Components/Render/AnimatorComponent.h"
+#include "Engine/Framework/Components/Render/SpriteRendererComponent.h"
 #include "Engine/Framework/Components/UI/UIImageComponent.h"
 #include "LocalController.h"
 #include "NetworkController.h"
 #include "Game/Monster/Monster.h"
 #include "Game/Item/ExpGem.h"
 #include "Game/Manager/InGameManager.h"
+#include "Engine/Manager/PrefabManager.h"
+#include "Coffin.h"
 
 static ComponentRegistrar<Player> registrar(EngineKey::CustomComponent::Player.data());
 
 Player::Player(GameObject* owner, TransformComponent* transform) : ScriptComponent(owner, transform)
 {
 	ExposeVariable("MaxHP", &m_maxHP);
-	ExposeVariable("IFrameDuration", const_cast<float*>(&k_iFrameDuration));
+	ExposeVariable("IFrameDuration", &m_iFrameDuration);
+}
+
+void Player::SetFacingDirection(const Vector2& dir)
+{
+	if (dir.LengthSquared() > 0.0001f)
+	{
+		m_facingDir = dir.GetNormalized();
+		if (!m_pSpriteRenderer.IsValid())
+		{
+			m_pSpriteRenderer = gameObject.GetComponent<SpriteRendererComponent>();
+		}
+		if (m_pSpriteRenderer.IsValid())
+		{
+			if (m_facingDir.x < -0.01f)
+			{
+				m_pSpriteRenderer->SetFlip(true, false);
+			}
+			else if (m_facingDir.x > 0.01f)
+			{
+				m_pSpriteRenderer->SetFlip(false, false);
+			}
+		}
+	}
 }
 
 void Player::Start()
@@ -29,12 +56,20 @@ void Player::Start()
 	m_iFrameTimer = 0.0f;
 
 	m_pCollider = gameObject.GetComponent<ColliderComponent>();
+	m_pAnimator = gameObject.GetComponent<AnimatorComponent>();
+	m_pSpriteRenderer = gameObject.GetComponent<SpriteRendererComponent>();
+	m_prevPos = transform.GetPosition();
+
+	if (m_pAnimator.IsValid())
+	{
+		m_pAnimator->Pause();
+	}
 
 	if (m_pCollider.IsValid())
 	{
 		m_pCollider->m_bIsSensor = false;
-		m_pCollider->m_density = 1000.0f; // 몬스터 대비 압도적인 밀도/질량으로 몬스터를 밀치고 이동
-		m_pCollider->SetFilter(PhysicsLayer::Player, PhysicsLayer::All & ~PhysicsLayer::Player); // Player간 충돌 비활성화
+		m_pCollider->m_density = 1000.0f;
+		m_pCollider->SetFilter(PhysicsLayer::Player, PhysicsLayer::All & ~PhysicsLayer::Player);
 		m_pCollider->RebuildShape();
 	}
 
@@ -55,40 +90,118 @@ void Player::Start()
 		}
 	}
 
-	CreateTestHPBar();
+	CreateHPBarFromPrefab();
 }
 
 void Player::Update(float dt)
 {
-	if (m_iFrameTimer > 0.0f)
+	if (IsDead())
 	{
-		m_iFrameTimer -= dt;
-	}
-	else if (!IsDead())
-	{
-		NetRole role = NetworkManager::GetInstance()->GetRole();
-		NetworkIdentity* netId = gameObject.GetComponent<NetworkIdentity>();
-
-		// Host 또는 내 로컬 로컬 소유 플레이어(Prediction)만 피격 검사 수행
-		if (role != NetRole::CLIENT || (netId && netId->HasAuthority()))
+		if (!m_pSpriteRenderer.IsValid())
 		{
-			Vector2 myPos = transform.GetPosition();
-			float hitRadius = 24.0f; // 플레이어 피격 판정 반경
+			m_pSpriteRenderer = gameObject.GetComponent<SpriteRendererComponent>();
+		}
+		if (m_pSpriteRenderer.IsValid())
+		{
+			m_pSpriteRenderer->SetOpacity(0.0f);
+		}
+		UpdateHPBar();
+		return;
+	}
 
-			auto colliders = PhysicsManager::GetInstance()->OverlapAABB(myPos, hitRadius, PhysicsLayer::Monster);
-			for (auto* pCol : colliders)
+	if (m_hitFlashTimer > 0.0f)
+	{
+		m_hitFlashTimer -= dt;
+		if (m_hitFlashTimer <= 0.0f)
+		{
+			m_hitFlashTimer = 0.0f;
+			if (!m_pSpriteRenderer.IsValid())
 			{
-				if (!pCol || !pCol->IsEnabled() || !pCol->gameObject.IsActive()) continue;
-
-				Monster* pMonster = pCol->gameObject.GetComponent<Monster>();
-				if (pMonster && !pMonster->IsDead())
-				{
-					TakeDamage(pMonster->GetAttackDamage());
-					break; // 1회 피격 후 무적시간(iFrame) 재설정되므로 바로 탈출
-				}
+				m_pSpriteRenderer = gameObject.GetComponent<SpriteRendererComponent>();
+			}
+			if (m_pSpriteRenderer.IsValid())
+			{
+				m_pSpriteRenderer->SetOpacity(1.0f);
 			}
 		}
 	}
+
+	if (m_iFrameTimer > 0.0f)
+	{
+		m_iFrameTimer -= dt;
+		if (m_iFrameTimer <= 0.0f)
+		{
+			m_iFrameTimer = 0.0f;
+			if (!m_pSpriteRenderer.IsValid())
+			{
+				m_pSpriteRenderer = gameObject.GetComponent<SpriteRendererComponent>();
+			}
+			if (m_pSpriteRenderer.IsValid())
+			{
+				m_pSpriteRenderer->SetOpacity(1.0f);
+			}
+		}
+		else
+		{
+			if (!m_pSpriteRenderer.IsValid())
+			{
+				m_pSpriteRenderer = gameObject.GetComponent<SpriteRendererComponent>();
+			}
+			if (m_pSpriteRenderer.IsValid())
+			{
+				float blink = (fmod(m_iFrameTimer, 0.2f) < 0.1f) ? 0.35f : 0.9f;
+				m_pSpriteRenderer->SetOpacity(blink);
+			}
+		}
+	}
+
+	Vector2 currentPos = transform.GetPosition();
+	Vector2 posDelta = currentPos - m_prevPos;
+	m_prevPos = currentPos;
+
+	bool isMoving = m_bIsMoving || (posDelta.LengthSquared() > 0.001f);
+
+	if (!m_pAnimator.IsValid())
+	{
+		m_pAnimator = gameObject.GetComponent<AnimatorComponent>();
+	}
+
+	if (m_pAnimator.IsValid())
+	{
+		if (isMoving && !IsDead())
+		{
+			if (!m_pAnimator->IsPlaying())
+			{
+				m_pAnimator->Resume();
+			}
+		}
+		else
+		{
+			if (m_pAnimator->IsPlaying())
+			{
+				m_pAnimator->Pause();
+			}
+		}
+	}
+
+	if (!m_pSpriteRenderer.IsValid())
+	{
+		m_pSpriteRenderer = gameObject.GetComponent<SpriteRendererComponent>();
+	}
+
+	if (m_pSpriteRenderer.IsValid())
+	{
+		if (m_facingDir.x < -0.01f)
+		{
+			m_pSpriteRenderer->SetFlip(true, false);
+		}
+		else if (m_facingDir.x > 0.01f)
+		{
+			m_pSpriteRenderer->SetFlip(false, false);
+		}
+	}
+
+	m_bIsMoving = false;
 
 	UpdateHPBar();
 	UpdateExpGemMagnet(dt);
@@ -102,10 +215,9 @@ void Player::UpdateExpGemMagnet(float dt)
 	if (!mgr || mgr->IsSimulationPaused()) return;
 
 	Vector2 myPos = transform.GetPosition();
-	float magnetRange = 280.0f; // 자력 반응 반경 (픽셀)
-	float pickupRange = 70.0f;  // 실제 획득 반경 (픽셀)
+	float magnetRange = 50.0f;
+	float pickupRange = 10.0f;
 
-	// 안전한 순회를 위해 벡터 복사본 사용 (UnregisterGem 호출 시 m_activeGems 수정으로 인한 이터레이터 파괴 방지)
 	std::vector<ExpGem*> gemsToProcess = mgr->GetActiveGems();
 
 	for (ExpGem* pGem : gemsToProcess)
@@ -115,21 +227,17 @@ void Player::UpdateExpGemMagnet(float dt)
 		Vector2 gemPos = pGem->transform.GetPosition();
 		float dist = Vector2::Distance(myPos, gemPos);
 
-		// 1. 보석 획득 판정 (Player 주체로 AddTeamExp 호출 및 반납)
 		if (dist <= pickupRange)
 		{
-			// Host 및 싱글플레이어에서만 전역 경험치 변경 (Client는 Host 패킷으로 100% 동기화)
 			if (NetworkManager::GetInstance()->GetRole() != NetRole::CLIENT)
 			{
 				mgr->AddTeamExp(static_cast<float>(pGem->GetExpAmount()));
 			}
 
-			// 보석 소멸(Despawn)은 Client 로컬 화면에서도 흡수 제거 연출을 위해 실행
 			pGem->Despawn();
 			continue;
 		}
 
-		// 2. 자력 반응 반경 진입 처리 (더 가까운 플레이어로 자동 타깃 갱신)
 		if (dist <= magnetRange)
 		{
 			if (!pGem->HasTargetPlayer())
@@ -156,17 +264,9 @@ void Player::OnDestroy()
 {
 	ScriptComponent::OnDestroy();
 
-	Scene* pScene = gameObject.GetOwnerScene();
-	if (pScene)
+	if (m_pHpBarRootObj.IsValid())
 	{
-		if (m_pHpBarBgObj.IsValid())
-		{
-			pScene->DestroyObjects(m_pHpBarBgObj.Get());
-		}
-		if (m_pHpBarFillObj.IsValid())
-		{
-			pScene->DestroyObjects(m_pHpBarFillObj.Get());
-		}
+		m_pHpBarRootObj->Destroy();
 	}
 }
 
@@ -191,77 +291,110 @@ void Player::OnCollision(ColliderComponent* other)
 void Player::TakeDamage(float damage, GameObject* pAttacker)
 {
 	if (IsDead()) return;
+	if (m_iFrameTimer > 0.0f) return;
 
 	NetRole role = NetworkManager::GetInstance()->GetRole();
 	NetworkIdentity* netId = gameObject.GetComponent<NetworkIdentity>();
 
-	// Client에서 남의 원격 플레이어 HP를 함부로 깎지 못하도록 차단
 	if (role == NetRole::CLIENT && netId && !netId->HasAuthority()) return;
 
 	m_currentHP -= damage;
 	if (m_currentHP <= 0.0f)
 	{
 		m_currentHP = 0.0f;
+
+		Scene* pScene = gameObject.GetOwnerScene();
+		if (pScene)
+		{
+			bool coffinExists = false;
+			for (GameObject* sceneObj : pScene->GetGameObjects())
+			{
+				if (sceneObj && sceneObj->IsActive())
+				{
+					Coffin* c = sceneObj->GetComponent<Coffin>();
+					if (c && c->GetTargetPlayer() == this)
+					{
+						coffinExists = true;
+						break;
+					}
+				}
+			}
+
+			if (!coffinExists)
+			{
+				GameObject* coffinObj = PrefabManager::GetInstance()->Instantiate("Coffin", pScene);
+				if (coffinObj)
+				{
+					coffinObj->transform.SetPosition(transform.GetPosition());
+					Coffin* pCoffinComp = coffinObj->GetComponent<Coffin>();
+					if (!pCoffinComp)
+					{
+						pCoffinComp = coffinObj->AddComponent<Coffin>();
+					}
+					if (pCoffinComp)
+					{
+						pCoffinComp->SetTargetPlayer(this);
+					}
+				}
+			}
+		}
+
+		if (!m_pSpriteRenderer.IsValid())
+		{
+			m_pSpriteRenderer = gameObject.GetComponent<SpriteRendererComponent>();
+		}
+		if (m_pSpriteRenderer.IsValid())
+		{
+			m_pSpriteRenderer->SetOpacity(0.0f);
+		}
+
+		UpdateHPBar();
+		return;
 	}
 
-	m_iFrameTimer = k_iFrameDuration;
+	m_iFrameTimer = m_iFrameDuration;
+	m_hitFlashTimer = 0.15f;
+
+	if (!m_pSpriteRenderer.IsValid())
+	{
+		m_pSpriteRenderer = gameObject.GetComponent<SpriteRendererComponent>();
+	}
+	if (m_pSpriteRenderer.IsValid())
+	{
+		m_pSpriteRenderer->SetOpacity(0.35f);
+	}
+
+	UpdateHPBar();
 }
 
-void Player::CreateTestHPBar()
+void Player::CreateHPBarFromPrefab()
 {
 	Scene* pScene = gameObject.GetOwnerScene();
 	if (!pScene) return;
 
-	Vector2 playerPos = transform.GetPosition();
-	Vector2 hpBarPos = { playerPos.x, playerPos.y - 45.0f };
+	GameObject* pHpBarRoot = PrefabManager::GetInstance()->Instantiate("HpBar", pScene);
+	if (!pHpBarRoot) return;
 
-	// 1. HPBar Background GameObject (월드 스페이스 UI)
-	m_pHpBarBgObj = pScene->CreateGameObject("Test_HPBar_BG");
-	if (m_pHpBarBgObj.IsValid())
-	{
-		m_pHpBarBgObj->transform.SetPosition(hpBarPos);
-		UIImageComponent* pBgImg = m_pHpBarBgObj->AddComponent<UIImageComponent>();
-		if (pBgImg)
-		{
-			pBgImg->SetIsUI(false); // 월드 좌표 따라가도록 설정
-			pBgImg->SetSize({ 50.0f, 6.0f });
-			pBgImg->SetColor(D2D1::ColorF(0.2f, 0.2f, 0.2f, 0.8f));
-			pBgImg->SetZOrder(500);
-		}
-	}
+	pHpBarRoot->SetParent(&this->gameObject, false);
+	pHpBarRoot->transform.SetLocalPosition(0.0f, 25.0f);
 
-	// 2. HPBar Fill GameObject (월드 스페이스 UI + FillAmount 연동)
-	m_pHpBarFillObj = pScene->CreateGameObject("Test_HPBar_Fill");
-	if (m_pHpBarFillObj.IsValid())
+	m_pHpBarRootObj = pHpBarRoot;
+
+	for (GameObject* pChild : pHpBarRoot->GetChildren())
 	{
-		m_pHpBarFillObj->transform.SetPosition(hpBarPos);
-		m_pHpBarFillImg = m_pHpBarFillObj->AddComponent<UIImageComponent>();
-		if (m_pHpBarFillImg.IsValid())
+		if (pChild && pChild->GetName() == "HpBar_Filled")
 		{
-			m_pHpBarFillImg->SetIsUI(false); // 월드 좌표 따라가도록 설정
-			m_pHpBarFillImg->SetSize({ 50.0f, 6.0f });
-			m_pHpBarFillImg->SetColor(D2D1::ColorF(0.9f, 0.1f, 0.1f, 1.0f));
-			m_pHpBarFillImg->SetFillAmount(1.0f);
-			m_pHpBarFillImg->SetZOrder(501);
+			m_pHpBarFillImg = pChild->GetComponent<UIImageComponent>();
+			break;
 		}
 	}
 }
 
 void Player::UpdateHPBar()
 {
-	Vector2 playerPos = transform.GetPosition();
-	Vector2 hpBarPos = { playerPos.x, playerPos.y - 45.0f };
-
-	if (m_pHpBarBgObj.IsValid())
+	if (m_pHpBarRootObj.IsValid())
 	{
-		m_pHpBarBgObj->transform.SetPosition(hpBarPos);
-		m_pHpBarBgObj->SetActive(!IsDead());
-	}
-
-	if (m_pHpBarFillObj.IsValid())
-	{
-		m_pHpBarFillObj->transform.SetPosition(hpBarPos);
-		m_pHpBarFillObj->SetActive(!IsDead());
+		m_pHpBarRootObj->SetActive(!IsDead());
 	}
 
 	if (m_pHpBarFillImg.IsValid())
@@ -269,3 +402,4 @@ void Player::UpdateHPBar()
 		m_pHpBarFillImg->SetFillAmount(GetHPRatio());
 	}
 }
+

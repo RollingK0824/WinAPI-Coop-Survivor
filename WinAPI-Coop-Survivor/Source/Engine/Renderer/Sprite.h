@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <string>
 #include <vector>
 #include <d2d1.h>
@@ -11,6 +11,7 @@ struct Sprite
 	D2D1_POINT_2F offset;
 	float originalWidth = 0.0f;
 	float originalHeight = 0.0f;
+	D2D1_RECT_F border = { 0.0f, 0.0f, 0.0f, 0.0f };
 };
 
 struct AnimationClip
@@ -19,6 +20,6 @@ struct AnimationClip
 	ID2D1Bitmap* pTexture = nullptr;
 
 	std::vector<Sprite> frames;
-	float frameRate = 0.1f;
+	float frameDuration = 0.1f;
 	bool bIsLoop = true;
 };
